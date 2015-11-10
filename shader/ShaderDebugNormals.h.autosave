@@ -1,0 +1,16 @@
+#ifndef SHADERDEBUGNORMALS_H
+#define SHADERDEBUGNORMALS_H
+
+class ShaderDebugNormals {
+	
+public:
+	
+	ShaderDebugNormals(Scene* scene) {
+		
+		
+		
+	}
+	
+}
+
+#endif // SHADERDEBUGNORMALS_H

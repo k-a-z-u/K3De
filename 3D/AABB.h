@@ -77,7 +77,7 @@ public:
 
 	/** does this bounding-box intersect with the unit cube? [-1,-1,-1] [+1,+1,+1] */
 	bool intersectsUnitCube() const {
-		static AABB unitAABB( Vec3(-1,-1,-1), Vec3(+1,+1,+1) );
+		static AABB unitAABB( Vec3(-1.01f, -1.01f, -1.01f), Vec3(+1.01, +1.01, +1.01) );
 		return this->intersects(unitAABB);
 	}
 

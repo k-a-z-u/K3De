@@ -90,33 +90,33 @@ std::string ShadowRendererSimple::getShadowAmountCalculationGLSL() {
 	ss << "\tfloat nearest = texture(texShadowMap, sc.st).r;\n";		// smallest distance from this given (x,y) to the light
 	ss << "\tfloat curDist = sc.z;\n";									// current distance to the light
 	//ss << "\tif(nearest<curDist) {\n";
-	//ss << "\t return pow((curDist-nearest), 0.5);\n";
+	//ss << "\t return pow((curDist-nearest), 0.5f);\n";
 	//ss << "} return 1.0;\n";
-	//ss << "\treturn clamp((curDist-nearest), 0,1);\n";
-	ss << "\treturn (nearest < curDist) ? (0.25) : (1.0);\n";			// shadowed?
+	//ss << "\treturn clamp((curDist-nearest), 0.0f, 1.0f);\n";
+	ss << "\treturn (nearest < curDist) ? (0.25f) : (1.0f);\n";			// shadowed?
 	ss << "}\n";
 
-	const float size = 0.15;
+	const float size = 0.15 * 2;		// TODO: make flexible?
 	const int numSamples = 12;
 
 	ss << "float getShadowAmount() {\n";
 	ss << "\tif (shadowCoord.w <= 0.0) {return 1.0;}\n";				// if we are behind the light, no shadowing is possible (prevents artifacts)
 	ss << "\tvec3 sc = shadowCoord.xyz / shadowCoord.w;\n";
-	ss << "\tsc.z -= 0.0002;\n";										// add some clearance to prevent almost-equal-z artifcats
+	ss << "\tsc.z -= 0.0002f;\n";										// add some clearance to prevent almost-equal-z artifcats
 	ss << "\tfloat s = "<<size<<" / shadowCoord.w;\n";						// "smooth" the shadow
-	ss << "\tfloat sum = 0;\n";
+	ss << "\tfloat sum = 0.0f;\n";
 
 	for (int i = 0; i < numSamples; ++i) {
 		const float x = Random::get(0,1);
 		const float y = Random::get(0,1);
-		ss << "\tsum += isShadowed(sc + vec3(s*"<<x<<",s*"<<y<<", 0));\n";
+		ss << "\tsum += isShadowed(sc + vec3(s*"<<x<<"f,s*"<<y<<"f, 0.0f));\n";
 	}
-	ss << "\tsum += isShadowed(sc + vec3( 0, 0, 0));\n";
-	//ss << "\tsum += isShadowed(sc + vec3(+s,+s, 0));\n";
-	//ss << "\tsum += isShadowed(sc + vec3(-s,-s, 0));\n";
-	//ss << "\tsum += isShadowed(sc + vec3(-s,+s, 0));\n";
-	//ss << "\tsum += isShadowed(sc + vec3(+s,-s, 0));\n";
-	ss << "\treturn sum/" << numSamples <<";\n";
+	ss << "\tsum += isShadowed(sc + vec3( 0.0f, 0.0f, 0.0f));\n";
+	//ss << "\tsum += isShadowed(sc + vec3(+s,+s, 0.0f));\n";
+	//ss << "\tsum += isShadowed(sc + vec3(-s,-s, 0.0f));\n";
+	//ss << "\tsum += isShadowed(sc + vec3(-s,+s, 0.0f));\n";
+	//ss << "\tsum += isShadowed(sc + vec3(+s,-s, 0.0f));\n";
+	ss << "\treturn sum/" << numSamples <<".0f;\n";
 	ss << "}\n";
 
 	return ss.str();

@@ -9,6 +9,9 @@ typedef Vec3 Vertex;
 /** represents a 3D normal */
 typedef Vec3 Normal;
 
+/** represents a 3D tangent */
+typedef Vec3 Tangent;
+
 /** represents a 2D texture coordinate */
 typedef Vec2 TexCoord;
 
@@ -82,12 +85,60 @@ struct VertexNormalTexture {
 
 };
 
+/**
+ * represents a combination of:
+ *	Vertex with Normal an Texture-coordinate
+ */
+struct VertexNormalTangentTexture {
+
+	Vertex v;
+	Normal n;
+	Tangent ta;
+	TexCoord t;
+
+	/** empty ctor */
+	VertexNormalTangentTexture() {;}
+
+	/** ctor from vectors */
+	VertexNormalTangentTexture(const Vertex& v, const Normal& n, const Tangent& ta, const TexCoord& t) : v(v), n(n), ta(ta), t(t) {;}
+
+	/** ctor from scalars */
+	VertexNormalTangentTexture(const float vx, const float vy, const float vz, const float nx, const float ny, const float nz, const float tx, const float ty, const float tz, const float tu, const float tv) :
+		v(vx,vy,vz), n(nx,ny,nz), ta(tx, ty, tz), t(tu,tv) {
+		;
+	}
+
+	void setVertex(const Vec3& v)		{this->v = v;}
+	void setNormal(const Vec3& n)		{this->n = n;}
+	void setTangent(const Vec3& n)		{this->ta = ta;}
+	void setTexCoord(const Vec2& t)		{this->t = t;}
+
+	const Vec3& getVertex() const		{return v;}
+	const Vec3& getNormal() const		{return n;}
+	const Vec3& getTangent() const		{return ta;}
+	const Vec2& getTexCoord() const		{return t;}
+
+	bool operator == (const VertexNormalTexture& o) const {
+		return (o.v == v) && (o.n == n) && (o.t == t);
+	}
+
+};
+
+
 namespace std {
+
 	template<> struct hash<VertexNormalTexture> {
 		size_t operator() (const VertexNormalTexture& vnt) const {
 			return vnt.getVertex().hash() ^ vnt.getNormal().hash() ^ vnt.getTexCoord().hash();
 		}
 	};
+
+	template<> struct hash<VertexNormalTangentTexture> {
+		size_t operator() (const VertexNormalTangentTexture& vnt) const {
+			return vnt.getVertex().hash() ^ vnt.getNormal().hash() ^ vnt.getTangent().hash() ^ vnt.getTexCoord().hash();
+		}
+	};
+
 }
 
 #endif // MESHVERTEX_H

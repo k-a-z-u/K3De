@@ -4,7 +4,6 @@
 #include "../gl/VAO.h"
 #include "../gl/VBOArray.h"
 #include "../scene/Renderable.h"
-#include "../textures/Texture2D.h"
 
 class Text : public Renderable {
 
@@ -12,35 +11,103 @@ private:
 
 	VAO vao;
 	VBOArray<VertexTexture> vertices;
-	Mat4 mat;
-	Texture2D* tex;
+	Mat4 matrix;
+	Material* material;
+	std::string text;
+
 	Vec2 pos;
+	Vec2 charSize;
+	Vec2 stridePercent;
 
 public:
 
-	Text(Texture2D* tex, Vec2 pos) : mat(1.0f), tex(tex), pos(pos) {
+	Text(Material* material) : material(material), pos(0.5f, 0.5f) {
+		matrix = Mat4::identity();
+		charSize = Vec2(0.1f, 0.2f);
+		stridePercent = Vec2(1.0f, 1.0f);
+	}
 
+	void setPosition(const Vec2 xy) {
+		if (xy == this->pos) {return;}
+		this->pos = xy;
+		rebuild();
+	}
+
+	void setCharSize(const Vec2 charSize) {
+		if (charSize == this->charSize) {return;}
+		this->charSize = charSize;
+		rebuild();
+	}
+
+	void setStride(const Vec2 percent) {
+		if (percent == this->stridePercent) {return;}
+		this->stridePercent = percent;
+		rebuild();
 	}
 
 	void setText(const std::string& text) {
+		if (text == this->text) {return;}
+		this->text = text;
+		rebuild();
+	}
+
+	/** render this object */
+	virtual void render(const RenderStage& rs) override {
+
+		(void) rs;
+
+		//glEnable(GL_BLEND);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		//tex->bind(0);
+		material->bind();
+		vao.bind();
+
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+
+		vao.unbind();
+		//tex->unbind(0);
+		material->unbind();
+		//glDisable(GL_BLEND);
+
+	}
+
+	const Mat4& getMatrix() const override {
+		return matrix;
+	}
+
+	virtual bool isVisible(const Mat4& MVP) const override {
+		(void) MVP;
+		return true;
+	}
+
+private:
+
+	void rebuild() {
 
 		vertices.clear();
 
+		// start at the given starting position (lower-left)
 		Vec2 pos = this->pos;
-		const Vec2 vs(0.025, 0.05);
 
 		for (char c : text) {
+
+			// newline?
+			if (c == '\n') {
+				pos.x = this->pos.x;
+				pos.y += (charSize * stridePercent).y;
+				continue;
+			}
 
 			const Vec2 t1 = getTexCoord(c);
 			const Vec2 t2 = t1 + getTexSize();
 
-			const Vec2 v1 = pos;
-			const Vec2 v2 = pos + vs;
+			const Vec2 v1 = pos;									// lower left of the letter
+			const Vec2 v2 = pos + Vec2(charSize.x, -charSize.y);	// upper right of the letter
 
-			VertexTexture vt1(v1.x, v1.y, 0,	t1.x, t2.y);
-			VertexTexture vt2(v2.x, v1.y, 0,	t2.x, t2.y);
-			VertexTexture vt3(v2.x, v2.y, 0,	t2.x, t1.y);
-			VertexTexture vt4(v1.x, v2.y, 0,	t1.x, t1.y);
+			const VertexTexture vt1(v1.x, v1.y, 0,	t1.x, t2.y);
+			const VertexTexture vt2(v2.x, v1.y, 0,	t2.x, t2.y);
+			const VertexTexture vt3(v2.x, v2.y, 0,	t2.x, t1.y);
+			const VertexTexture vt4(v1.x, v2.y, 0,	t1.x, t1.y);
 
 			vertices.append(vt1);
 			vertices.append(vt2);
@@ -51,7 +118,7 @@ public:
 			vertices.append(vt4);
 
 			// next char
-			pos.x += vs.x;
+			pos.x += (charSize * stridePercent).x;
 
 		}
 
@@ -65,34 +132,12 @@ public:
 
 	}
 
-	/** render this object */
-	virtual void render(const RenderStage& rs) override {
-
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		tex->bind(0);
-		vao.bind();
-
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
-
-		vao.unbind();
-		tex->unbind(0);
-		glDisable(GL_BLEND);
-
-	}
-
-	const Mat4& getMatrix() const override {return mat;}
-
-	virtual bool isVisible(const Mat4& MVP) const override {return true;}
-
-private:
-
-
 	Vec2 getTexCoord(const char c) {
 		const float x = (c % 16) / 16.0f;
 		const float y = (c / 16) / 16.0f;
 		return Vec2(x,y);
 	}
+
 	Vec2 getTexSize() {
 		return Vec2(1.0f/16.0f, 1.0f/16.0f);
 	}

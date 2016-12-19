@@ -3,6 +3,7 @@
 
 #include "Vector.h"
 #include <cstring>
+#include <initializer_list>
 
 template <int size> class Matrix {
 
@@ -142,6 +143,13 @@ public:
 	/** get the matrix for openGL (in column-major notation) */
 	inline Matrix<size> toGL() const {
 		return toColumnMajor();
+	}
+
+	/** assign initializer list */
+	Matrix& operator = (const std::initializer_list<float>& lst) {
+		memcpy(values, lst.begin(), size*size*sizeof(float));
+		transpose();
+		return *this;
 	}
 
 private:

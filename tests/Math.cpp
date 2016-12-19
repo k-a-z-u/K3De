@@ -120,6 +120,7 @@ TEST(Math, VectorSub) {
 
 }
 
+#ifdef WITH_TESTS_OLD
 #include <glm/matrix.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -148,6 +149,8 @@ TEST(Math, CameraPerspective) {
 	ASSERT_ARR_NEAR(data1, data2, 16, 0.0001);
 
 }
+
+#endif
 
 TEST(Math, VectorLength) {
 	Vec3 v1(1,2,3);

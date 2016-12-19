@@ -2,6 +2,7 @@
 #define GPUPARAMS_H
 
 #include <GL/glew.h>
+#include "misc/Error.h"
 
 class GPUParams {
 
@@ -15,18 +16,24 @@ public:
 		std::cout << "max vertex uniforms:\t" << getMaxVertexUniformComp() << "\n";
 		std::cout << "max geometry uniforms:\t" << getMaxGeometryUniformComp() << "\n";
 		std::cout << "max fragment uniforms:\t" << getMaxFragmentUniformComp() << "\n";
+		std::cout << "shader version:\t" << getShaderVersion() << "\n";
 	}
 
 	static int getInt(GLenum val) {
 		GLint i;
 		glGetIntegerv(val, &i);
-		return i;
+		return (Error::isOK()) ? (i) : (-1);
+	}
+
+	static std::string getString(GLenum val) {
+		std::string res = std::string((char*)glGetString(val));
+		return (Error::isOK()) ? (res) : ("?");
 	}
 
 	static float getMaxAnisotropy() {
 		GLfloat max;
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max);
-		return max;
+		return (Error::isOK()) ? (max) : (-1);
 	}
 
 	static int getMaxNumClippingPlanes() {return getInt(GL_MAX_CLIP_PLANES);}
@@ -37,6 +44,8 @@ public:
 	static int getMaxVertexUniformComp() {return getInt(GL_MAX_VERTEX_UNIFORM_COMPONENTS);}
 	static int getMaxGeometryUniformComp() {return getInt(GL_MAX_GEOMETRY_UNIFORM_COMPONENTS);}
 	static int getMaxFragmentUniformComp() {return getInt(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS);}
+
+	static std::string getShaderVersion() {return getString ( GL_SHADING_LANGUAGE_VERSION );}
 
 
 

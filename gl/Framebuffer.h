@@ -54,7 +54,7 @@ public:
 	void attachTextureDepth(Texture* texture) {
 		bind();
 		// todo assert that the texture is a depth texture
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture->getID(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texture->getID(), 0);
 		Error::assertOK();
 		unbind();
 	}

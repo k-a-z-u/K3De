@@ -14,9 +14,11 @@ TEST(Path, round) {
 	p.round(0.2);
 	p.round(0.2);
 
-	for (const Vec3& v : p.getPoints()) {
-		std::cout << v.x << " " << v.y << " " << v.z << std::endl;
-	}
+	std::cout << "TODO: path.round()" << std::endl;
+
+//	for (const Vec3& v : p.getPoints()) {
+//		std::cout << v.x << " " << v.y << " " << v.z << std::endl;
+//	}
 
 }
 

@@ -34,6 +34,9 @@ private:
 	/** get the geometry-shader-code */
 	std::string getGeometryShader();
 
+	/** get the shader version to use */
+	std::string getShaderVersion();
+
 };
 
 #include "Material.h"
@@ -43,10 +46,23 @@ ShaderCompiler::ShaderCompiler(Material* mat, Scene* scene) : mat(mat), scene(sc
 	;
 }
 
+std::string ShaderCompiler::getShaderVersion() {
+
+	todo("fetch shader version from gpu");
+	// http://stackoverflow.com/questions/27407774/get-supported-glsl-versions
+
+	//return "#version 330 core\n\n";	// 3.3 GL
+	//return "#version 130\n\n";			// 3.0 GL
+
+	//shader += "#version 100\n\n";			// 1.00 ES
+	return "#version 300 es\n\n precision mediump float;\n";		// 3.00 ES
+
+}
+
 std::string ShaderCompiler::getVertexShader() {
 
 	std::string shader;
-	shader += "#version 330 core\n\n";
+	shader += getShaderVersion();
 
 	shader += "layout(location = 0) in vec3 vertex;\n";
 	shader += "layout(location = 1) in vec3 normal;\n";
@@ -117,7 +133,7 @@ std::string ShaderCompiler::getFragmentShader() {
 	if (!mat->getAmbient()) {throw "ambient material missing!";}
 
 	std::string shader;
-	shader += "#version 330 core\n\n";
+	shader += getShaderVersion();
 
 
 	shader += "in vec2 uv;\n";
@@ -131,6 +147,7 @@ std::string ShaderCompiler::getFragmentShader() {
 	;
 
 	if (mat->getReceivesShadows()) {
+		_assertNotNull(scene->getShadowRenderer(), "scene does not have a valid ShadowRenderer");
 		shader += scene->getShadowRenderer()->getShadowAmountCalculationGLSL();
 	}
 
@@ -193,12 +210,12 @@ std::string ShaderCompiler::getFragmentShader() {
 		shader += "\tvec3 lightColor = getLightColor(0);\n";
 
 		shader += "\tvec3 L = normalize(lightPos_M - vertex_M);\n";
-		shader += "\tfloat theta = clamp( dot(N, L), 0, 1);\n";
+		shader += "\tfloat theta = clamp( dot(N, L), 0.0f, 1.0f);\n";
 
 		// use specular lighting?
 		if (mat->getSpecular()) {
 			shader += "\tvec3 R = reflect(-L, N);\n";
-			shader += "\tfloat alpha = clamp( dot(E, R), 0, 1);\n";
+			shader += "\tfloat alpha = clamp( dot(E, R), 0.0f, 1.0f);\n";
 			shader += mat->getSpecular()->getMainCode();
 		}
 
@@ -292,6 +309,9 @@ std::string ShaderCompiler::getGeometryShader() {
 
 /** get a compiled shader for the material from the ctor */
 Shader* ShaderCompiler::compileShader(Material* mat, Scene* scene) {
+
+	_assertNotNull(mat, "Material is null");
+	_assertNotNull(scene, "Scene is null");
 
 	ShaderCompiler sc(mat, scene);
 	const std::string codeVertex = sc.getVertexShader();

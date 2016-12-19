@@ -12,7 +12,8 @@ class IMesh : public Renderable, public HasAABB {
 public:
 
 	virtual bool isVisible(const Mat4& MVP) const override {
-		return getAABBmodel().getTransformed(MVP).intersectsUnitCube();
+		// TODO: seems broken;
+		return true;//getAABBmodel().getTransformed(MVP).intersectsUnitCube();
 	}
 
 	virtual ~IMesh() {;}

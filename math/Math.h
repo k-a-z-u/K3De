@@ -6,7 +6,7 @@
 
 #include <cmath>
 
-#ifdef WITH_TESTS
+#ifdef WITH_TESTS_OLD
 #include <glm/matrix.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

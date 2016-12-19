@@ -48,10 +48,12 @@ public:
 
 	void setRect(float x1, float y1, float x2, float y2) {
 
-		x1 = x1*2-1;
-		x2 = x2*2-1;
-		y1 = y1*2-1;
-		y2 = y2*2-1;
+//		x1 = x1*2-1;
+//		x2 = x2*2-1;
+//		y1 = y1*2-1;
+//		y2 = y2*2-1;
+
+		//vertices.clear();
 
 		vertices.set(0, VertexNormalTexture(x1,y1,0.1,		0,0,1,	0,0));
 		vertices.set(1, VertexNormalTexture(x2,y1,0.1,		0,0,1,	1,0));
@@ -66,18 +68,28 @@ public:
 
 	}
 
-	/** set the mesh's texture */
-	void setTexture(const size_t idx, Texture* texture) {
-		if (textures.size() < (idx+1)) {textures.resize(idx+1);}
-		textures[idx] = texture;
-	}
+//	/** set the sprite's texture */
+//	void setTexture(const size_t idx, Texture* texture) {
+//		if (textures.size() < (idx+1)) {textures.resize(idx+1);}
+//		textures[idx] = texture;
+//	}
+
+//	/** set the sprite's texture */
+//	void setTexture(Texture* texture) {
+//		const int idx = 0;
+//		if (textures.size() < (idx+1)) {textures.resize(idx+1);}
+//		textures[idx] = texture;
+//	}
 
 	void render(const RenderStage& rs) override {
 
-		for (size_t i = 0; i < textures.size(); ++i) {
-			if (textures[i]) {textures[i]->bind(i);}
-		}
+		(void) rs;
 
+//		for (size_t i = 0; i < textures.size(); ++i) {
+//			if (textures[i]) {textures[i]->bind(i);}
+//		}
+
+		material->bind();
 		//shader->bind();
 
 		vao.bind();
@@ -86,6 +98,7 @@ public:
 		vao.unbind();
 
 		//shader->unbind();
+		material->unbind();
 
 	}
 

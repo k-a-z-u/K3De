@@ -2,13 +2,11 @@
 #define ENGINESETTINGS_H
 
 #include <string>
+#include "scene/ScreenSize.h"
 
 struct EngineSettings {
 
-	struct {
-		int width = 640;
-		int height = 480;
-	} screen;
+	ScreenSize screen;
 
 	int antiAliasing = 0;
 

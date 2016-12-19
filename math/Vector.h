@@ -25,9 +25,14 @@ struct Vec2 {
 	Vec2 operator / (const Vec2& o)	const {return Vec2(x/o.x, y/o.y);}
 
 	Vec2 operator / (const float v) const {return Vec2(x/v, y/v);}
+	Vec2 operator * (const float v) const {return Vec2(x*v, y*v);}
 
 	bool operator == (const Vec2& o) const {return (o.x == x) && (o.y == y);}
 	bool operator != (const Vec2& o) const {return (o.x != x) || (o.y != y);}
+
+	float length() const {return std::sqrt( (x*x) + (y*y) );}
+
+	Vec2 normalized() const {return *this / length();}
 
 	size_t hash() const {return *((uint32_t*)&x) ^ *((uint32_t*)&y);}
 
@@ -68,6 +73,7 @@ struct Vec3 {
 
 	/** convert this Vec3 to a Vec4 with w=1 */
 	inline Vec4 xyz1() const;
+	inline Vec2 xy() const;
 	inline Vec2 xz() const;
 
 };
@@ -101,11 +107,14 @@ struct Vec4 {
 	/** divide the vector by its w component */
 	inline Vec4 divW() const {return Vec4(x/w, y/w, z/w, 1.0f);}
 
+	Vec4& operator /= (const float v)		{x/=v; y/=v; z/=v; w/=w; return *this;}
+	Vec4& operator *= (const float v)		{x*=v; y*=v; z*=v; w*=w; return *this;}
 
 };
 
 
 Vec4 Vec3::xyz1() const {return Vec4(x,y,z,1);}
+Vec2 Vec3::xy() const {return Vec2(x,y);}
 Vec2 Vec3::xz() const {return Vec2(x,z);}
 
 Vec3 Vec4::xyz() const {return Vec3(x,y,z);}
@@ -113,7 +122,9 @@ Vec3 Vec4::xyz() const {return Vec3(x,y,z);}
 
 
 
-
+inline float dot(const Vec2 v1, const Vec2 v2) {
+	return (v1.x * v2.x) + (v1.y * v2.y);
+}
 
 
 

@@ -23,6 +23,11 @@ struct AffineTransform {
 		needsUpdate = true;
 	}
 
+	/** get the current position */
+	Vec3 getPosition() const {
+		return position;
+	}
+
 	/** configure the rotation (x,y,z) in degree */
 	void setRotation(const float x, const float y, const float z) {
 		rotate.x = x;
@@ -31,12 +36,22 @@ struct AffineTransform {
 		needsUpdate = true;
 	}
 
+	/** get the current rotation in degree */
+	Vec3 getRotation() const {
+		return rotate;
+	}
+
 	/** configure the scaling */
 	void setScale(const float x, const float y, const float z) {
 		scale.x = x;
 		scale.y = y;
 		scale.z = z;
 		needsUpdate = true;
+	}
+
+	/** get the current scale */
+	Vec3 getScale() const {
+		return scale;
 	}
 
 	/** get the resulting transformation matrix */

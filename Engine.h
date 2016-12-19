@@ -1,10 +1,18 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+
+
 #include <chrono>
+#include <iostream>
+
 #include "EngineSettings.h"
 #include "misc/Error.h"
 #include "Debug.h"
+
+#include <KLib/Assertions.h>
+#include <GLFW/glfw3.h>
+
 
 class Scene;
 
@@ -16,7 +24,6 @@ private:
 	uint64_t msCur;
 	uint64_t msLast;
 	uint64_t msSinceStart;
-	static Engine* instance;
 	Scene* scene;
 	EngineSettings settings;
 
@@ -55,12 +62,10 @@ public:
 		return (msCur - msLast) / 1000.0f;
 	}
 
-	static void init() {
-		instance = new Engine();
-	}
-
+	/** singleton access */
 	static Engine* get() {
-		return instance;
+		static Engine instance;
+		return &instance;
 	}
 
 	/** set the current scene */
@@ -71,6 +76,12 @@ public:
 	/** get the current scene */
 	Scene* getScene() {
 		return scene;
+	}
+
+	/** get the current screen size */
+	ScreenSize getScreenSize() const {
+		// TODO: change on window resize
+		return settings.screen;
 	}
 
 	void apply(EngineSettings settings) {
@@ -152,6 +163,8 @@ private:
 #include "scene/Scene.h"
 
 void Engine::render() {
+
+	_assertNotNull(window, "window is null. call Engine::apply(settings) first");
 
 	scene->render();
 

@@ -27,6 +27,13 @@ class ShadowRenderer;
 class WaterRenderer;
 class ParticleSystem;
 
+/**
+ * @brief a scene is something that describes a render-setup
+ * including light, camera, objects, etc.
+ *
+ * this is the base-class for all scenes.
+ * the user has to subclass thise one and implement the missing methods
+ */
 class Scene {
 
 protected:
@@ -86,6 +93,7 @@ public:
 		setup();
 	}
 
+	/** init with default parameters */
 	void setup();
 
 	/** configure whether this scene supports shadows */
@@ -131,6 +139,11 @@ public:
 	/** set the sky */
 	void setSkyBox(SkyBox* skybox) {
 		this->skybox = skybox;
+	}
+
+	/** get the current screen size */
+	ScreenSize getScreenSize() const {
+		return Engine::get()->getScreenSize();
 	}
 
 	/** get the scene's mesh-factory */
@@ -217,13 +230,29 @@ private:
 
 	/** render everything for the normal pass */
 	void renderForNormal() {
+
+		rs.matrices.P = cam.getPMatrix();
+		rs.matrices.V = cam.getVMatrix();
 		rs.matrices.PV = cam.getPVMatrix();
-		for (Renderable* s : ui.elements)	{renderThis(s, rs);}
+
 		for (Renderable* r : renderables)	{renderThis(r, rs);}
 		for (Water* w : waters)				{renderThis(w, rs);}
 		for (Terrain* t : terrains)			{renderThis(t, rs);}
 		if (skybox)							{renderThis(skybox, rs);}
 		for (Renderable* ps : particles)	{renderThis(ps, rs);}
+
+
+
+		// this matrix mirros the y axis (0,0 = upper left)
+		// and changes the area from [-1:+1] to [0:1]
+		// -> (0,0) = upper left, (1,1) = lower right
+		rs.matrices.V = {2,0,0,0, 0,-2.0,0,0, 0,0,1,0, -1.0,+1.0,0,1};
+		rs.matrices.P = Mat4::identity();
+		rs.matrices.PV = rs.matrices.P * rs.matrices.V;
+		glDisable(GL_CULL_FACE);
+		for (Renderable* s : ui.elements)	{renderThis(s, rs);}
+		glEnable(GL_CULL_FACE);
+
 	}
 
 	/** render one object (if enabled, visible, ...) */
@@ -233,9 +262,9 @@ private:
 		if (!r->isEnabled()) {return;}
 
 		// skip invisible elements
-		rs.matrices.PV = cam.getPVMatrix();
-		rs.matrices.VM = cam.getVMatrix() * r->getMatrix();
-		rs.matrices.PVM = cam.getPMatrix() * cam.getVMatrix() * r->getMatrix();
+		//rs.matrices.PV = cam.getPVMatrix();
+		//rs.matrices.VM = cam.getVMatrix() * r->getMatrix();
+		rs.matrices.PVM = rs.matrices.P * rs.matrices.V * r->getMatrix();
 		if (!r->isVisible(rs.matrices.PVM)) {return;}
 
 		// get shader and perform sanity check

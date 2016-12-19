@@ -84,8 +84,12 @@ public:
 		transform.setPosition(x,y,z);
 	}
 
+	Vec3 getPosition() const {
+		return transform.getPosition();
+	}
+
 	void setRotation(const float x, const float y, const float z) {
-		transform.setRotation(x/180*3.1415,y/180*3.1415,z/180*3.1415);
+		transform.setRotation(x/180.0f*M_PI, y/180.0f*M_PI, z/180.0f*M_PI);
 	}
 
 	void setScale(const float x, const float y, const float z) {

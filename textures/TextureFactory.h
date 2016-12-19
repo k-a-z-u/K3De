@@ -22,15 +22,32 @@ private:
 	std::vector<std::unique_ptr<ITexture>> textures;
 
 	bool mipmaps = true;
-	float anisotropic = 2;
+	int anisotropic = 2;
+
+	std::string includePath;
 
 public:
 
+	/** configure using mip maps */
+	void setUseMipMaps(const bool use) {
+		this->mipmaps = use;
+	}
+
+	/** set the include-path to use */
+	void setIncludePath(const std::string& path) {
+		this->includePath = path;
+	}
+
+	/** set anisotropic filtering level. 0 = disabled */
+	void setAnisotropicFiltering(const int level) {
+		this->anisotropic = level;
+	}
+
 	/** create a new texture using the given input file */
-	Texture2D* create(const std::string& file) {
+	Texture2D* create(const std::string& file, bool compressed = true) {
 
 		// parse the image file
-		Image img = ImageFactory::load(file);
+		Image img = ImageFactory::load(includePath + file);
 		void* data = (void*) img.getData().data();
 
 		// get the texture format
@@ -38,19 +55,19 @@ public:
 		switch(img.getFormat()) {
 			case ImageFormat::IMAGE_RGB:
 				formatIn = GL_RGB;
-				formatOut = COMPR;//GL_COMPRESSED_RGB;		// use compression
+				formatOut = (compressed) ? (COMPR) : (GL_COMPRESSED_RGB);
 				break;
 			case ImageFormat::IMAGE_RGBA:
 				formatIn = GL_RGBA;
-				formatOut = COMPR;//GL_COMPRESSED_RGBA;		// use compression
+				formatOut = (compressed) ? (COMPR) : (GL_COMPRESSED_RGBA);
 				break;
 			case ImageFormat::IMAGE_GREY:
 				formatIn = GL_ALPHA;
-				formatOut = GL_COMPRESSED_ALPHA;
+				formatOut = (compressed) ? (GL_COMPRESSED_ALPHA) : (GL_ALPHA);
 				break;
 			case ImageFormat::IMAGE_GREY_ALPHA:
 				formatIn = GL_ALPHA;
-				formatOut = COMPR;
+				formatOut = (compressed) ? (GL_COMPRESSED_ALPHA) : (GL_ALPHA);				// which compressionm format?
 				break;
 			default: throw "error";
 		}
@@ -69,13 +86,17 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 //		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 //		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		Error::assertOK();
 
-//		// trilinear filtering???
-//		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		// linear-filtering
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-		// set anisotropic filtering
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropic);
+		// set anisotropic filtering [will fail if unsupported]
+		if (anisotropic) {
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropic);
+			Error::assertOK();
+		}
 
 		// generate mip-maps?
 		if (mipmaps) {

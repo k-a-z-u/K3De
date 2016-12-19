@@ -4,6 +4,8 @@
 #include <GL/glew.h>
 #include <KLib/Assertions.h>
 
+#define todo(str)		std::cout << str << std::endl;
+
 class Error {
 
 public:
@@ -12,6 +14,12 @@ public:
 	static void assertOK() {
 		const GLenum err = glGetError();
 		_assertEqual(GL_NO_ERROR, err, "an openGL error occurred");
+	}
+
+	/** check whether the last openGL call was OK */
+	static bool isOK() {
+		const GLenum err = glGetError();
+		return err == GL_NO_ERROR;
 	}
 
 };

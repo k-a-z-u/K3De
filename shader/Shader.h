@@ -8,14 +8,19 @@
 #include <string>
 #include <fstream>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "../math/Math.h"
 #include "../misc/Error.h"
 #include "../gl/UBO.h"
 
+#include <set>
+
 class Shader {
 
 private:
+
+    #include "../misc/BindOnce.h"
 
 	GLuint vertexShaderID;
 	GLuint fragmentShaderID;
@@ -90,18 +95,23 @@ public:
 
 	}
 
+
+
 	void bind() const {
+		assertUnbound();
 		glUseProgram(programID);
 		Error::assertOK();
+		setBound(programID);
 	}
 
 	void unbind() const {
 		glUseProgram(0);
 		Error::assertOK();
+		setUnbound(programID);
 	}
 
 	GLint getCachedUniformLocation(const std::string& name) const {
-		auto it = uniforms.find(name);
+		const auto it = uniforms.find(name);
 		if (it == uniforms.end()) {
 			const GLint id = glGetUniformLocation(programID, name.c_str());
 			Error::assertOK();
@@ -114,7 +124,7 @@ public:
 
 	/** get the ID for a uniform named "name" */
 	GLuint getUniformLocation(const std::string& name) const {
-		GLint id = getCachedUniformLocation(name);
+		const GLint id = getCachedUniformLocation(name);
 		if (id == -1) {throw "uniform not found: " + name;}
 		return id;
 	}
@@ -130,32 +140,37 @@ public:
 	}
 
 	void setInt(const std::string& name, const int i) const {
-		bind();
+		//bind();
+		assertBound();
 		glUniform1i(getUniformLocation(name), i);
 		Error::assertOK();
 	}
 
 	void setFloat(const std::string& name, const float val) const {
-		bind();
+		//bind();
+		assertBound();
 		glUniform1f(getUniformLocation(name), val);
 		Error::assertOK();
 	}
 
 	void setVector(const std::string& name, const Vec2& vec) const {
-		bind();
+		//bind();
+		assertBound();
 		const GLuint id = getUniformLocation(name);
 		glUniform2f(id, vec.x, vec.y);
 		Error::assertOK();
 	}
 
 	void setVector(const std::string& name, const Vec3& vec) const {
-		bind();
+		//bind();
+		assertBound();
 		glUniform3f(getUniformLocation(name), vec.x, vec.y, vec.z);
 		Error::assertOK();
 	}
 
 	void setVar(const std::string& name, UBO& ubo) {
-		bind();
+		//bind();
+		assertBound();
 		const GLuint idx = glGetUniformBlockIndex(programID, name.c_str());
 		glUniformBlockBinding(programID, idx, 0);
 		Error::assertOK();
@@ -164,14 +179,44 @@ public:
 	}
 
 	void setMatrix(const std::string& name, const Mat4& mat) const {
-		bind();
+		//bind();
+		assertBound();
 		const GLuint id = getUniformLocation(name);
 		//glUniformMatrix4fv(id, 1, GL_FALSE, &mat[0][0]);
 		glUniformMatrix4fv(id, 1, GL_TRUE, mat.data());		// GL_TRUE = transpose from row-major to column-major!
 		Error::assertOK();
 	}
 
+
+
+	std::unordered_set<std::string> _setValues;
+
+	void setVarOnce(const std::string& name, UBO& ubo) {
+		if (_setValues.find(name) == _setValues.end()) {
+			setVar(name, ubo);
+			_setValues.insert(name);
+		}
+	}
+
+	void setFloatOnce(const std::string& name, const float val) {
+		if (_setValues.find(name) == _setValues.end()) {
+			setFloat(name, val);
+			_setValues.insert(name);
+		}
+	}
+
 private:
+
+	/** ensure the ID is currently bound */
+	inline void assertBound() const {
+		_assertTrue(isBound(programID), "bind() the shader first");
+	}
+
+	/** ensure the ID is currently unbound */
+	inline void assertUnbound() const {
+		_assertFalse(isBound(programID), "shader is already bound!");
+	}
+
 
 	/** perform some cleanups */
 	void cleanup() {

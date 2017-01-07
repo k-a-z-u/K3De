@@ -1,0 +1,21 @@
+#ifndef RENDERPASS_H
+#define RENDERPASS_H
+
+enum RenderPass {
+
+	OTHER,
+
+	BEFORE,
+
+	WATER_REFLECT,
+	WATER_REFRACT,
+
+	SHADOW_MAP,
+
+	FINAL,
+
+	POST_PROCESS,
+
+};
+
+#endif // RENDERPASS_H

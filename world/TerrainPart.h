@@ -20,8 +20,8 @@ private:
 	friend class TerrainFactory;
 
 	VAO vao;
-	VBOArray<VertexNormalTexture> vertices;
-	VBOArrayIndex indices;
+	VBOArrayStatic<AttrVertexNormalTexture> vertices;
+	VBOArrayIndexStatic indices;
 	AABB bbox;
 
 	void upload() {
@@ -41,7 +41,7 @@ private:
 		vao.unbind();
 
 		// update the bounding-box
-		for (const VertexNormalTexture vnt : vertices.getData()) {
+		for (const AttrVertexNormalTexture vnt : vertices.getData()) {
 			bbox.add(vnt.v);
 		}
 
@@ -50,7 +50,7 @@ private:
 public:
 
 	/** render the terrain part */
-	void render(const RenderStage& rs) {
+	void render(const SceneState&, const RenderState&) {
 		vao.bind();
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 		vao.unbind();

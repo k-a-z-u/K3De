@@ -2,14 +2,10 @@ R"=====(
 
 out mat3 normalRotMat;
 
-/**
- * get a matrix, that rotates vec3(0,0,1) into the provided vec3.
- * this matrix is used, to rotate a normal map
- * (used for bump-mapping, blue-color = (0,0,1)
- * into the coordinate-system of the vertex' normal.
- */
-mat3 getNormalRotationMatrix(const vec3 normal) {
-	return getRotationMatrix( vec3(0,0,1), normalize(normal) );
+/** get the matrix describing the bump-maps coordinate system (normal, tangent, bitangent) */
+mat3 getNormalRotationMatrix(const vec3 normal, const vec3 tangent) {
+    vec3 bitangent = cross(normal, tangent);
+    return mat3(tangent, bitangent, normal);
 }
 
 )====="

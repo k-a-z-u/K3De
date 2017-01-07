@@ -37,7 +37,7 @@ public:
 
 		// sanity checks
 		_assertBetween(textures->getNumLayers(), 2, 4, "number of textures to blend must be between 2 and 4");
-		_assertEqual(tiles.size(), textures->getNumLayers(), "number of textures must match the number of tiling-factors");
+		_assertEqual((int)tiles.size(), textures->getNumLayers(), "number of textures must match the number of tiling-factors");
 
 	}
 
@@ -71,7 +71,7 @@ public:
 	}
 
 	std::string getMainCode() override {
-		return "getAmbient();\n";
+		return "\tvec4 ambient = getAmbient();\n";
 	}
 
 	virtual void configureShader(Shader* shader, ShaderState& state) override {

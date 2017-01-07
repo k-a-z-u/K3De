@@ -67,6 +67,20 @@ public:
 		Error::assertOK();
 	}
 
+	void setTangents(const int idx, const int stride = 0, const size_t offset = 0) {
+		glVertexAttribPointer (idx, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+		Error::assertOK();
+		glEnableVertexAttribArray (idx);
+		Error::assertOK();
+	}
+
+	void setColor(const int idx, const int stride = 0, const size_t offset = 0) {
+		glVertexAttribPointer (idx, 4, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+		Error::assertOK();
+		glEnableVertexAttribArray (idx);
+		Error::assertOK();
+	}
+
 
 
 };

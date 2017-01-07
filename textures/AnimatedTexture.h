@@ -18,21 +18,28 @@ public:
 		;
 	}
 
+	void setFPS(const float fps) {
+		this->fps = fps;
+	}
+
 	void add(Texture* tex) {
 		textures.push_back(tex);
 	}
 
-	void bind(const int idx) const override {
+	void bind(const TextureUnit idx) const override {
 		get()->bind(idx);
 	}
 
-	void unbind(const int idx) const override {
+	void unbind(const TextureUnit idx) const override {
 		get()->unbind(idx);
 	}
 
+	virtual bool isAlphaOnly() const override {
+		return textures[0]->isAlphaOnly();
+	}
+
 	Texture* get() const {
-		const float time = Engine::get()->getTimeSec();
-		const int idx = (int) (fps * time) % textures.size();
+		const int idx = int(fps * Time::runtime().seconds()) % textures.size();
 		return textures[idx];
 	}
 

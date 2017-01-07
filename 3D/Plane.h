@@ -6,13 +6,14 @@
 #include "../gl/VBOArrayIndex.h"
 #include "../math/AffineTransform.h"
 #include "../scene/Renderable.h"
+#include "../3D/Estimator.h"
+#include "../mesh/Transformable.h"
 
-class Plane3 : public Renderable {
+class Plane3 : public Renderable, public Transformable {
 
 	VAO vao;
-	VBOArray<VertexNormalTexture> vertices;
+	VBOArrayStatic<AttrVertexNormalTangentTexture> vertices;
 	//VBOArrayIndex indices;
-	AffineTransform transform;
 
 public:
 
@@ -32,12 +33,17 @@ public:
 		const float z1 = x1z1.y;
 		const float z2 = x2z2.y;
 
+		const Vec3 ta(0,0,0);		// dummy data
 		const Vec3 n(0,1,0);
 
-		const VertexNormalTexture vt1(x1, y, z1,	n.x,n.y,n.z,	t1.x, t2.y);
-		const VertexNormalTexture vt2(x2, y, z1,	n.x,n.y,n.z,	t2.x, t2.y);
-		const VertexNormalTexture vt3(x2, y, z2,	n.x,n.y,n.z,	t2.x, t1.y);
-		const VertexNormalTexture vt4(x1, y, z2,	n.x,n.y,n.z,	t1.x, t1.y);
+		AttrVertexNormalTangentTexture vt1(x1, y, z1,		n.x,n.y,n.z,	ta.x, ta.y, ta.z,	t1.x, t2.y);
+		AttrVertexNormalTangentTexture vt2(x2, y, z1,		n.x,n.y,n.z,	ta.x, ta.y, ta.z,	t2.x, t2.y);
+		AttrVertexNormalTangentTexture vt3(x2, y, z2,		n.x,n.y,n.z,	ta.x, ta.y, ta.z,	t2.x, t1.y);
+		AttrVertexNormalTangentTexture vt4(x1, y, z2,		n.x,n.y,n.z,	ta.x, ta.y, ta.z,	t1.x, t1.y);
+
+		Estimator::estimateTangents(vt1, vt3, vt2);
+		Estimator::estimateTangents(vt1, vt4, vt3);
+
 
 //		indices.append(0);
 //		indices.append(1);
@@ -63,9 +69,17 @@ public:
 		vao.bind();
 
 		vertices.bind();
-		vao.setVertices(0, 8*4, 0);
-		vao.setNormals(1, 8*4, 3*4);
-		vao.setTexCoords(2, 8*4, 6*4);
+
+//		//VertexNormalTexture
+//		vao.setVertices(0, 8*4, 0);
+//		vao.setNormals(1, 8*4, 3*4);
+//		vao.setTexCoords(2, 8*4, 6*4);
+
+		// VertexNormalTangentTexture
+		vao.setVertices(0, 11*4);
+		vao.setNormals(1, 11*4, 3*4);
+		vao.setTangents(3, 11*4, 6*4);		// todo swap indicies [2,3] here and within shaders?
+		vao.setTexCoords(2, 11*4, 9*4);
 
 		//indices.bind();
 
@@ -73,19 +87,7 @@ public:
 
 	}
 
-	void setPosition(const float x, const float y, const float z) {
-		transform.setPosition(x,y,z);
-	}
-
-	void setRotation(const float x, const float y, const float z) {
-		transform.setRotation(x/180*3.1415,y/180*3.1415,z/180*3.1415);
-	}
-
-	void setScale(const float x, const float y, const float z) {
-		transform.setScale(x,y,z);
-	}
-
-	void render(const RenderStage& rs) override {
+	void render(const SceneState&, const RenderState&) override {
 
 		material->bind();
 		vao.bind();

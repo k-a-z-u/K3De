@@ -17,7 +17,7 @@ class AABBRenderable : public Renderable {
 
 	HasAABB* obj;
 	VAO vao;
-	VBOArray<Vertex> vertices;
+	VBOArrayStatic<Vertex> vertices;
 	Mat4 identity;
 
 public:
@@ -69,7 +69,7 @@ private:
 
 public:
 
-	void render(const RenderStage& rs) {
+	void render(const SceneState&, const RenderState&) {
 
 		vao.bind();
 		glDrawArrays(GL_LINES, 0, vertices.size());

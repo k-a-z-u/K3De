@@ -33,7 +33,7 @@
 #include "tests/Tests.h"
 int runTests(int argc, char** argv) {
 
-	::testing::GTEST_FLAG(filter) = "*";
+	::testing::GTEST_FLAG(filter) = "*Matrix.*";
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
 

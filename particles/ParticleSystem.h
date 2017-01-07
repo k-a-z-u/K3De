@@ -19,8 +19,8 @@ class ParticleSystem : public Renderable {
 private:
 
 	VAO vao;
-	VBOArray<VertexTexture> mesh;
-	VBOArray<Particle> params;
+	VBOArrayStatic<VertexTexture> mesh;
+	VBOArrayDynamic<Particle> params;
 
 	//std::vector<Particle> particles;
 	Particle* particles;

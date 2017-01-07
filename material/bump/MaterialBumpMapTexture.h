@@ -5,7 +5,7 @@
 #include "../../textures/ITexture.h"
 #include "../../textures/Multitexture.h"
 
-class MaterialBumpMapTexture : public MaterialBumpMap{
+class MaterialBumpMapTexture : public MaterialBumpMap {
 
 private:
 
@@ -33,11 +33,11 @@ public:
 		++state.nextFreeTextureSlot;
 	}
 
-	virtual void bind() {
+	virtual void bind() override {
 		textures.bindAll();
 	}
 
-	virtual void unbind() {
+	virtual void unbind() override {
 		textures.unbindAll();
 	}
 

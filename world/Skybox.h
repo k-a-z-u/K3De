@@ -114,13 +114,13 @@ public:
 
 		const Vec3 n(0,0,0);
 
-		vertices.append(VertexNormalTexture(v1, n, t1));
-		vertices.append(VertexNormalTexture(v2, n, t2));
-		vertices.append(VertexNormalTexture(v3, n, t3));
+		vertices.append(AttrVertexNormalTexture(v1, n, t1));
+		vertices.append(AttrVertexNormalTexture(v2, n, t2));
+		vertices.append(AttrVertexNormalTexture(v3, n, t3));
 
-		vertices.append(VertexNormalTexture(v1, n, t1));
-		vertices.append(VertexNormalTexture(v3, n, t3));
-		vertices.append(VertexNormalTexture(v4, n, t4));
+		vertices.append(AttrVertexNormalTexture(v1, n, t1));
+		vertices.append(AttrVertexNormalTexture(v3, n, t3));
+		vertices.append(AttrVertexNormalTexture(v4, n, t4));
 
 	}
 

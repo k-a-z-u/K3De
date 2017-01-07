@@ -1,10 +1,12 @@
 #ifndef RENDERABLE_H
 #define RENDERABLE_H
 
+#include "../material/Material.h"
 #include "../shader/Shader.h"
 #include "../math/Math.h"
-#include "RenderStage.h"
-#include "../material/Material.h"
+
+#include "RenderState.h"
+#include "SceneState.h"
 
 class Renderable {
 
@@ -27,11 +29,17 @@ public:
 	/** dtor */
 	virtual ~Renderable() {;}
 
+
 	Material* getMaterial() {return material;}
 	void setMaterial(Material* mat) {this->material = mat;}
 
+
+	/** this method is called, just before an object is rendered. once per complete frame */
+	virtual void onBeforeRender(const SceneState&) {;}
+
 	/** render this object */
-	virtual void render(const RenderStage& rs) = 0;
+	virtual void render(const SceneState& ss, const RenderState& rs) = 0;
+
 
 	/** get the object's model-matrix */
 	virtual const Mat4& getMatrix() const = 0;

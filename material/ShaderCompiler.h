@@ -55,7 +55,7 @@ std::string ShaderCompiler::getShaderVersion() {
 	//return "#version 130\n\n";			// 3.0 GL
 
 	//shader += "#version 100\n\n";			// 1.00 ES
-	return "#version 300 es\n\n precision mediump float;\n";		// 3.00 ES
+	return "#version 300 es\n\n precision mediump float;\nprecision lowp sampler2DArray;\n";		// 3.00 ES
 
 }
 
@@ -67,6 +67,8 @@ std::string ShaderCompiler::getVertexShader() {
 	shader += "layout(location = 0) in vec3 vertex;\n";
 	shader += "layout(location = 1) in vec3 normal;\n";
 	shader += "layout(location = 2) in vec2 texCoord;\n";
+	shader += "layout(location = 3) in vec3 tangent;\n";
+	shader += "layout(location = 4) in vec4 color;\n";
 
 	shader += "uniform mat4 PVM;\n";
 	shader += "uniform mat4 M;\n";
@@ -76,8 +78,10 @@ std::string ShaderCompiler::getVertexShader() {
 
 	shader += "out vec2 uv;\n";
 	shader += "out vec3 normal_M;\n";
+	shader += "out vec3 tangent_M;\n";
 	shader += "out vec3 vertex_M;\n";
 	shader += "out vec3 eye_M;\n";
+	shader += "out vec4 color_M;\n";
 
 	if (mat->getReceivesShadows()) {
 		shader +=
@@ -108,12 +112,18 @@ std::string ShaderCompiler::getVertexShader() {
 	/** the vertex's normal in world-space */
 	shader += "\tnormal_M = (mat3(M) * normal);\n";		// normals are NOT translated (only scaled and rotated) -> 3x3 matrix suffices
 
+	/** the vertex's tangent in world-space */
+	shader += "\ttangent_M = (mat3(M) * tangent);\n";		// tangents are NOT translated (only scaled and rotated) -> 3x3 matrix suffices
+
 	/** the eye-vector in world-space */
 	shader += "\teye_M = normalize(camPos - vertex_M);\n";
 
+	/** the eye-vector in world-space */
+	shader += "\tcolor_M = color;\n";
+
 	/** the matrix to rotate a bump-map-normal into the vertex's normal */
 	if (mat->usesNormalMap()) {
-		shader += "\tnormalRotMat = getNormalRotationMatrix(normal_M);\n";
+		shader += "\tnormalRotMat = getNormalRotationMatrix(normal_M, tangent_M);\n";
 	}
 
 	/** calculate parameters needed to map shadows onto the object */
@@ -140,6 +150,7 @@ std::string ShaderCompiler::getFragmentShader() {
 
 	shader += "in vec3 vertex_M;\n";
 	shader += "in vec3 normal_M;\n";
+	shader += "in vec3 tangent_M;\n";
 	shader += "in vec3 eye_M;\n";
 
 	shader +=
@@ -183,10 +194,10 @@ std::string ShaderCompiler::getFragmentShader() {
 	if (mat->usesClipping()) {shader += "\tdoClip();\n\n";}
 
 	// ambient color
-	shader += "\tvec4 ambient = " + mat->getAmbient()->getMainCode();//texture(texAmbient, uv);\n";
+	shader += mat->getAmbient()->getMainCode();
 
 	// discard (almost) transparent pixels?
-	shader += "\tif (ambient.a < 0.5) {discard;}\n";
+	shader += "\tif (ambient.a < 0.01) {discard;}\n";
 
 	// apply shadow
 	if (mat->getReceivesShadows()) {
@@ -226,15 +237,15 @@ std::string ShaderCompiler::getFragmentShader() {
 		//shader += "\t\t(ambient.rgb * 0.1)";
 
 		// diffuse color
-		shader += "+\n\t\t(ambient.rgb * (lightColor * theta) * 1.0)";
+		shader += "\t\t(ambient.rgb * (lightColor * theta) * 1.0)";
 
 		// specular color
 		if (mat->getSpecular()) {
-			shader += "+\n\t\t(specularColor * lightColor * pow(alpha, specularShininess))";
+			shader += "+\n\t\t(specularColor * pow(alpha, specularShininess))";
 		}
 
 		// done
-		shader += ";\n\t\tcolor.a = ambient.a;\n";
+		shader += ";\n\tcolor.a = ambient.a;\n";
 
 	} else {
 
@@ -318,10 +329,12 @@ Shader* ShaderCompiler::compileShader(Material* mat, Scene* scene) {
 	const std::string codeFragment = sc.getFragmentShader();
 	//const std::string codeGeometry = sc.getGeometryShader();
 	Shader* s = scene->getShaderFactory().createFromCode(codeVertex, codeFragment);
+	s->bind();
 
 	ShaderState st;
 	mat->getAmbient()->configureShader(s, st);
 	if (mat->getBumpMap())		{mat->getBumpMap()->configureShader(s, st);}
+	if (mat->getSpecular())		{mat->getSpecular()->configureShader(s, st);}
 	if (mat->getReceivesShadows() && scene->getShadowRenderer()) {
 		s->setInt("texShadowMap", st.nextFreeTextureSlot);
 		mat->textures.set(st.nextFreeTextureSlot, scene->getShadowRenderer()->getShadowTexture());

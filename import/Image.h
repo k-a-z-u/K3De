@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <cstdint>
+#include <cmath>
+
 #include "Pixel.h"
 
 enum class ImageFormat {
@@ -27,10 +29,24 @@ private:
 
 public:
 
+	/** empty ctor */
+	Image() {;}
+
+	/** empty ctor */
+	Image(const int w, const int h, const ImageFormat fmt) : w(w), h(h), format(fmt) {
+		reformat(w,h,fmt);
+	}
+
 	/** get the underlying data vector */
 	const std::vector<uint8_t>& getData() const {
 		return data;
 	}
+
+	/** modifyable data pointer */
+	uint8_t* getDataPtr() {return data.data();}
+
+	/** un-modifyable data pointer */
+	const uint8_t* getDataPtr() const {return data.data();}
 
 	int getWidth() const {return w;}
 
@@ -112,6 +128,7 @@ public:
 	}
 
 	ImageFormat getFormat() const {return format;}
+
 
 protected:
 

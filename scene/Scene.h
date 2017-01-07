@@ -21,10 +21,12 @@
 #include "../2D/UI.h"
 #include "../2D/SpriteFactory.h"
 
-#include "RenderStage.h"
+#include "RenderState.h"
+#include "SceneState.h"
 
 class ShadowRenderer;
 class WaterRenderer;
+class PostProcessRenderer;
 class ParticleSystem;
 
 /**
@@ -55,8 +57,12 @@ protected:
 	/** render water textures */
 	WaterRenderer* waterRenderer;
 
-	/** render shadows */
+	/** render shadow maps */
 	ShadowRenderer* shadowRenderer;
+
+	/** render to texture for post-processing */
+	PostProcessRenderer* postProcRenderer;
+
 
 	/** terrain layers */
 	std::vector<Terrain*> terrains;
@@ -82,25 +88,31 @@ protected:
 	SpriteFactory spriteFac;
 	Vec2 clipY;
 
-	RenderStage rs;
+	RenderState rs;
+	SceneState ss;
 
 	Shader* overwriteShader;
 	Mat4 shadowPV;
 
 public:
 
-	Scene() : waterRenderer(nullptr), shadowRenderer(nullptr), skybox(nullptr) {
+	Scene() : waterRenderer(nullptr), shadowRenderer(nullptr), postProcRenderer(nullptr), skybox(nullptr) {
 		setup();
 	}
 
 	/** init with default parameters */
-	void setup();
+	inline void setup();
 
 	/** configure whether this scene supports shadows */
-	void setEnableShadows(bool enable);
+	inline void setEnableShadows(bool enable);
 
 	/** configure whether this scene supports water */
-	void setEnableWater(bool enable);
+	inline void setEnableWater(bool enable);
+
+	/** configure the post-processing renderer to use (if any) */
+	void setPostProcRenderer(PostProcessRenderer* ppRenderer) {
+		this->postProcRenderer = ppRenderer;
+	}
 
 	void setClipY(const float min, const float max) {
 		clipY.x = min;
@@ -129,7 +141,7 @@ public:
 	}
 
 	/** add a new water to the scene */
-	void addWater(Water* w);
+	inline void addWater(Water* w);
 
 	/** add a new terrain to the scene */
 	void addTerrain(Terrain* t) {
@@ -144,6 +156,18 @@ public:
 	/** get the current screen size */
 	ScreenSize getScreenSize() const {
 		return Engine::get()->getScreenSize();
+	}
+
+	/** get the current screen size */
+	const ScreenSize* getScreenSizePtr() const {
+		static ScreenSize screen;					// TODO: fix
+		screen = Engine::get()->getScreenSize();
+		return &screen;
+	}
+
+	/** get current FPS, given by the last render-time */
+	float getFPS() const {
+		return ss.getFPS();
 	}
 
 	/** get the scene's mesh-factory */
@@ -173,10 +197,10 @@ public:
 		// this bias matrix is used to convert from [-1;+1] to [0;+1]
 		// adding this directly to the matrix saves time within the shaders!
 		static const float bias[16] = {
-			0.5, 0.0, 0.0, 0.5,
-			0.0, 0.5, 0.0, 0.5,
-			0.0, 0.0, 0.5, 0.5,
-			0.0, 0.0, 0.0, 1.0
+		    0.5, 0.0, 0.0, 0.5,
+		    0.0, 0.5, 0.0, 0.5,
+		    0.0, 0.0, 0.5, 0.5,
+		    0.0, 0.0, 0.0, 1.0
 		};
 		static const Mat4 mBias = Mat4::fromRawRowMajor(bias);
 
@@ -202,28 +226,41 @@ private:
 
 	friend class Engine;
 	friend class WaterRenderer;
+	friend class PostProcessRenderer;
 	friend class ShadowRenderer;
 	friend class ShadowRendererSimple;
 
 	/** render the complete scene. requires multiple passes */
-	void render();
+	inline void render();
 
 	/** render everything visible to water reflection and refraction */
 	void renderForWater() {
+
+		rs.matrices.P = cam.getPMatrix();
+		rs.matrices.V = cam.getVMatrix();
+		rs.matrices.PV = cam.getPVMatrix();
+
 		for (Renderable* r : renderables)	{renderThis(r, rs);}
 		for (Terrain* t : terrains)			{renderThis(t, rs);}
 		if (skybox)							{renderThis(skybox, rs);}
 		for (Renderable* ps : particles)	{renderThis(ps, rs);}
+
 	}
 
 public:
 
 	/** render everything casting a shadow */
 	void renderForShadows() {
+
+		rs.matrices.P = cam.getPMatrix();
+		rs.matrices.V = cam.getVMatrix();
+		rs.matrices.PV = cam.getPVMatrix();
+
 		for (Renderable* r : renderables)	{
 			renderThis(r, rs);	// TODO remove elements not casting a shadow
 		}
 		for (Terrain* t : terrains)			{renderThis(t, rs);}
+
 	}
 
 private:
@@ -241,7 +278,9 @@ private:
 		if (skybox)							{renderThis(skybox, rs);}
 		for (Renderable* ps : particles)	{renderThis(ps, rs);}
 
+	}
 
+	void renderUI() {
 
 		// this matrix mirros the y axis (0,0 = upper left)
 		// and changes the area from [-1:+1] to [0:1]
@@ -249,14 +288,18 @@ private:
 		rs.matrices.V = {2,0,0,0, 0,-2.0,0,0, 0,0,1,0, -1.0,+1.0,0,1};
 		rs.matrices.P = Mat4::identity();
 		rs.matrices.PV = rs.matrices.P * rs.matrices.V;
+
+		// TODO: enable culling to speed things up?? or doesn't this change anything at all?
 		glDisable(GL_CULL_FACE);
+		glDisable(GL_DEPTH_TEST);
 		for (Renderable* s : ui.elements)	{renderThis(s, rs);}
+		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
 
 	}
 
 	/** render one object (if enabled, visible, ...) */
-	void renderThis(Renderable* r, RenderStage& rs) {
+	void renderThis(Renderable* r, RenderState& rs) {
 
 		// skip disabled elements
 		if (!r->isEnabled()) {return;}
@@ -265,6 +308,7 @@ private:
 		//rs.matrices.PV = cam.getPVMatrix();
 		//rs.matrices.VM = cam.getVMatrix() * r->getMatrix();
 		rs.matrices.PVM = rs.matrices.P * rs.matrices.V * r->getMatrix();
+
 		if (!r->isVisible(rs.matrices.PVM)) {return;}
 
 		// get shader and perform sanity check
@@ -274,18 +318,27 @@ private:
 		// activate the shader
 		s->bind();
 
-		// configure default parameters
+		// configure variable parameters [changing almost every frame]
 		if (s->hasUniform("clipY"))			{s->setVector("clipY", clipY);}
 		if (s->hasUniform("camPos"))		{s->setVector("camPos", cam.getPosition());}
 		if (s->hasUniform("M"))				{s->setMatrix("M", r->getMatrix());}
-		if (s->hasUniform("V"))				{s->setMatrix("V", cam.getVMatrix());}
-		if (s->hasUniform("P"))				{s->setMatrix("P", cam.getPMatrix());}
+		if (s->hasUniform("V"))				{s->setMatrix("V", rs.matrices.V);}//cam.getVMatrix());}
+		if (s->hasUniform("P"))				{s->setMatrix("P", rs.matrices.P);}//cam.getPMatrix());}
 		if (s->hasUniform("PV"))			{s->setMatrix("PV", rs.matrices.PV);}
 		if (s->hasUniform("PVM"))			{s->setMatrix("PVM", rs.matrices.PVM);}
 		if (s->hasUniform("PVshadow"))		{s->setMatrix("PVshadow", shadowPV);}
-		if (s->hasUniformBlock("Lights"))	{s->setVar("Lights", uboLights);}
-		if (s->hasUniform("time"))			{s->setFloat("time", Engine::get()->getTimeSec());}
-		r->render(rs);
+		if (s->hasUniform("time"))			{s->setFloat("time", ss.getCurrentTime().seconds());}
+
+		// configure fixed parameters once [constant between frames]
+		if (s->hasUniformBlock("Lights"))	{s->setVarOnce("Lights", uboLights);}
+		if (s->hasUniform("screenWidth"))	{s->setFloatOnce("screenWidth", getScreenSize().width);}
+		if (s->hasUniform("screenHeight"))	{s->setFloatOnce("screenHeight", getScreenSize().height);}
+
+		// render the object
+		r->render(ss, rs);
+
+		// disable the shader
+		s->unbind();
 
 //		HasAABB* m = dynamic_cast<HasAABB*>(r);
 //		if (m) {
@@ -301,7 +354,8 @@ private:
 #include "WaterRenderer.h"
 #include "ShadowRenderer.h"
 #include "ShadowRendererSimple.h"
-#include "ShadowRendererESM.h"
+#include "PostProcessRenderer.h"
+//#include "ShadowRendererESM.h"
 
 /** add a new water to the scene */
 void Scene::addWater(Water* w) {
@@ -337,19 +391,48 @@ void Scene::setEnableWater(bool enable) {
 
 void Scene::render() {
 
+	// timing update
+	ss.lastRenderStart = ss.renderStart;
+	ss.renderStart = Time::runtime();
+
+	// inform the scene
 	onBeforeRender();
+
+	// inform every renderable about the pending render process
+	for (Renderable* r : renderables) {r->onBeforeRender(ss);}
+	for (Renderable* r : ui.elements) {r->onBeforeRender(ss);}
 
 	// update the light-uniform
 	uboLights.upload((uint8_t*)&lights, sizeof(lights));
 	uboLights.bind();
 
+
 	if (waterRenderer)	{waterRenderer->update();}
+
 	if (shadowRenderer)	{shadowRenderer->update();}
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	getCamera().setScreenSize();
+	if (postProcRenderer) {postProcRenderer->begin();}
 
-	renderForNormal();
+	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		getCamera().setScreenSize();
+
+		renderForNormal();
+		renderUI();
+
+	if (postProcRenderer) {
+		postProcRenderer->end();
+		rs.matrices.V = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+		rs.matrices.P = Mat4::identity();
+		rs.matrices.PV = rs.matrices.P * rs.matrices.V;
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_DEPTH_TEST);
+		renderThis(postProcRenderer, rs);
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+	}
+
+	// time it took to render the current frame
+	ss.lastRenderDuration = Time::runtime() - ss.renderStart;
 
 }
 

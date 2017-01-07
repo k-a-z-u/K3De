@@ -26,13 +26,13 @@ private:
 public:
 
 	/** ctor */
-	ShadowRendererSimple(Scene* scene);
+	inline ShadowRendererSimple(Scene* scene);
 
-	void update() override;
+	inline void update() override;
 
-	Texture* getShadowTexture() override {return texShadows;}
+	inline Texture* getShadowTexture() override {return texShadows;}
 
-	std::string getShadowAmountCalculationGLSL() override;
+	inline std::string getShadowAmountCalculationGLSL() override;
 
 };
 
@@ -42,15 +42,25 @@ public:
 ShadowRendererSimple::ShadowRendererSimple(Scene* scene) {
 
 	this->scene = scene;
-	texW = 512;//Engine::get()->getSettings().screen.width;
-	texH = 512;//Engine::get()->getSettings().screen.height;
+//	texW = 512;
+//	texH = 512;
+
+	texW = 1024;//Engine::get()->getSettings().screen.width;
+	texH = 1024;//Engine::get()->getSettings().screen.height;
 
 	texShadows = scene->getTextureFactory().createDepthTexture(texW, texH);
 	texShadows->setFilter(TextureFilter::LINEAR, TextureFilter::LINEAR);
 	texShadows->setWrapping(TextureWrapping::CLAMP, TextureWrapping::CLAMP);
 
 	fbShadows.attachTextureDepth(texShadows);
-	sShadowGen = scene->getShaderFactory().create("shaderShadowMapVertex.glsl", "shaderShadowMapFragment.glsl");
+	//sShadowGen = scene->getShaderFactory().create("shaderShadowMapVertex.glsl", "shaderShadowMapFragment.glsl");
+
+	sShadowGen = scene->getShaderFactory().createFromCode(
+		#include "../material/inc/shadowMapVertex.glsl"
+		,
+		#include "../material/inc/shadowMapFragment.glsl"
+	);
+
 
 }
 
@@ -79,6 +89,11 @@ void ShadowRendererSimple::update() {
 }
 
 std::string ShadowRendererSimple::getShadowAmountCalculationGLSL() {
+
+	const float size = 0.22f;		// TODO: make flexible?
+	//const int numSamples = 16;
+	const float darkness = 0.25f;	// darkest possible vlaue
+
 	std::stringstream ss;
 
 	ss << "in vec4 shadowCoord;\n";
@@ -87,37 +102,76 @@ std::string ShadowRendererSimple::getShadowAmountCalculationGLSL() {
 
 	// is the given fragment shadowed?
 	ss << "float isShadowed(const vec3 sc) {\n";
-	ss << "\tfloat nearest = texture(texShadowMap, sc.st).r;\n";		// smallest distance from this given (x,y) to the light
-	ss << "\tfloat curDist = sc.z;\n";									// current distance to the light
-	//ss << "\tif(nearest<curDist) {\n";
-	//ss << "\t return pow((curDist-nearest), 0.5f);\n";
-	//ss << "} return 1.0;\n";
-	//ss << "\treturn clamp((curDist-nearest), 0.0f, 1.0f);\n";
-	ss << "\treturn (nearest < curDist) ? (0.25f) : (1.0f);\n";			// shadowed?
+		ss << "\tfloat nearest = texture(texShadowMap, sc.st).r;\n";			// smallest distance from this given (x,y) to the light
+		ss << "\tfloat curDist = sc.z;\n";										// current distance to the light
+		ss << "\treturn (nearest <= curDist) ? ("<<darkness<<") : (1.0f);\n";	// shadowed?
 	ss << "}\n";
 
-	const float size = 0.15 * 2;		// TODO: make flexible?
-	const int numSamples = 12;
-
-	ss << "float getShadowAmount() {\n";
-	ss << "\tif (shadowCoord.w <= 0.0) {return 1.0;}\n";				// if we are behind the light, no shadowing is possible (prevents artifacts)
-	ss << "\tvec3 sc = shadowCoord.xyz / shadowCoord.w;\n";
-	ss << "\tsc.z -= 0.0002f;\n";										// add some clearance to prevent almost-equal-z artifcats
-	ss << "\tfloat s = "<<size<<" / shadowCoord.w;\n";						// "smooth" the shadow
-	ss << "\tfloat sum = 0.0f;\n";
-
-	for (int i = 0; i < numSamples; ++i) {
-		const float x = Random::get(0,1);
-		const float y = Random::get(0,1);
-		ss << "\tsum += isShadowed(sc + vec3(s*"<<x<<"f,s*"<<y<<"f, 0.0f));\n";
-	}
-	ss << "\tsum += isShadowed(sc + vec3( 0.0f, 0.0f, 0.0f));\n";
-	//ss << "\tsum += isShadowed(sc + vec3(+s,+s, 0.0f));\n";
-	//ss << "\tsum += isShadowed(sc + vec3(-s,-s, 0.0f));\n";
-	//ss << "\tsum += isShadowed(sc + vec3(-s,+s, 0.0f));\n";
-	//ss << "\tsum += isShadowed(sc + vec3(+s,-s, 0.0f));\n";
-	ss << "\treturn sum/" << numSamples <<".0f;\n";
+	ss << "float getShadowDist(const vec3 sc) {\n";
+		ss << "\tfloat nearest = texture(texShadowMap, sc.st).r;\n";			// smallest distance from this given (x,y) to the light
+		ss << "\tfloat curDist = sc.z;\n";										// current distance to the light
+		ss << "\treturn (curDist - nearest);\n";								// shadowed?
 	ss << "}\n";
+
+
+
+	ss << "float getShadowAmount() {\n"; {
+
+		ss << "\tif (shadowCoord.w <= 0.0) {return 1.0;}\n";							// if we are behind the light, no shadowing is possible (prevents artifacts)
+
+		ss << "\tvec3 sc = shadowCoord.xyz / shadowCoord.w;\n";
+		ss << "\tsc.z -= 0.00025f;\n";													// add some clearance to prevent almost-equal-z artifcats
+
+
+
+//		ss << "\tfloat dist = getShadowDist(sc);\n";									// get difference between dist-to-light and dist-to-shadow
+//		ss << "\tfloat ss = clamp(dist*256.0 / shadowCoord.w, 0.01, 0.5);\n";				// dynamically "smooth" the shadow
+//		// distance test
+//		ss << "if (dist < 0.0) {return 1.0;}\n";
+//		ss << "if (dist < 0.0005) {return 0.0;}\n";
+//		ss << "return 0.5;\n";
+
+
+
+		ss << "\tfloat s = "<<size<<" / shadowCoord.w;\n";							// "smooth" the shadow
+
+		// fixed scatter pattern looks better than a random pattern
+		ss << "\tfloat sum = 0.0f;\n";
+
+//		for (int i = 0; i < 8; ++i) {
+//			const float rad = (float)i/8.0f * M_PI * 2;
+//			const float ox = std::cos(rad) * 0.1f;
+//			const float oy = std::sin(rad) * 0.1f;
+//			ss << "\tsum += isShadowed(sc + vec3(" << ox << ", " << oy << ", 0.0f) * s);\n";
+//		}
+
+		ss << "\tsum += isShadowed(sc + vec3(-0.1f,  0.0f, 0.0f) * s);\n";
+		ss << "\tsum += isShadowed(sc + vec3(+0.1f,  0.0f, 0.0f) * s);\n";
+		ss << "\tsum += isShadowed(sc + vec3( 0.0f, +0.1f, 0.0f) * s);\n";
+		ss << "\tsum += isShadowed(sc + vec3( 0.0f, -0.1f, 0.0f) * s);\n";
+
+		ss << "\tsum += isShadowed(sc + vec3(-0.2f, +0.2f, 0.0f) * s);\n";
+		ss << "\tsum += isShadowed(sc + vec3(+0.2f, +0.2f, 0.0f) * s);\n";
+		ss << "\tsum += isShadowed(sc + vec3(-0.2f, -0.2f, 0.0f) * s);\n";
+		ss << "\tsum += isShadowed(sc + vec3(+0.2f, -0.2f, 0.0f) * s);\n";
+
+		ss << "\tsum += isShadowed(sc);\n";
+
+		ss << "\treturn sum / 9.0f;\n";
+
+
+//		ss << "\tfloat s = "<<size<<" / shadowCoord.w;\n";							// "smooth" the shadow
+//		ss << "\tfloat sum = 0.0f;\n";
+
+//		for (int i = 0; i < numSamples; ++i) {
+//			const float x = Random::get(-1,+1);
+//			const float y = Random::get(-1,+1);
+//			ss << "\tsum += isShadowed(sc + vec3(s*"<<x<<"f,s*"<<y<<"f, 0.0f));\n";
+//		}
+//		ss << "\tsum += isShadowed(sc + vec3( 0.0f, 0.0f, 0.0f));\n";
+//		ss << "\treturn sum/" << numSamples <<".0f;\n";
+
+	} ss << "}\n";
 
 	return ss.str();
 }

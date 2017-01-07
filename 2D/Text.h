@@ -10,7 +10,7 @@ class Text : public Renderable {
 private:
 
 	VAO vao;
-	VBOArray<VertexTexture> vertices;
+	VBOArrayStatic<AttrVertexTexture> vertices;
 	Mat4 matrix;
 	Material* material;
 	std::string text;
@@ -52,22 +52,15 @@ public:
 	}
 
 	/** render this object */
-	virtual void render(const RenderStage& rs) override {
+	virtual void render(const SceneState&, const RenderState&) override {
 
-		(void) rs;
-
-		//glEnable(GL_BLEND);
-		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		//tex->bind(0);
 		material->bind();
 		vao.bind();
 
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
 		vao.unbind();
-		//tex->unbind(0);
 		material->unbind();
-		//glDisable(GL_BLEND);
 
 	}
 
@@ -104,10 +97,10 @@ private:
 			const Vec2 v1 = pos;									// lower left of the letter
 			const Vec2 v2 = pos + Vec2(charSize.x, -charSize.y);	// upper right of the letter
 
-			const VertexTexture vt1(v1.x, v1.y, 0,	t1.x, t2.y);
-			const VertexTexture vt2(v2.x, v1.y, 0,	t2.x, t2.y);
-			const VertexTexture vt3(v2.x, v2.y, 0,	t2.x, t1.y);
-			const VertexTexture vt4(v1.x, v2.y, 0,	t1.x, t1.y);
+			const AttrVertexTexture vt1(v1.x, v1.y, 0,	t1.x, t2.y);
+			const AttrVertexTexture vt2(v2.x, v1.y, 0,	t2.x, t2.y);
+			const AttrVertexTexture vt3(v2.x, v2.y, 0,	t2.x, t1.y);
+			const AttrVertexTexture vt4(v1.x, v2.y, 0,	t1.x, t1.y);
 
 			vertices.append(vt1);
 			vertices.append(vt2);
@@ -126,8 +119,8 @@ private:
 
 		vao.bind();
 		vertices.bind();
-		vao.setVertices(0, sizeof(VertexTexture), 0);
-		vao.setTexCoords(2, sizeof(VertexTexture), sizeof(Vertex));
+		vao.setVertices(0, sizeof(AttrVertexTexture), 0);
+		vao.setTexCoords(2, sizeof(AttrVertexTexture), sizeof(Vertex));
 		vao.unbind();
 
 	}

@@ -5,6 +5,7 @@
 #include "../misc/Error.h"
 #include "ITexture.h"
 #include "../math/Vector.h"
+#include <set>
 
 /** supported texture filters */
 enum class TextureFilter {
@@ -23,6 +24,8 @@ class Texture : public ITexture {
 
 private:
 
+	#include "../misc/BindOnceMany.h"
+
 	friend class TextureFactory;
 
 	/** the openGL texture type (1D, 2D, 3D, 2D-Array, ..) */
@@ -30,6 +33,9 @@ private:
 
 	/** the openGL texture-id */
 	GLuint id;
+
+	/** the texture's data format */
+	GLuint format;
 
 //	/** the tiling to apply to this texture when used as a material */
 //	Vec2 tiling;
@@ -46,6 +52,11 @@ public:
 		remove();
 	}
 
+
+	bool isAlphaOnly() const {
+		return format == GL_COMPRESSED_ALPHA || format == GL_ALPHA;
+	}
+
 //	/** get the texture's tiling */
 //	const Vec2 getTiling() const {return tiling;}
 
@@ -53,16 +64,18 @@ public:
 //	void setTiling(const Vec2& tiling) {this->tiling = tiling;}
 
 
-	void bind(const int idx) const override {
+	void bind(const TextureUnit idx) const override {
+		assertUnbound(key(idx));
 		glActiveTexture(GL_TEXTURE0 + idx);	Error::assertOK();
-		//glEnable(type);						Error::assertOK();
 		glBindTexture(type, id);			Error::assertOK();
+		setBound(key(idx));
 	}
 
-	void unbind(const int idx) const override {
+	void unbind(const TextureUnit idx) const override {
+//		assertBound(key(idx));
 		glActiveTexture(GL_TEXTURE0 + idx);	Error::assertOK();
-		//glDisable(type);					Error::assertOK();
 		glBindTexture(type, 0);				Error::assertOK();
+		setUnbound(key(idx));
 	}
 
 	/** get the texture's ID */
@@ -72,7 +85,6 @@ public:
 
 	/** set the TextureFilter to use when down/up-scaling this texture */
 	void setFilter(const TextureFilter min, const TextureFilter mag) {
-		bind(0);
 		glTexParameteri(type, GL_TEXTURE_MAG_FILTER, getFilter(mag));	Error::assertOK();
 		glTexParameteri(type, GL_TEXTURE_MIN_FILTER, getFilter(min));	Error::assertOK();
 	}
@@ -95,6 +107,22 @@ public:
 	}
 
 private:
+
+	/** convert texture-unit + texture-id to a unique key */
+	inline unsigned int key(const TextureUnit idx) const {
+		return (idx << 16) | id;
+	}
+
+	/** ensure the ID is currently bound */
+	inline void assertBound(const TextureUnit idx) const {
+		_assertTrue(isBound(key(idx)), "bind() the texture first");
+	}
+
+	/** ensure the ID is currently unbound */
+	inline void assertUnbound(const TextureUnit idx) const {
+		_assertFalse(isBound(key(idx)), "texture is already bound!");
+	}
+
 
 	/** convert TextureFilter enum to openGL enum */
 	GLenum getFilter(const TextureFilter f) const {

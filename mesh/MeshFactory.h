@@ -2,6 +2,7 @@
 #define MESHFACTORY_H
 
 #include <vector>
+#
 
 #include "MeshVertex.h"
 #include "../misc/Memory.h"
@@ -9,6 +10,7 @@
 
 class IMesh;
 class IndexedMesh;
+class InstanceMesh;
 
 class MeshFactory {
 
@@ -18,15 +20,19 @@ private:
 
 public:
 
-	IndexedMesh* createMesh(const std::string fileName, const bool normalize = false);
+	/** create a new mesh by loading the given file */
+	inline IndexedMesh* createMesh(const std::string fileName, const bool normalize = false, const bool centerAtOrigin = false);
 
-	static std::vector<VertexNormalTexture> getPlaneY(const float y, const float x1, const float z1, const float x2, const float z2, const Vec2 texTiling) {
+	/** create a new instance-wrapper around the given source mesh [allows position,rotation,scale without modifying the mesh] */
+	inline InstanceMesh* createNewInstance(IMesh* mesh);
 
-		std::vector<VertexNormalTexture> vertices;
-		VertexNormalTexture v1( x1,y,z1,	0,1,0,	0*texTiling.x,0*texTiling.y);
-		VertexNormalTexture v2( x2,y,z1,	0,1,0,	1*texTiling.x,0*texTiling.y);
-		VertexNormalTexture v3( x2,y,z2,	0,1,0,	1*texTiling.x,1*texTiling.y);
-		VertexNormalTexture v4( x1,y,z2,	0,1,0,	0*texTiling.x,1*texTiling.y);
+	static std::vector<AttrVertexNormalTexture> getPlaneY(const float y, const float x1, const float z1, const float x2, const float z2, const Vec2 texTiling) {
+
+		std::vector<AttrVertexNormalTexture> vertices;
+		AttrVertexNormalTexture v1( x1,y,z1,	0,1,0,	0*texTiling.x,0*texTiling.y);
+		AttrVertexNormalTexture v2( x2,y,z1,	0,1,0,	1*texTiling.x,0*texTiling.y);
+		AttrVertexNormalTexture v3( x2,y,z2,	0,1,0,	1*texTiling.x,1*texTiling.y);
+		AttrVertexNormalTexture v4( x1,y,z2,	0,1,0,	0*texTiling.x,1*texTiling.y);
 
 		// triangle 1
 		vertices.push_back(v1);
@@ -47,33 +53,51 @@ public:
 
 #include "UnindexedMesh.h"
 #include "IndexedMesh.h"
+#include "InstanceMesh.h"
 
-IndexedMesh* MeshFactory::createMesh(const std::string fileName, const bool normalize) {
+InstanceMesh* MeshFactory::createNewInstance(IMesh* srcMesh) {
 
-	//tex = TextureFactory::create("/mnt/ssss/3D/checkerboard.png");
-//	tex = TextureFactory::create("/mnt/ssss/3D/grass.jpg");
+	// create a new instance-wrapper around the given source
+	InstanceMesh* mesh = new InstanceMesh(srcMesh);
 
-	//Mesh* mesh = new Mesh();
+	// add to the list of meshes [e.g. for scene cleanup]
+	meshes.push_back(std::make_unique(mesh));
+
+	// done
+	return mesh;
+
+}
+
+IndexedMesh* MeshFactory::createMesh(const std::string fileName, const bool normalize, const bool centerAtOrigin) {
+
+	// create a new, empty mesh
 	IndexedMesh* mesh = new IndexedMesh();
-//		meshes.push_back(std::make_unique(mesh));
 
+	// add to the list of meshes [e.g. for scene cleanup]
+	meshes.push_back(std::make_unique(mesh));
+
+	// import from .OBJ file
 	ObjImport imp;
-	imp.load(fileName, normalize);
-//		mesh->vertices.append(imp.getUnindexedMeshData());
-//		mesh->vertices.upload();
-//		mesh->configure();
-	mesh->vertices.append(imp.getIndexedMeshVertices());
+	imp.load(fileName, normalize, centerAtOrigin);
+
+	// append vertices and faces [=indices]
+	mesh->vertices.append(imp.getIndexedMeshVerticesWithTangent());
 	mesh->indices.append(imp.getIndexedMeshIndices());
+
+	// upload both
 	mesh->vertices.upload();
 	mesh->indices.upload();
+
+	// final setup
 	mesh->configure();
 
-	for (const VertexNormalTexture& vnt : imp.getIndexedMeshVertices()) {
+	// calculate BBox
+	for (const AttrVertexNormalTexture& vnt : imp.getIndexedMeshVertices()) {
 		mesh->bbox.add(vnt.getVertex());
 	}
 
+	// done
 	return mesh;
-
 
 }
 

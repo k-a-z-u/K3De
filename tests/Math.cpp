@@ -4,6 +4,7 @@
 #include "Tests.h"
 #include "../math/Math.h"
 
+
 TEST(Math, MatrixIdentity) {
 	Mat4 mat(1.0f);
 	ASSERT_EQ(1, mat.get(0,0));	ASSERT_EQ(0, mat.get(1,0));	ASSERT_EQ(0, mat.get(2,0));	ASSERT_EQ(0, mat.get(3,0));
@@ -55,6 +56,35 @@ TEST(Math, MatrixVectorMul2) {
 	const float data[] = {1,2,3, 4,5,6, 7,8,9};
 	Mat3 mat3 = Mat3::fromRawRowMajor(data);
 	ASSERT_EQ(Vec3(14,32,50), mat3*vec3);
+}
+
+TEST(Math, QuaternionIdentity) {
+
+	const Quaternion q0(0,0,0,0);
+	const Mat4 mat0 = q0.toMat4();
+	ASSERT_TRUE(mat0 == Mat4::identity());
+
+	const Quaternion q1(1,0,0,0);
+	const Mat4 mat1 = q1.toMat4().abs();
+	ASSERT_TRUE(mat1 == Mat4::identity());
+
+	const Quaternion q2(0,1,0,0);
+	const Mat4 mat2 = q2.toMat4().abs();
+	ASSERT_TRUE(mat2 == Mat4::identity());
+
+	const Quaternion q3(0,0,1,0);
+	const Mat4 mat3 = q3.toMat4().abs();
+	ASSERT_TRUE(mat3 == Mat4::identity());
+
+	const Quaternion q4(0,0,0,1);
+	const Mat4 mat4 = q4.toMat4().abs();
+	ASSERT_TRUE(mat4 == Mat4::identity());
+
+
+	const Quaternion q5(1,1,1,1);
+	const Mat4 mat5 = q5.toMat4();
+	ASSERT_FALSE(mat5 == Mat4::identity());
+
 }
 
 //#include <ctime>

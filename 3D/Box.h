@@ -7,13 +7,13 @@
 #include "../gl/VBOArrayIndex.h"
 #include "../math/AffineTransform.h"
 #include "../scene/Renderable.h"
+#include "../mesh/Transformable.h"
+#include "Estimator.h"
 
-class Box3 : public Renderable {
+class Box3 : public Renderable, public Transformable {
 
 	VAO vao;
-	VBOArray<VertexNormalTexture> vertices;
-	AffineTransform transform;
-
+	VBOArrayStatic<AttrVertexNormalTangentTexture> vertices;
 
 public:
 
@@ -60,9 +60,17 @@ public:
 		vao.bind();
 
 		vertices.bind();
-		vao.setVertices(0, 8*4, 0);
-		vao.setNormals(1, 8*4, 3*4);
-		vao.setTexCoords(2, 8*4, 6*4);
+
+//		//VertexNormalTexture
+//		vao.setVertices(0, 8*4, 0);
+//		vao.setNormals(1, 8*4, 3*4);
+//		vao.setTexCoords(2, 8*4, 6*4);
+
+		// VertexNormalTangentTexture
+		vao.setVertices(0, 11*4);
+		vao.setNormals(1, 11*4, 3*4);
+		vao.setTangents(3, 11*4, 6*4);		// todo swap indicies [2,3] here and within shaders?
+		vao.setTexCoords(2, 11*4, 9*4);
 
 		vao.unbind();
 
@@ -70,15 +78,22 @@ public:
 
 	void addQuad(const Vec3 v1, const Vec3 v2, const Vec3 v3, const Vec3 v4, const Vec3 n) {
 
+		// dummy tangent
+		const Vec3 ta(0,0,0);
+
 		const Vec2 t1 = getTexCoord(v1, n);
 		const Vec2 t2 = getTexCoord(v2, n);
 		const Vec2 t3 = getTexCoord(v3, n);
 		const Vec2 t4 = getTexCoord(v4, n);
 
-		const VertexNormalTexture vnt1(v1, n, t1);
-		const VertexNormalTexture vnt2(v2, n, t2);
-		const VertexNormalTexture vnt3(v3, n, t3);
-		const VertexNormalTexture vnt4(v4, n, t4);
+		AttrVertexNormalTangentTexture vnt1(v1, n, ta, t1);
+		AttrVertexNormalTangentTexture vnt2(v2, n, ta, t2);
+		AttrVertexNormalTangentTexture vnt3(v3, n, ta, t3);
+		AttrVertexNormalTangentTexture vnt4(v4, n, ta, t4);
+
+		// calculate real tangents
+		Estimator::estimateTangents(vnt1, vnt3, vnt2);
+		Estimator::estimateTangents(vnt1, vnt4, vnt3);
 
 		vertices.append(vnt1);
 		vertices.append(vnt3);
@@ -106,24 +121,11 @@ public:
 
 	}
 
-	void setPosition(const float x, const float y, const float z) {
-		transform.setPosition(x,y,z);
-	}
-
-	void setRotation(const float x, const float y, const float z) {
-		transform.setRotation(x/180*3.1415,y/180*3.1415,z/180*3.1415);
-	}
-
-	void setScale(const float x, const float y, const float z) {
-		transform.setScale(x,y,z);
-	}
-
-	void render(const RenderStage& rs) override {
+	void render(const SceneState&, const RenderState&) override {
 
 		material->bind();
 		vao.bind();
 
-		//glDisable(GL_CULL_FACE);
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 		//glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 		Error::assertOK();

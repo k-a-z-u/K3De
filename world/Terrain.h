@@ -85,15 +85,15 @@ public:
 
 	}
 
-	virtual void render(const RenderStage& rs) override {
+	virtual void render(const SceneState& ss, const RenderState& rs) override {
 
 		material->bind();
-		//textures.bindAll();
+
 		lastVisible = 0;
 		for (TerrainPart& part : parts) {
 			if (part.isVisible(rs.matrices.PVM)) {
 
-				part.render(rs);
+				part.render(ss, rs);
 				++lastVisible;
 
 			}

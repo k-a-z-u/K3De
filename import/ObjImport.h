@@ -12,6 +12,7 @@
 #include "../math/Math.h"
 
 #include "../3D/AABB.h"
+#include "../3D/Estimator.h"
 
 #include "../Debug.h"
 
@@ -26,14 +27,14 @@ public:
 	} data;
 
 	// the assembled mesh data (not using indices -> duplicate vertices)
-	std::vector<VertexNormalTexture> meshDataUnindexed;
+	std::vector<AttrVertexNormalTexture> meshDataUnindexed;
 
 	// the assembled mesh data (using indices -> unique vertices)
-	std::unordered_map<VertexNormalTexture, int> uniqueVertices;
-	std::vector<VertexNormalTexture> meshDataIndexed;
+	std::unordered_map<AttrVertexNormalTexture, int> uniqueVertices;
+	std::vector<AttrVertexNormalTexture> meshDataIndexed;
 	std::vector<GLuint> indices;
 
-	void load(const std::string& file, const bool normalize = false) {
+	void load(const std::string& file, const bool normalize = false, const bool centerAtOrigin = false) {
 
 		Debug("OBJ", "loading file: " + file);
 
@@ -44,18 +45,33 @@ public:
 		Debug("OBJ", "got " << uniqueVertices.size() << " vertices and " << (indices.size()/3) << " triangles");
 
 		// normalize the object? (scale to a max size of 1.0)
-		if (normalize) {doNormalize();}
+		if (normalize)		{doNormalize();}
+
+		// put object's center-of-mass to (0,0,0) ?
+		if (centerAtOrigin)	{doCenter();}
 
 	}
 
 	/** get all vertices for this mesh in triangle order. contains duplicate vertices */
-	const std::vector<VertexNormalTexture>& getUnindexedMeshData() {
+	const std::vector<AttrVertexNormalTexture>& getUnindexedMeshData() {
 		return meshDataUnindexed;
 	}
 
 	/** get all (unique) vertices within this mesh */
-	const std::vector<VertexNormalTexture>& getIndexedMeshVertices() {
+	const std::vector<AttrVertexNormalTexture>& getIndexedMeshVertices() {
 		return meshDataIndexed;
+	}
+
+	/** get all (unique) vertices within this mesh with calculated tangent */
+	std::vector<AttrVertexNormalTangentTexture> getIndexedMeshVerticesWithTangent() {
+		std::vector<AttrVertexNormalTangentTexture> res;
+		res.reserve(meshDataIndexed.size());
+		std::vector<Vec3> tangents = Estimator::estimateTangents(meshDataIndexed, indices);
+		for (size_t i = 0; i < meshDataIndexed.size(); ++i) {
+			AttrVertexNormalTangentTexture vntt(meshDataIndexed[i].getVertex(), meshDataIndexed[i].getNormal(), tangents[i], meshDataIndexed[i].getTexCoord());
+			res.push_back(vntt);
+		}
+		return res;
 	}
 
 	/** get the indices to create triangles from the indexed mesh data */
@@ -115,7 +131,7 @@ private:
 			const std::string vn = t2.getToken('/', false);
 
 			// create a new vertex/normal/texture combination
-			VertexNormalTexture vnt;
+			AttrVertexNormalTexture vnt;
 			vnt.setVertex( data.vertices[std::stoi(v)-1] );
 			vnt.setNormal(		(vn.empty()) ? (Vec3(0,0,0)) :	(data.normals[std::stoi(vn)-1]) );
 			vnt.setTexCoord(	(vt.empty()) ? (Vec2(0,0)) :	(data.texCoords[std::stoi(vt)-1]) );
@@ -151,20 +167,29 @@ private:
 	void doNormalize() {
 
 		AABB bbox;
-		for (const VertexNormalTexture& vnt : meshDataIndexed) {bbox.add(vnt.v);}
+		for (const AttrVertexNormalTexture& vnt : meshDataIndexed) {bbox.add(vnt.v);}
 
 		const Vec3 diff = bbox.max() - bbox.min();
 		const float max = std::max(std::max(diff.x, diff.y), diff.z);
 
-		for (VertexNormalTexture& vnt : meshDataUnindexed) {vnt.v /= max;}
-		for (VertexNormalTexture& vnt : meshDataIndexed) {vnt.v /= max;}
+		for (AttrVertexNormalTexture& vnt : meshDataUnindexed) {vnt.v /= max;}
+		for (AttrVertexNormalTexture& vnt : meshDataIndexed) {vnt.v /= max;}
 
-//		std::unordered_map<VertexNormalTexture, int> nUniqueVertices;
-//		for (auto& it : uniqueVertices) {
-//			VertexNormalTexture vnt = it.first; vnt.v /= max;
-//			nUniqueVertices[vnt] = it.second;
-//		}
-//		uniqueVertices = nUniqueVertices;
+	}
+
+	void doCenter() {
+
+		Vec3 sum;
+		AABB bbox;
+		for (const AttrVertexNormalTexture& vnt : meshDataIndexed) {
+			bbox.add(vnt.v);
+			sum += vnt.v;
+		}
+
+		Vec3 avg = sum / meshDataIndexed.size();
+
+		for (AttrVertexNormalTexture& vnt : meshDataUnindexed) {vnt.v -= avg;}
+		for (AttrVertexNormalTexture& vnt : meshDataIndexed) {vnt.v -= avg;}
 
 	}
 

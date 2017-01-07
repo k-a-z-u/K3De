@@ -22,6 +22,10 @@ template<typename T> void ASSERT_ARR_NEAR(T* arr1, T* arr2, const int len, const
 	}
 }
 
+static inline std::string getDataFile(const std::string& name) {
+	return "/mnt/vm/workspace/IRGame/K3De/tests/data/" + name;
+}
+
 
 
 #endif

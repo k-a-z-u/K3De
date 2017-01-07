@@ -33,7 +33,8 @@ public:
 	}
 
 	virtual void configureShader(Shader* shader, ShaderState& state) override {
-		;
+		(void) shader;
+		(void) state;
 	}
 
 	virtual void bind() {

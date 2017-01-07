@@ -19,9 +19,9 @@ public:
 		return sprite;
 	}
 
-	Sprite2D* createSprite(const float x, const float y, const float w, const float h) {
+	Sprite2D* createSprite(const Rect& rect) {
 		Sprite2D* sprite = createSprite();
-		sprite->setRect(x,y, x+w,y+h);
+		sprite->setRect(rect);
 		return sprite;
 	}
 

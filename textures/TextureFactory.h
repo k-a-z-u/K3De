@@ -43,6 +43,22 @@ public:
 		this->anisotropic = level;
 	}
 
+	/** create a new alpha-channel texture using the given input file */
+	Texture2D* createAlpha(const std::string& file, bool compressed = true) {
+
+		// parse the image file
+		Image img = ImageFactory::load(includePath + file);
+		void* data = (void*) img.getData().data();
+
+		const int formatIn = getFormatIn(img);
+		const int formatOut = (compressed) ? (GL_COMPRESSED_ALPHA) : (GL_ALPHA);
+
+		return create(data, img.getWidth(), img.getHeight(), formatIn, formatOut);
+
+	}
+
+
+
 	/** create a new texture using the given input file */
 	Texture2D* create(const std::string& file, bool compressed = true) {
 
@@ -72,13 +88,39 @@ public:
 			default: throw "error";
 		}
 
+		return create(data, img.getWidth(), img.getHeight(), formatIn, formatOut);
+
+	}
+
+
+
+	int getFormatIn(const Image& img) {
+
+		switch(img.getFormat()) {
+		    case ImageFormat::IMAGE_RGB:
+			    return GL_RGB;
+		    case ImageFormat::IMAGE_RGBA:
+			    return GL_RGBA;
+		    case ImageFormat::IMAGE_GREY:
+			    return GL_ALPHA;
+		    case ImageFormat::IMAGE_GREY_ALPHA:
+			    return GL_ALPHA;
+		    default:
+			    throw Exception("invalid image format");
+		}
+
+	}
+
+	Texture2D* create(void* data, int w, int h, int formatIn, int formatOut) {
+
 		// create and add a new texture
 		Texture2D* tex = new Texture2D();
 		textures.push_back(std::make_unique(tex));
+		tex->format = formatOut;
 		tex->bind(0);
 
 		// load image into the texture
-		glTexImage2D(GL_TEXTURE_2D, 0,formatOut, img.getWidth(), img.getHeight(), 0, formatIn, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0,formatOut, w, h, 0, formatIn, GL_UNSIGNED_BYTE, data);
 		Error::assertOK();
 
 		// wrapping
@@ -90,7 +132,12 @@ public:
 
 		// linear-filtering
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+		if (mipmaps) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		} else {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		}
 
 		// set anisotropic filtering [will fail if unsupported]
 		if (anisotropic) {
@@ -105,6 +152,7 @@ public:
 		}
 
 		return tex;
+
 	}
 
 	/** create a new 2D-array texture using the given input files */
@@ -228,6 +276,7 @@ public:
 		textures.push_back(std::make_unique(tex));
 		tex->bind(0);
 
+		// TODO: performance boost possible?
 		// Give an empty image to OpenGL ( the last "0" )
 		glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32F, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
 

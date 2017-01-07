@@ -5,9 +5,11 @@
 #include "../gl/VBOArray.h"
 #include "../mesh/MeshVertex.h"
 #include "../scene/Renderable.h"
-#include "../shader/Shader.h"
+#include "Rect.h"
 
 #include <vector>
+
+
 
 /** 2D sprite image */
 class Sprite2D : public Renderable {
@@ -15,9 +17,10 @@ class Sprite2D : public Renderable {
 private:
 
 	friend class SpriteFactory;
+	friend class PostProcessRenderer;
 
 	VAO vao;
-	VBOArray<VertexNormalTexture> vertices;
+	VBOArrayStatic<AttrVertexNormalTexture> vertices;
 
 	std::vector<Texture*> textures;
 	Mat4 mat;
@@ -46,27 +49,33 @@ private:
 
 public:
 
-	void setRect(float x1, float y1, float x2, float y2) {
+	void setRect(const Rect& r) {
 
-//		x1 = x1*2-1;
-//		x2 = x2*2-1;
-//		y1 = y1*2-1;
-//		y2 = y2*2-1;
+		const float x1 = r.getUpperLeft().x;
+		const float y1 = r.getUpperLeft().y;
 
-		//vertices.clear();
+		const float x2 = r.getLowerRight().x;
+		const float y2 = r.getLowerRight().y;
 
-		vertices.set(0, VertexNormalTexture(x1,y1,0.1,		0,0,1,	0,0));
-		vertices.set(1, VertexNormalTexture(x2,y1,0.1,		0,0,1,	1,0));
-		vertices.set(2, VertexNormalTexture(x2,y2,0.1,		0,0,1,	1,1));
+		setRect(x1,y1, x2,y2);
 
-		vertices.set(3, VertexNormalTexture(x1,y1,0.1,		0,0,1,	0,0));
-		vertices.set(4, VertexNormalTexture(x2,y2,0.1,		0,0,1,	1,1));
-		vertices.set(5, VertexNormalTexture(x1,y2,0.1,		0,0,1,	0,1));
+	}
+
+	void setRect(const float x1, const float y1, const float x2, const float y2) {
+
+		vertices.set(0, AttrVertexNormalTexture(x1,y1,0.1,		0,0,1,	0,0));
+		vertices.set(1, AttrVertexNormalTexture(x2,y1,0.1,		0,0,1,	1,0));
+		vertices.set(2, AttrVertexNormalTexture(x2,y2,0.1,		0,0,1,	1,1));
+
+		vertices.set(3, AttrVertexNormalTexture(x1,y1,0.1,		0,0,1,	0,0));
+		vertices.set(4, AttrVertexNormalTexture(x2,y2,0.1,		0,0,1,	1,1));
+		vertices.set(5, AttrVertexNormalTexture(x1,y2,0.1,		0,0,1,	0,1));
 
 		vertices.upload();
 		configure();
 
 	}
+
 
 //	/** set the sprite's texture */
 //	void setTexture(const size_t idx, Texture* texture) {
@@ -81,24 +90,16 @@ public:
 //		textures[idx] = texture;
 //	}
 
-	void render(const RenderStage& rs) override {
+	void render(const SceneState&, const RenderState&) override {
 
-		(void) rs;
-
-//		for (size_t i = 0; i < textures.size(); ++i) {
-//			if (textures[i]) {textures[i]->bind(i);}
-//		}
-
-		material->bind();
-		//shader->bind();
+		if (material) {material->bind();}
 
 		vao.bind();
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 		Error::assertOK();
 		vao.unbind();
 
-		//shader->unbind();
-		material->unbind();
+		if (material) {material->unbind();}
 
 	}
 

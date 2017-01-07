@@ -14,13 +14,12 @@
 #include "../shader/Shader.h"
 
 #include "../Engine.h"
-#include "../scene/Scene.h"
 
 
 class Water : public IMesh {
 
 	VAO vao;
-	VBOArray<VertexNormalTexture> vertices;
+	VBOArrayStatic<AttrVertexNormalTexture> vertices;
 	Mat4 mat;
 	Multitexture textures;
 	AABB bbox;
@@ -30,7 +29,7 @@ public:
 	/** ctor */
 	Water(const Vec3& center, const Vec2 size, const Vec2 texTiling = Vec2(1,1)) : mat(1.0f) {
 
-		std::vector<VertexNormalTexture> vec = MeshFactory::getPlaneY(center.y, center.x-size.x/2, center.z-size.y/2, center.x+size.x/2, center.z+size.y/2, texTiling);
+		std::vector<AttrVertexNormalTexture> vec = MeshFactory::getPlaneY(center.y, center.x-size.x/2, center.z-size.y/2, center.x+size.x/2, center.z+size.y/2, texTiling);
 		vertices.append(vec);
 		vertices.upload();
 
@@ -58,7 +57,7 @@ public:
 		textures.set(3, texDuDv);
 	}
 
-	void render(const RenderStage& rs) override {
+	void render(const SceneState&, const RenderState&) override {
 		textures.bindAll();
 		//shader->bind();
 		//shader->setVector("viewportSize", Engine::get()->getScene()->getCamera().getScreenSize());

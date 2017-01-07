@@ -40,7 +40,8 @@ public:
 	void attachTextureColor(const int idx, Texture* texture) {
 		bind();
 		const GLuint id = GL_COLOR_ATTACHMENT0 + idx;
-		glFramebufferTexture(GL_FRAMEBUFFER, id, texture->getID(), 0);
+		//glFramebufferTexture(GL_FRAMEBUFFER, id, texture->getID(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, id, GL_TEXTURE_2D, texture->getID(), 0);
 		Error::assertOK();
 		colorBuffers.push_back(id);
 		unbind();

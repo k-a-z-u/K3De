@@ -39,6 +39,7 @@ public:
 			if (textures[i]) {textures[i]->unbind(i);}
 		}
 	}
+
 };
 
 #endif // MULTITEXTURE_H

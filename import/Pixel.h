@@ -32,7 +32,7 @@ struct RGBf {
 	RGBi toRGBi() const;
 };
 
-RGBf RGBi::toRGBf() const {return RGBf(r/255.0f, g/255.0f, b/255.0f);}
-RGBi RGBf::toRGBi() const {return RGBi(r*255, g*255, b*255);}
+inline RGBf RGBi::toRGBf() const {return RGBf(r/255.0f, g/255.0f, b/255.0f);}
+inline RGBi RGBf::toRGBi() const {return RGBi(r*255, g*255, b*255);}
 
 #endif // PIXEL_H

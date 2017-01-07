@@ -26,12 +26,30 @@ public:
 	}
 
 	std::string getMainCode() override {
+
+		// use UV as is or multiplied by a tiling factor?
+		std::string uv;
 		if (tiling0 != Vec2(1,1)) {
-			std::string v = "vec2(" + std::to_string(tiling0.x) + "," + std::to_string(tiling0.y) + ")";
-			return "texture(texAmbient0, uv * "+v+");\n";
+			uv = "uv * vec2(" + std::to_string(tiling0.x) + "," + std::to_string(tiling0.y) + ")";
 		} else {
-			return "texture(texAmbient0, uv);\n";
+			uv = "uv";
 		}
+
+		std::stringstream ss;
+
+		// output variable
+		ss << "\tvec4 ambient = ";
+
+		// alpha-only textures are handled differently
+		if (texAmbient0->isAlphaOnly()) {
+			ss << "vec4( 1, 1, 1, texture(texAmbient0, " + uv + ").a );\n";
+		} else {
+			ss << "texture(texAmbient0, uv);\n";
+		}
+
+		// done
+		return ss.str();
+
 	}
 
 	virtual void configureShader(Shader* shader, ShaderState& state) override {

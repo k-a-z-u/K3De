@@ -5,6 +5,7 @@
 //#include <eigen3/Eigen/Eigenvalues>
 
 #include <cmath>
+#include <limits>
 
 #ifdef WITH_TESTS_OLD
 #include <glm/matrix.hpp>
@@ -22,6 +23,7 @@
 
 //#include "Vector.h"
 #include "Matrix.h"
+#include "Quaternion.h"
 //typedef glm::vec2 Vec2;
 //typedef glm::vec3 Vec3;
 //typedef glm::vec4 Vec4;
@@ -166,8 +168,8 @@ public:
 	}
 
 	/** get a rotation matrix for the given x,y,z rotation (in radians) */
-	static Mat4 getRotation(const Vec3& rotation) {
-		const float g = rotation.x; const float b = rotation.y; const float a = rotation.z;
+	static Mat4 getRotation(const Vec3& rad) {
+		const float g = rad.x; const float b = rad.y; const float a = rad.z;
 		const float a11 = cos(a)*cos(b);
 		const float a12 = cos(a)*sin(b)*sin(g)-sin(a)*cos(g);
 		const float a13 = cos(a)*sin(b)*cos(g)+sin(a)*sin(g);
@@ -206,8 +208,13 @@ public:
 	}
 
 	/** convert from degree to radians */
-	static inline float toRadians(const float angle) {
-		return angle * M_PI / 180.0f;
+	static inline float degToRad(const float deg) {
+		return deg * M_PI / 180.0f;
+	}
+
+	/** convert from degree to radians */
+	static inline float radToDeg(const float rad) {
+		return rad * 180.0f / M_PI;
 	}
 
 	static inline Vec3 cross(const Vec3& a, const Vec3& b) {
@@ -230,6 +237,15 @@ public:
 
 	static inline Vec3 normalize(const Vec3& vec) {
 		return vec / length(vec);
+	}
+
+	// http://math.stackexchange.com/questions/128991/how-to-calculate-area-of-3d-triangle
+	static inline float getTriangleArea(const Vec3 a, const Vec3 b, const Vec3 c) {
+		const Vec3 ab = b-a;
+		const Vec3 ac = c-a;
+		const float cosTheta = dot(ab.normalized(), ac.normalized());
+		const float theta = std::acos(cosTheta);
+		return 0.5f * ab.length() * ac.length() * sin(theta);
 	}
 
 

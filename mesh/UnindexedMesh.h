@@ -16,9 +16,9 @@
 #include "../textures/TextureFactory.h"
 
 #include "../shader/Shader.h"
-//#include "../textures/Multitexture.h"
 
 #include "IMesh.h"
+#include "Transformable.h"
 
 /**
  * an unindexed mesh is a mesh that might contain vertices
@@ -28,17 +28,14 @@
  * this should be faster for small meshes with low polygon counts
  * and will definitely hurt for meshes with many polygons ;)
  */
-class UnindexedMesh : public IMesh {
+class UnindexedMesh : public IMesh, public Transformable {
 
 protected:
 
 	friend class MeshFactory;
 
-	AffineTransform transform;
-	VBOArray<VertexNormalTexture> vertices;
+	VBOArrayStatic<AttrVertexNormalTexture> vertices;
 	VAO vao;
-
-	//Multitexture textures;
 
 	AABB bbox;
 
@@ -53,9 +50,9 @@ protected:
 		vao.bind();
 
 		vertices.bind();
-		vao.setVertices(0, sizeof(VertexNormalTexture));
-		vao.setNormals(1, sizeof(VertexNormalTexture), 3*4);
-		vao.setTexCoords(2, sizeof(VertexNormalTexture), 6*4);
+		vao.setVertices(0, sizeof(AttrVertexNormalTexture));
+		vao.setNormals(1, sizeof(AttrVertexNormalTexture), 3*4);
+		vao.setTexCoords(2, sizeof(AttrVertexNormalTexture), 6*4);
 
 		vao.unbind();
 
@@ -63,44 +60,24 @@ protected:
 
 public:
 
-//	/** set the mesh's texture */
-//	void setTexture(const size_t idx, Texture* texture) {
-//		textures.set(idx, texture);
-//	}
 
 	Material* getMaterial() {return material;}
 	void setMaterial(Material* mat) {this->material = mat;}
-
-	void setPosition(const float x, const float y, const float z) {
-		transform.setPosition(x,y,z);
-	}
-
-	void setRotation(const float x, const float y, const float z) {
-		transform.setRotation(x/180*3.1415,y/180*3.1415,z/180*3.1415);
-	}
-
-	void setScale(const float x, const float y, const float z) {
-		transform.setScale(x,y,z);
-	}
 
 	const Mat4& getMatrix() const override {
 		return transform.getMatrix();
 	}
 
-	void render(const RenderStage& rs) override {
+	void render(const SceneState&, const RenderState&) override {
 
-		material->bind();
-		//textures.bindAll();
-		//shader->bind();
+		if (material) {material->bind();}
 
 		vao.bind();
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 		Error::assertOK();
 		vao.unbind();
 
-		//shader->unbind();
-		//textures.unbindAll();
-		material->unbind();
+		if (material) {material->unbind();}
 
 	}
 

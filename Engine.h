@@ -3,16 +3,20 @@
 
 
 
-#include <chrono>
+
 #include <iostream>
 
 #include "EngineSettings.h"
 #include "misc/Error.h"
 #include "Debug.h"
+#include "Exception.h"
+#include "import/Image.h"
+//#include "scene/Scene.h"
 
 #include <KLib/Assertions.h>
 #include <GLFW/glfw3.h>
 
+#define UNUSED(x)		(void) x
 
 class Scene;
 
@@ -20,52 +24,44 @@ class Engine {
 
 private:
 
-	uint64_t msStart;
-	uint64_t msCur;
-	uint64_t msLast;
-	uint64_t msSinceStart;
 	Scene* scene;
 	EngineSettings settings;
+	bool settingsOK = false;
 
 	GLFWwindow* window;
 
 private:
 
+	/** hidden ctor. use singleton */
 	Engine() {
-		msStart = _getMS();
-		msLast = _getMS();
-		msCur = _getMS();
-	}
 
-	uint64_t _getMS() {
-		return std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
 	}
 
 public:
 
-	void next() {
-		msLast = msCur;
-		msCur = _getMS();
-		msSinceStart = msCur - msStart;
-		updateFPS();
+
+	Image getFrame() {
+		const int w = getScreenSize().width;
+		const int h = getScreenSize().height;
+		Image img(w, h, ImageFormat::IMAGE_RGB);
+		//glReadBuffer(GL_BACK_LEFT);
+		glReadPixels(0,0, w,h, GL_RGB,GL_UNSIGNED_BYTE, img.getDataPtr());
+		return img;
 	}
 
-	uint64_t getTimeMS() const {
-		return msSinceStart;
-	}
 
-	float getTimeSec() const {
-		return msSinceStart / 1000.0f;
-	}
-
-	float getDeltaSec() const {
-		return (msCur - msLast) / 1000.0f;
-	}
 
 	/** singleton access */
 	static Engine* get() {
-		static Engine instance;
-		return &instance;
+		Engine* eng = singleton();
+		if (!eng->settingsOK) {throw Exception("call Engine::init(..) first!");}
+		return eng;
+	}
+
+	/** initialize the engine (once!) */
+	static void init(const EngineSettings& settings) {
+		Engine* eng = singleton();
+		eng->apply(settings);
 	}
 
 	/** set the current scene */
@@ -84,9 +80,42 @@ public:
 		return settings.screen;
 	}
 
+	//int i = 0;
+	void run() {
+
+		glEnable(GL_CULL_FACE);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
+
+		do {
+			render();
+			//if (++i > 2048) {break;}
+		} while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0 );
+
+	}
+
+	/** render the current scene */
+	inline void render();
+
+	/** get the engine's configuration */
+	const EngineSettings& getSettings() const {return settings;}
+
+private:
+
+	/** hidden singleton access. public singleton access has additional checks */
+	static Engine* singleton() {
+		static Engine instance;
+		return &instance;
+	}
+
+	/** configure the engine ONCE */
 	void apply(EngineSettings settings) {
 
-		if( !glfwInit() ) {throw "error during init";}
+		// sanity check
+		if (this->settingsOK) {throw Exception("must not initialize the engine twice!");}
+
+		// init GLFW
+		if( !glfwInit() ) {throw Exception("error during init");}
 		Error::assertOK();
 
 //		// opengl version
@@ -116,46 +145,30 @@ public:
 		glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 		Error::assertOK();
 
+		// store
 		this->settings = settings;
-		Error::assertOK();
+		this->settingsOK = true;
 
 	}
 
-	//int i = 0;
-	void run() {
+//	void updateFPS() {
 
-		glEnable(GL_CULL_FACE);
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LESS);
+//		const float alpha = 0.95f;
+//		this->fps = this->fps * alpha + getFPS() * (1.0f - alpha);
 
-		do {
-			next();
-			render();
-			//if (++i > 2048) {break;}
-		} while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0 );
-
-	}
-
-	void render();
-
-	/** get the engine's configuration */
-	const EngineSettings& getSettings() const {return settings;}
-
-private:
-
-	void updateFPS() {
-		static uint64_t msA = getTimeMS();
-		static int numFrames = 0;
-		++numFrames;
-		const uint64_t diff = getTimeMS() - msA;
-		if (diff > 1000) {
-			const float fps = (float)numFrames / (float)diff * 1000.0f;
-			const float msPerFrame = (float)diff / (float)numFrames;
-			msA = getTimeMS();
-			numFrames = 0;
-			std::cout << "fps: " << fps << " msPerFrame: " << msPerFrame << std::endl;
-		}
-	}
+////		static uint64_t msA = getTimeMS();
+////		static int numFrames = 0;
+////		++numFrames;
+////		const uint64_t diff = getTimeMS() - msA;
+////		if (diff > 1000) {
+////			const float fps = (float)numFrames / (float)diff * 1000.0f;
+////			const float msPerFrame = (float)diff / (float)numFrames;
+////			msA = getTimeMS();
+////			numFrames = 0;
+////			this->fps = fps;
+////			//std::cout << "fps: " << fps << " msPerFrame: " << msPerFrame << std::endl;
+////		}
+//	}
 
 };
 
@@ -165,6 +178,7 @@ private:
 void Engine::render() {
 
 	_assertNotNull(window, "window is null. call Engine::apply(settings) first");
+	_assertNotNull(scene, "scene is null. call setScene(..) first");
 
 	scene->render();
 

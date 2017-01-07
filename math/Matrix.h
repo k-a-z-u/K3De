@@ -5,6 +5,11 @@
 #include <cstring>
 #include <initializer_list>
 
+#include <xmmintrin.h>
+#include <pmmintrin.h>
+
+#define FORCE_LOOP_UNROLL	__attribute__((optimize("unroll-loops")))
+
 template <int size> class Matrix {
 
 private:
@@ -17,7 +22,7 @@ private:
 			Vec4 v2;
 			Vec4 v3;
 		} vectors ;
-	};
+	}__attribute__ ((aligned (16)));
 
 
 public:
@@ -66,7 +71,7 @@ public:
 	}
 
 	/** transpose the matrix (inplace) */
-	void transpose() {
+	FORCE_LOOP_UNROLL void transpose() {
 		for (int x = 0; x < size; ++x) {
 			for (int y = 0; y < size; ++y) {
 				if (y <= x) {continue;}		// process only the upper-right-half
@@ -78,23 +83,66 @@ public:
 		}
 	}
 
-	/** multiply this matrix by the given matrix */
-	Matrix<size> operator * (const Matrix<size>& other) const {
-		Matrix<size> out;
+	/** get a transposed copy of this matrix */
+	FORCE_LOOP_UNROLL Matrix<size> transposed() const {
+		Matrix<size> res;
 		for (int x = 0; x < size; ++x) {
 			for (int y = 0; y < size; ++y) {
-				float val = 0;
-				for (int i = 0; i < size; ++i) {
-					val += get(i,y) * other.get(x,i);
-				}
-				out.set(x,y, val);
+				res.set(x,y, get(y,x));
+				res.set(y,x, get(x,y));
 			}
 		}
-		return out;
+		return res;
+	}
+
+	const float* row(const int rowNr) const {
+		return &values[rowNr*size];
+	}
+
+	/** multiply this matrix by the given matrix */
+	FORCE_LOOP_UNROLL Matrix<size> operator * (const Matrix<size>& other) const {
+
+//		if (1 == 0 && size == 4) {
+
+//			Matrix<size> out;
+//			const Matrix<size> tmp = other.transposed();
+
+//			for (int x = 0; x < size; ++x) {
+
+//				const __m128 colB = _mm_load_ps(tmp.row(x));
+
+//				for (int y = 0; y < size; ++y) {
+
+//					const __m128 rowA = _mm_load_ps(this->row(y));
+//					const __m128 res = _mm_mul_ps(rowA, colB);
+
+//					out.values[x+y*size] = res[0]+res[1]+res[2]+res[3];
+
+//				}
+//			}
+
+//			return out;
+
+//		} else {
+
+			Matrix<size> out;
+			for (int x = 0; x < size; ++x) {
+				for (int y = 0; y < size; ++y) {
+					float val = 0;
+					for (int i = 0; i < size; ++i) {
+						val += get(i,y) * other.get(x,i);
+					}
+					out.set(x,y, val);
+				}
+			}
+			return out;
+
+//		}
+
 	}
 
 	/** multiply this matrix with the given vector */
-	Vec3 operator * (const Vec3& vec) const {
+	FORCE_LOOP_UNROLL Vec3 operator * (const Vec3& vec) const {
 		static_assert(size == 3, "matrix must have a size of 3x3");
 		return Vec3(
 			vec.x*get(0,0) + vec.y*get(1,0) + vec.z*get(2,0),
@@ -104,7 +152,7 @@ public:
 	}
 
 	/** multiply this matrix with the given vector */
-	Vec4 operator * (const Vec4& vec) const {
+	FORCE_LOOP_UNROLL Vec4 operator * (const Vec4& vec) const {
 		static_assert(size == 4, "matrix must have a size of 4x4");
 		return Vec4(
 			vec.x*get(0,0) + vec.y*get(1,0) + vec.z*get(2,0) + vec.w*get(3,0),
@@ -151,6 +199,23 @@ public:
 		transpose();
 		return *this;
 	}
+
+	/** equality check */
+	bool operator == (const Matrix& other) const {
+		for (size_t i = 0; i < (size*size); ++i) {
+			if (this->values[i] != other.values[i]) {return false;}
+		}
+		return true;
+	}
+
+	Matrix abs() const {
+		Matrix copy = *this;
+		for (size_t i = 0; i < (size*size); ++i) {
+			copy.values[i] = std::abs(copy.values[i]);
+		}
+		return copy;
+	}
+
 
 private:
 

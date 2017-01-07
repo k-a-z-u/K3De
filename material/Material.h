@@ -73,15 +73,15 @@ public:
 
 
 	/** get the ambient material */
-	MaterialAmbient* getAmbient() {return ambient;}
+	MaterialAmbient* getAmbient() const {return ambient;}
 	void setAmbient(MaterialAmbient* ambient) {this->ambient = ambient;}
 
 	/** get the bump-map material */
-	MaterialBumpMap* getBumpMap() {return bumpMap;}
+	MaterialBumpMap* getBumpMap() const {return bumpMap;}
 	void setBumpMap(MaterialBumpMap* map) {this->bumpMap = map;}
 
 	/** get the specular material */
-	MaterialSpecular* getSpecular() {return specular;}
+	MaterialSpecular* getSpecular() const {return specular;}
 	void setSpecular(MaterialSpecular* specular) {this->specular = specular;}
 
 
@@ -90,16 +90,20 @@ public:
 
 	/** bind the material. before rendering */
 	void bind() {
-		getAmbient()->bind();
-		if (getBumpMap()) {getBumpMap()->bind();}
+		if (getAmbient())	{getAmbient()->bind();}
+		if (getBumpMap())	{getBumpMap()->bind();}
+		if (getSpecular())	{getSpecular()->bind();}
 		textures.bindAll();
+		Error::assertOK();
 	}
 
 	/** unbind the material. after rendering */
 	void unbind() {
-		getAmbient()->unbind();
-		if (getBumpMap()) {getBumpMap()->unbind();}
+		if (getAmbient())	{getAmbient()->unbind();}
+		if (getBumpMap())	{getBumpMap()->unbind();}
+		if (getSpecular())	{getSpecular()->unbind();}
 		textures.unbindAll();
+		Error::assertOK();
 	}
 
 };

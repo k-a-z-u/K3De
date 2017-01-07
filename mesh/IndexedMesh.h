@@ -13,12 +13,8 @@
 
 #include "../math/AffineTransform.h"
 
-#include "../textures/TextureFactory.h"
 #include "IMesh.h"
-#include "../shader/Shader.h"
-//#include "../textures/Multitexture.h"
-
-
+#include "Transformable.h"
 
 /**
  * an indexed mesh is a mesh that contains each vertex only once
@@ -29,19 +25,15 @@
  * this should speed things up for meshes with many polygons and
  * will save some GPU-RAM.
  */
-class IndexedMesh : public IMesh {
+class IndexedMesh : public IMesh, public Transformable {
 
 private:
 
 	friend class MeshFactory;
 
-	AffineTransform transform;
-	VBOArray<VertexNormalTexture> vertices;
-	VBOArrayIndex indices;
+	VBOArrayStatic<AttrVertexNormalTangentTexture> vertices;
+	VBOArrayIndexStatic indices;
 	VAO vao;
-
-	//Multitexture textures;
-	//Material* material;
 
 	AABB bbox;
 
@@ -56,16 +48,25 @@ private:
 		vao.bind();
 
 		vertices.bind();
-		vao.setVertices(0, 8*4);
-		vao.setNormals(1, 8*4, 3*4);
-		vao.setTexCoords(2, 8*4, 6*4);
+
+		// VertexNormalTexture
+//		vao.setVertices(0, 8*4);
+//		vao.setNormals(1, 8*4, 3*4);
+//		vao.setTexCoords(2, 8*4, 6*4);
+
+		// VertexNormalTangentTexture
+		vao.setVertices(0, 11*4);
+		vao.setNormals(1, 11*4, 3*4);
+		vao.setTangents(3, 11*4, 6*4);		// todo swap indicies [2,3] here and within shaders?
+		vao.setTexCoords(2, 11*4, 9*4);
+
 
 		indices.bind();
 
 		vao.unbind();
 
 		// update the bbox;
-		for (const VertexNormalTexture& vnt : vertices.getData()) {
+		for (const AttrVertexNormalTangentTexture& vnt : vertices) {
 			bbox.add(vnt.getVertex());
 		}
 
@@ -73,47 +74,20 @@ private:
 
 public:
 
-//	/** set the mesh's texture */
-//	void setTexture(const size_t idx, Texture* texture) {
-//		textures.set(idx, texture);
-//	}
-
-
-
-	void setPosition(const float x, const float y, const float z) {
-		transform.setPosition(x,y,z);
-	}
-
-	Vec3 getPosition() const {
-		return transform.getPosition();
-	}
-
-	void setRotation(const float x, const float y, const float z) {
-		transform.setRotation(x/180.0f*M_PI, y/180.0f*M_PI, z/180.0f*M_PI);
-	}
-
-	void setScale(const float x, const float y, const float z) {
-		transform.setScale(x,y,z);
-	}
-
 	const Mat4& getMatrix() const override {
 		return transform.getMatrix();
 	}
 
-	void render(const RenderStage& rs) override {
+	void render(const SceneState&, const RenderState&) override {
 
-		material->bind();
-		//textures.bindAll();
-		//shader->bind();
+		if (material) {material->bind();}
 
 		vao.bind();
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 		Error::assertOK();
 		vao.unbind();
 
-		//shader->unbind();
-		//textures.unbindAll();
-		material->unbind();
+		if (material) {material->unbind();}
 
 	}
 

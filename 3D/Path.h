@@ -37,7 +37,7 @@ public:
 	/** get the path's position at the given percentage */
 	Vec3 getPosAt(float percent) const {
 		percent = fmodf(percent, 1);
-		int i;
+		size_t i;
 		for (i = 0; i < points.size(); ++i) {
 			if (points[i].percent > percent) {break;}
 		}

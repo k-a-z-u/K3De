@@ -1,6 +1,8 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#include <cmath>
+
 struct Vec2;
 struct Vec3;
 struct Vec4;
@@ -52,6 +54,13 @@ struct Vec3 {
 	Vec3&	operator -= (const Vec3& o)	{x-=o.x; y-=o.y; z-=o.z; return *this;}
 	Vec3	operator - () const {return Vec3(-x,-y,-z);}
 
+
+	/** array access operator */
+	float& operator [] (const int idx)		{return data[idx];}
+
+	/** const array access operator */
+	float operator [] (const int idx) const	{return data[idx];}
+
 	Vec3 operator + (const Vec3& o) const	{return Vec3(x+o.x, y+o.y, z+o.z);}
 	Vec3 operator - (const Vec3& o) const	{return Vec3(x-o.x, y-o.y, z-o.z);}
 	Vec3 operator * (const Vec3& o) const	{return Vec3(x*o.x, y*o.y, z*o.z);}
@@ -69,7 +78,18 @@ struct Vec3 {
 
 	void set(const float x, const float y, const float z) {this->x = x; this->y = y; this->z = z;}
 
+	float length() const {return std::sqrt( (x*x) + (y*y) + (z*z) );}
+
+	void normalize() { const float l = length(); x/=l; y/=l; z/=l; }
+	Vec3 normalized() const {return *this / length();}
+
+	void swapYZ() {std::swap(y,z);}
+	Vec3 swappedYZ() const {return Vec3(x,z,y);}
+
+
 	size_t hash() const {return *((uint32_t*)&x) ^ *((uint32_t*)&y) ^ *((uint32_t*)&z);}
+
+
 
 	/** convert this Vec3 to a Vec4 with w=1 */
 	inline Vec4 xyz1() const;
@@ -107,8 +127,25 @@ struct Vec4 {
 	/** divide the vector by its w component */
 	inline Vec4 divW() const {return Vec4(x/w, y/w, z/w, 1.0f);}
 
+	/** array access operator */
+	float& operator [] (const int idx)		{return data[idx];}
+
+	/** const array access operator */
+	float operator [] (const int idx) const	{return data[idx];}
+
+	Vec4 operator + (const Vec4& o) const	{return Vec4(x+o.x, y+o.y, z+o.z, w+o.w);}
+	Vec4 operator - (const Vec4& o) const	{return Vec4(x-o.x, y-o.y, z-o.z, w-o.w);}
+	Vec4 operator * (const Vec4& o) const	{return Vec4(x*o.x, y*o.y, z*o.z, w*o.w);}
+	Vec4 operator / (const Vec4& o) const	{return Vec4(x/o.x, y/o.y, z/o.z, w/o.w);}
+
+	Vec4 operator / (const float v) const	{return Vec4(x/v, y/v, z/v, w/v);}
+
 	Vec4& operator /= (const float v)		{x/=v; y/=v; z/=v; w/=w; return *this;}
 	Vec4& operator *= (const float v)		{x*=v; y*=v; z*=v; w*=w; return *this;}
+
+	float length() const {return std::sqrt( (x*x) + (y*y) + (z*z) + (w*w) );}
+
+	Vec4 normalized() const {return *this / length();}
 
 };
 
@@ -124,6 +161,19 @@ Vec3 Vec4::xyz() const {return Vec3(x,y,z);}
 
 inline float dot(const Vec2 v1, const Vec2 v2) {
 	return (v1.x * v2.x) + (v1.y * v2.y);
+}
+
+inline float dot(const Vec3 v1, const Vec3 v2) {
+	return (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z);
+}
+
+inline float dot(const Vec4& v1, const Vec4& v2) {
+	return (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z) + (v1.w * v2.w);
+}
+
+
+inline Vec3 cross(const Vec3 a, const Vec3 b) {
+	return Vec3(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x);
 }
 
 

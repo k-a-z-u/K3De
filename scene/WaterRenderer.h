@@ -30,9 +30,9 @@ private:
 
 public:
 
-	WaterRenderer(Scene* scene);
+	inline WaterRenderer(Scene* scene);
 
-	void update();
+	inline void update();
 
 };
 

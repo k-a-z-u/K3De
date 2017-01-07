@@ -5,6 +5,7 @@
 #include "MaterialSpecular.h"
 #include "../../textures/ITexture.h"
 #include "../../textures/Multitexture.h"
+#include <sstream>
 
 /**
  * use a texture as specular-map.
@@ -20,6 +21,8 @@ class MaterialSpecularTexture : public MaterialSpecular {
 private:
 
 	const float maxShininess;
+	const float mul;
+
 	ITexture* texSpecularMap0;
 	Multitexture textures;
 
@@ -27,8 +30,13 @@ private:
 public:
 
 	/** ctor */
-	MaterialSpecularTexture(ITexture* tex, const float maxShininess) : maxShininess(maxShininess) {
+	MaterialSpecularTexture(ITexture* tex, const float maxShininess, const float mul = 1) : maxShininess(maxShininess), mul(mul) {
+
+		// sanity check
+		//if (!tex->isAlphaOnly()) {throw Exception("specular-texture must be an alpha-only texture e.g. by loading only a grayscale image");}
+
 		texSpecularMap0 = tex;
+
 	}
 
 	std::string getHeaderCode() override {
@@ -36,10 +44,25 @@ public:
 	}
 
 	std::string getMainCode() override {
-		return	std::string() +
-				"vec4 texSpecularMap0Color = texture(texSpecularMap0, uv);\n" +
-				"vec3 specularColor = texSpecularMap0Color.rgb;\n" +
-				"float specularShininess = texSpecularMap0Color.a * " + std::to_string(maxShininess) + ";\n";
+
+		std::stringstream ss;
+
+		ss << "\n";
+		ss << "\t// specular texture\n";
+
+		ss << "\tvec4 texSpecularMap0Color = texture(texSpecularMap0, uv);\n";
+
+		if (texSpecularMap0->isAlphaOnly()) {
+			ss << "\tvec3 specularColor = vec3(texSpecularMap0Color.a, texSpecularMap0Color.a, texSpecularMap0Color.a) * " << std::to_string(mul) << "f;\n";
+		} else {
+			ss << "\tvec3 specularColor = texSpecularMap0Color.rgb * " << std::to_string(mul) << "f;\n";
+		}
+
+		ss << "\tfloat specularShininess = (texSpecularMap0Color.a * " + std::to_string(maxShininess) + "f);\n";
+		ss << "\n";
+
+		return ss.str();
+
 	}
 
 	virtual void configureShader(Shader* shader, ShaderState& state) override {

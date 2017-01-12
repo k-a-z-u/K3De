@@ -22,10 +22,10 @@ public:
 
 	}
 
-	void addPlaneY(const float y, const Vec2 x1z1, const Vec2 x2z2) {
+	void addPlaneY(const float y, const Vec2 x1z1, const Vec2 x2z2, const Vec2 tile = Vec2(1,1)) {
 
 		const Vec2 t1(0,0);
-		const Vec2 t2(5,5);
+		const Vec2 t2 = tile;
 
 		const float x1 = x1z1.x;
 		const float x2 = x2z2.x;

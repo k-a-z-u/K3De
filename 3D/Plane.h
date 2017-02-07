@@ -89,7 +89,8 @@ public:
 
 	void render(const SceneState&, const RenderState&) override {
 
-		material->bind();
+		if (material)	{material->bind();}
+		if (material2)	{material2->bind();}
 		vao.bind();
 
 		//glDisable(GL_CULL_FACE);
@@ -98,7 +99,8 @@ public:
 		Error::assertOK();
 
 		vao.unbind();
-		material->unbind();
+		if (material)	{material->unbind();}
+		if (material2)	{material2->unbind();}
 
 	}
 

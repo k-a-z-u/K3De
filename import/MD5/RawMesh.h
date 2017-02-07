@@ -147,11 +147,13 @@ namespace MD5 {
 
 	};
 
+	/** raw imported mesh-data: "as-is" */
 	struct ImportedMesh {
 
+		// TODO: remove
 		int mode = 0;
 
-		// the skeleton for all sub-meshes
+		// the skeleton [the same for all sub-meshes]
 		Skeleton skeleton;
 
 		// all parsed raw-meshes
@@ -163,7 +165,10 @@ namespace MD5 {
 		/** get the whole mesh's skeleton */
 		const Skeleton& getSkeleton() {return skeleton;}
 
-		/** get the idx-th pre-processed mesh */
+		/**
+		 * an MD5 file usually contains more than one mesh.
+		 * get the idx-th of those meshes and perform some pre-computations
+		 */
 		const PreparedMesh getPreparedMesh(const int idx) {
 			return meshes.at(idx).prepare(skeleton);
 		}

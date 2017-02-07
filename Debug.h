@@ -1,7 +1,10 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#define Debug(sys, str) std::cout << "[" << sys << "] " << str << std::endl;
+#include <iostream>
+#include <iomanip>
+
+#define Debug(sys, str) std::cout << "[" << std::setw(10) << sys << "] " << str << std::endl;
 
 //class Debug {
 

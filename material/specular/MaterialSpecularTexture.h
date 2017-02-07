@@ -65,6 +65,10 @@ public:
 
 	}
 
+	void addVariables(ShaderParamsOLD& params) override {
+
+	}
+
 	virtual void configureShader(Shader* shader, ShaderState& state) override {
 		shader->setInt("texSpecularMap0", state.nextFreeTextureSlot);
 		textures.set(state.nextFreeTextureSlot, texSpecularMap0);

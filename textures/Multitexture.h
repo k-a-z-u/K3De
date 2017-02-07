@@ -27,6 +27,18 @@ public:
 		textures[idx] = texture;
 	}
 
+	/** add to the next free slot. returns the used slot */
+	size_t add(ITexture* tex) {
+		const size_t idx = textures.size();
+		textures.push_back(tex);
+		return idx;
+	}
+
+	/** number of bound textures */
+	size_t size() const {
+		return textures.size();
+	}
+
 	/** bind all contained textures */
 	void bindAll() {
 		for (size_t i = 0; i < textures.size(); ++i) {
@@ -39,6 +51,9 @@ public:
 			if (textures[i]) {textures[i]->unbind(i);}
 		}
 	}
+
+
+	const std::vector<ITexture*> get() const {return textures;}
 
 };
 

@@ -18,6 +18,7 @@
 #include "IMesh.h"
 #include "Transformable.h"
 
+//#define DEBUG_NORMALS
 
 class MD5Mesh : public IMesh, public Transformable {
 
@@ -29,6 +30,11 @@ private:
 	VBOArrayStatic<AttrTexture> textures;
 	VBOArrayDynamic<AttrVertexNormalTangent> vertices;
 	VBOArrayIndexStatic indices;
+
+#ifdef DEBUG_NORMALS
+	VAO vaoNormals;
+	VBOArrayDynamic<AttrVertex> debugNormals;
+#endif
 
 	AABB bbox;
 
@@ -74,6 +80,13 @@ public:
 		indices.upload();
 
 		vertices.resize(mesh.vertices.size());
+
+#ifdef DEBUG_NORMALS
+		debugNormals.resize(mesh.vertices.size()*2);	// from -> to
+#endif
+
+		// start with the mesh's skeleton pose
+		updateFrame(mesh.skeleton.asAbsoluteFrame());
 
 	}
 
@@ -142,6 +155,13 @@ private:
 
 		} vao.unbind();
 
+#ifdef DEBUG_NORMALS
+		vaoNormals.bind();
+		debugNormals.bind();
+		vaoNormals.setVertices(0, 3*4, 0);
+		vaoNormals.unbind();
+#endif
+
 	}
 
 public:
@@ -171,6 +191,7 @@ public:
 	void render(const SceneState&, const RenderState&) override {
 
 		if (material) {material->bind();}
+		if (material2) {material2->bind();}
 
 		vao.bind();
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
@@ -178,6 +199,15 @@ public:
 		vao.unbind();
 
 		if (material) {material->unbind();}
+		if (material2) {material2->unbind();}
+
+#ifdef DEBUG_NORMALS
+		vaoNormals.bind();
+		//debugNormals.bind();
+		//glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+		glDrawArrays(GL_LINES, 0, debugNormals.size());
+		vaoNormals.unbind();
+#endif
 
 	}
 
@@ -204,25 +234,42 @@ private:
 		if (frameNr != animate.curFrameNr) {
 
 			const MD5::AbsoluteFrame& frame = ani.getFrame(frameNr);
-			const std::vector<AttrVertexNormalTangent> vnt = mesh.getVertices(frame, true);
-			vertices.upload(vnt, false);
-
-			for (Attachment& a : attachments) {
-
-				// bone's transformation
-				const Mat4 mBR = frame.bones[a.myBoneIdx].orientation.swappedYZ().toMat4(); //Math::getRotation(a.getTransform().getRotationRad());
-				const Mat4 mBT = Math::getTranslation(frame.bones[a.myBoneIdx].pos.swappedYZ());
-				a.boneTransform.setManually(mBT*mBR);
-
-				// transformation order: final = this.transform * bone.transform * attachedObject.transform
-				a.getOtherTransform().setPost(&a.boneTransform);
-				a.boneTransform.setPost(&this->getTransform());
-
-			}
+			updateFrame(frame);
 
 		}
 
 		animate.curFrameNr = frameNr;
+
+	}
+
+	void updateFrame(const MD5::AbsoluteFrame& frame) {
+
+		const std::vector<AttrVertexNormalTangent> vnt = mesh.getVertices(frame, true);
+		vertices.upload(vnt, false);
+
+#ifdef DEBUG_NORMALS
+		debugNormals.beginSync();
+		for (int i = 0; i < vnt.size(); ++i) {
+			AttrVertexNormalTangent a = vnt[i];
+			debugNormals[i*2 +0].v = a.getVertex();
+			debugNormals[i*2 +1].v = a.getVertex() + a.getNormal() * 0.15;
+		}
+		debugNormals.endSync();
+#endif
+
+
+		for (Attachment& a : attachments) {
+
+			// bone's transformation
+			const Mat4 mBR = frame.bones[a.myBoneIdx].orientation.swappedYZ().toMat4(); //Math::getRotation(a.getTransform().getRotationRad());
+			const Mat4 mBT = Math::getTranslation(frame.bones[a.myBoneIdx].pos.swappedYZ());
+			a.boneTransform.setManually(mBT*mBR);
+
+			// transformation order: final = this.transform * bone.transform * attachedObject.transform
+			a.getOtherTransform().setPost(&a.boneTransform);
+			a.boneTransform.setPost(&this->getTransform());
+
+		}
 
 	}
 

@@ -139,14 +139,15 @@ public:
 		// update each vertex
 		for (size_t a = 0; a < verts.size(); ++a) {
 
-			const Vec3& n = norm[a].getNormal();
-			const Vec3& t = tan1[a];
+			const Vec3 n = norm[a].getNormal();
+			const Vec3 t = tan1[a];
 
 			// Gram-Schmidt orthogonalize
 			const Vec3 tangent = (t - n * dot(n, t)).normalized();
 
 			// Calculate handedness
-			const float w = (dot(cross(n, t), tan2[a]) < 0.0F) ? (-1.0f) : (1.0f);
+			// should be < 0.0f, however, this produces flickering in some parts. so we added a delta
+			const float w = (dot(cross(n, t), tan2[a]) < 0.0003f) ? (-1.0f) : (1.0f);
 
 			out[a] = tangent*w;	// normally tangent should be vec4.. is this OK?
 //			out[a].setVertex(verts[a].getVertex());

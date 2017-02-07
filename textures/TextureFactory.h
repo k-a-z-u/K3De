@@ -16,13 +16,15 @@ class TextureFactory {
 
 private:
 
+	const char* NAME = "TexFac";
+
 	/** the texture compression format to use */
 	static constexpr GLuint COMPR = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 
 	std::vector<std::unique_ptr<ITexture>> textures;
 
 	bool mipmaps = true;
-	int anisotropic = 2;
+	int anisotropic = 0;	// not all cards support this
 
 	std::string includePath;
 
@@ -43,6 +45,11 @@ public:
 		this->anisotropic = level;
 	}
 
+	/** number of loaded textures */
+	size_t getNumLoaded() const {
+		return textures.size();
+	}
+
 	/** create a new alpha-channel texture using the given input file */
 	Texture2D* createAlpha(const std::string& file, bool compressed = true) {
 
@@ -59,42 +66,78 @@ public:
 
 
 
+//	/** create a new texture using the given input file */
+//	Texture2D* create(const std::string& file, bool compressed = true) {
+
+//		Debug(NAME, "loading texture: " + file);
+
+//		// parse the image file
+//		Image img = ImageFactory::load(includePath + file);
+//		void* data = (void*) img.getData().data();
+
+////		// get the texture format
+////		int formatIn, formatOut;
+////		switch(img.getFormat()) {
+////			case ImageFormat::IMAGE_RGB:
+////				formatIn = GL_RGB;
+////				formatOut = (compressed) ? (COMPR) : (GL_RGB);
+////				break;
+////			case ImageFormat::IMAGE_RGBA:
+////				formatIn = GL_RGBA;
+////				formatOut = (compressed) ? (COMPR) : (GL_RGBA);
+////				break;
+////			case ImageFormat::IMAGE_GREY:
+////				formatIn = GL_ALPHA;
+////				formatOut = (compressed) ? (GL_COMPRESSED_ALPHA) : (GL_ALPHA);
+////				break;
+////			case ImageFormat::IMAGE_GREY_ALPHA:
+////				formatIn = GL_ALPHA;
+////				formatOut = (compressed) ? (GL_COMPRESSED_ALPHA) : (GL_ALPHA);				// which compressionm format?
+////				break;
+////			default: throw "error";
+////		}
+
+//		const int formatIn = getFormatIn(img);
+//		const int formatOut = getFormatOut(img, compressed);
+
+//		return create(data, img.getWidth(), img.getHeight(), formatIn, formatOut);
+
+//	}
+
+
 	/** create a new texture using the given input file */
-	Texture2D* create(const std::string& file, bool compressed = true) {
+	Texture2D* create(const std::string file, bool compressed = true) {
 
-		// parse the image file
-		Image img = ImageFactory::load(includePath + file);
-		void* data = (void*) img.getData().data();
+		// create and add a new texture
+		Texture2D* tex = new Texture2D(-1, -1);
+		textures.push_back(std::make_unique(tex));
 
-		// get the texture format
-		int formatIn, formatOut;
-		switch(img.getFormat()) {
-			case ImageFormat::IMAGE_RGB:
-				formatIn = GL_RGB;
-				formatOut = (compressed) ? (COMPR) : (GL_COMPRESSED_RGB);
-				break;
-			case ImageFormat::IMAGE_RGBA:
-				formatIn = GL_RGBA;
-				formatOut = (compressed) ? (COMPR) : (GL_COMPRESSED_RGBA);
-				break;
-			case ImageFormat::IMAGE_GREY:
-				formatIn = GL_ALPHA;
-				formatOut = (compressed) ? (GL_COMPRESSED_ALPHA) : (GL_ALPHA);
-				break;
-			case ImageFormat::IMAGE_GREY_ALPHA:
-				formatIn = GL_ALPHA;
-				formatOut = (compressed) ? (GL_COMPRESSED_ALPHA) : (GL_ALPHA);				// which compressionm format?
-				break;
-			default: throw "error";
-		}
+		auto funcDecode = [this, file, tex, compressed] () {
 
-		return create(data, img.getWidth(), img.getHeight(), formatIn, formatOut);
+			// decode the image file
+			Image img = ImageFactory::load(includePath + file);
+
+			auto funcUpload = [this, tex, img, compressed] () {
+				void* data = (void*) img.getData().data();
+				const int formatIn = getFormatIn(img);
+				const int formatOut = getFormatOut(img, compressed);
+				upload(tex, data, img.getWidth(), img.getHeight(), formatIn, formatOut);
+			};
+
+			MainLoop::get().add(funcUpload);
+
+		};
+
+
+		GlobalThreadPool::get().add(funcDecode);
+
+		return tex;
 
 	}
 
 
 
-	int getFormatIn(const Image& img) {
+	int getFormatIn(const Image& img) const {
 
 		switch(img.getFormat()) {
 		    case ImageFormat::IMAGE_RGB:
@@ -111,12 +154,43 @@ public:
 
 	}
 
-	Texture2D* create(void* data, int w, int h, int formatIn, int formatOut) {
+	int getFormatOut(const Image& img, const bool compressed) const {
+
+		switch(img.getFormat()) {
+			case ImageFormat::IMAGE_RGB:
+				return (compressed) ? (COMPR) : (GL_RGB);
+			case ImageFormat::IMAGE_RGBA:
+				return (compressed) ? (COMPR) : (GL_RGBA);
+			case ImageFormat::IMAGE_GREY:
+				return (compressed) ? (GL_COMPRESSED_ALPHA) : (GL_ALPHA);
+			case ImageFormat::IMAGE_GREY_ALPHA:
+				return  (compressed) ? (GL_COMPRESSED_ALPHA) : (GL_ALPHA);
+			default:
+				throw Exception("invalid image format");
+		}
+
+	}
+
+	Texture2D* create(const void* data, const int w, const int h, const int formatIn, const int formatOut) {
 
 		// create and add a new texture
-		Texture2D* tex = new Texture2D();
+		Texture2D* tex = new Texture2D(w, h);
 		textures.push_back(std::make_unique(tex));
+
+		// upload data
+		upload(tex, data, w, h, formatIn, formatOut);
+
+		// done
+		return tex;
+
+	}
+
+	void upload(Texture* tex, const void* data, const int w, const int h, const int formatIn, const int formatOut) {
+
 		tex->format = formatOut;
+		tex->width = w;
+		tex->height = h;
+
 		tex->bind(0);
 
 		// load image into the texture
@@ -151,8 +225,6 @@ public:
 			Error::assertOK();
 		}
 
-		return tex;
-
 	}
 
 	/** create a new 2D-array texture using the given input files */
@@ -176,7 +248,7 @@ public:
 		const int layers = files.size();
 
 		// create and add a new texture
-		Texture2DArray* tex = new Texture2DArray(layers);
+		Texture2DArray* tex = new Texture2DArray(w, h, layers);
 		textures.push_back(std::make_unique(tex));
 		tex->bind(0);
 
@@ -237,7 +309,7 @@ public:
 
 	Texture* createRenderTexture(const int w, const int h, const GLuint type = GL_RGB) {
 
-		Texture* tex = new Texture(GL_TEXTURE_2D);
+		Texture* tex = new Texture(GL_TEXTURE_2D, w, h);
 		textures.push_back(std::make_unique(tex));
 		tex->bind(0);
 
@@ -272,7 +344,7 @@ public:
 
 	Texture* createDepthTexture(const int w, const int h) {
 
-		Texture* tex = new Texture(GL_TEXTURE_2D);
+		Texture* tex = new Texture(GL_TEXTURE_2D, w, h);
 		textures.push_back(std::make_unique(tex));
 		tex->bind(0);
 
@@ -286,6 +358,23 @@ public:
 		return tex;
 
 	}
+
+//	Texture* createDepthTexture3D(const int w, const int h, const int d) {
+
+//		Texture* tex = new Texture(GL_TEXTURE_3D, w, h);
+//		textures.push_back(std::make_unique(tex));
+//		tex->bind(0);
+
+//		// TODO: performance boost possible?
+//		// Give an empty image to OpenGL ( the last "0" )
+//		glTexImage3D(GL_TEXTURE_3D, 0,GL_DEPTH_COMPONENT32F, w, h, d, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+
+//		//tex->setFilter(TextureFilter::NEAREST, TextureFilter::NEAREST);
+//		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+//		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+//		return tex;
+
+//	}
 
 };
 

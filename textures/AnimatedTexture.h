@@ -22,6 +22,14 @@ public:
 		this->fps = fps;
 	}
 
+	int getWidth() const override {
+		return (textures.empty()) ? (-1) : (textures.front()->getWidth());
+	}
+
+	int getHeight() const override {
+		return (textures.empty()) ? (-1) : (textures.front()->getHeight());
+	}
+
 	void add(Texture* tex) {
 		textures.push_back(tex);
 	}

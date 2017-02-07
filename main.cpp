@@ -33,7 +33,7 @@
 #include "tests/Tests.h"
 int runTests(int argc, char** argv) {
 
-	::testing::GTEST_FLAG(filter) = "*Matrix.*";
+	::testing::GTEST_FLAG(filter) = "*DemoScene1.*";
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
 
@@ -44,10 +44,20 @@ int runTests(int argc, char** argv) {
 
 int main(int argc, char** argv) {
 
+//	ThreadPool& gtq = GlobalThreadPool::get();
+//	gtq.add( [] () {std::cout << "123" << std::endl;} );
+//	gtq.add( [] () {std::cout << "abc" << std::endl;} );
+//	gtq.add( [] () {std::cout << "xyz" << std::endl;} );
+
+//	gtq.join();
+
 #ifdef WITH_TESTS
 	runTests(argc, argv);
 	//exit(0);
 #endif
+
+
+
 
 //	Engine::init();
 

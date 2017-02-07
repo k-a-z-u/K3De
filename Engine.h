@@ -16,6 +16,11 @@
 #include <KLib/Assertions.h>
 #include <GLFW/glfw3.h>
 
+#include "InputListener.h"
+
+#include "threads/MainLoop.h"
+#include "threads/GlobalThreadPool.h"
+
 #define UNUSED(x)		(void) x
 
 class Scene;
@@ -29,6 +34,8 @@ private:
 	bool settingsOK = false;
 
 	GLFWwindow* window;
+
+	std::vector<InputListener*> inputListeners;
 
 private:
 
@@ -62,6 +69,11 @@ public:
 	static void init(const EngineSettings& settings) {
 		Engine* eng = singleton();
 		eng->apply(settings);
+	}
+
+	/** attach a new input listener */
+	void addInputListener(InputListener* l) {
+		this->inputListeners.push_back(l);
 	}
 
 	/** set the current scene */
@@ -149,6 +161,22 @@ private:
 		this->settings = settings;
 		this->settingsOK = true;
 
+		// defaults
+//		glEnable(GL_BLEND);
+//		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		// register for keyboard events
+		glfwSetKeyCallback(window, keyCallback);
+
+	}
+
+private:
+
+	/** static key-input callback */
+	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+		for (InputListener* l : Engine::get()->inputListeners) {
+			l->onKeyEvent(key, scancode, action, mods);
+		}
 	}
 
 //	void updateFPS() {
@@ -173,19 +201,6 @@ private:
 };
 
 
-#include "scene/Scene.h"
 
-void Engine::render() {
-
-	_assertNotNull(window, "window is null. call Engine::apply(settings) first");
-	_assertNotNull(scene, "scene is null. call setScene(..) first");
-
-	scene->render();
-
-	// make visible
-	glfwSwapBuffers(window);
-	glfwPollEvents();
-
-}
 
 #endif // ENGINE_H

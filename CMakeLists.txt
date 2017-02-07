@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
-PROJECT(openGL)
+PROJECT(K3De)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
 
@@ -8,11 +8,6 @@ IF (NOT CMAKE_BUILD_TYPE)
     MESSAGE(STATUS "No build type selected. Default to RELEASE")
     SET(CMAKE_BUILD_TYPE "RELEASE")
 ENDIF()
-
-# TODO: Check if USE_OPENNI has been set and set it for the compilation.
-
-# TODO: Check compiler version to be at least g++4.7 or clang++3.1.
-
 
 FIND_PACKAGE(OpenGL REQUIRED)
 #FIND_PACKAGE(FMODEX REQUIRED)
@@ -53,7 +48,7 @@ ADD_DEFINITIONS(
 	#-DGLEW_STATIC
 
 	-g3
-	-O2
+	-O0
 	-DWITH_ASSERTIONS
 	-DWITH_TESTS
 
@@ -84,6 +79,7 @@ TARGET_LINK_LIBRARIES(
 	png
 	jpeg
 	gtest
+	pthread
    #${SDL_LIBRARY}
    #${SDLIMAGE_LIBRARY}
    #${SDLGFX_LIBRARY}

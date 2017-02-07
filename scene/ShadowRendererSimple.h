@@ -17,8 +17,10 @@ private:
 	int texW;
 	int texH;
 
+	// one shadow texture per light
+	Texture* texShadows[MAX_LIGHTS];
+
 	Framebuffer fbShadows;
-	Texture* texShadows;
 	Shader* sShadowGen;
 
 	Scene* scene;
@@ -30,7 +32,8 @@ public:
 
 	inline void update() override;
 
-	inline Texture* getShadowTexture() override {return texShadows;}
+	/** get the shadow-map-texture for the given light */
+	inline Texture* getShadowTexture(const int lightIdx) {return texShadows[lightIdx];}
 
 	inline std::string getShadowAmountCalculationGLSL() override;
 
@@ -42,18 +45,22 @@ public:
 ShadowRendererSimple::ShadowRendererSimple(Scene* scene) {
 
 	this->scene = scene;
-//	texW = 512;
-//	texH = 512;
+	//texW = 512;
+	//texH = 512;
+	texW = 1024;
+	texH = 1024;
+	//texW = Engine::get()->getSettings().screen.width;
+	//texH = Engine::get()->getSettings().screen.height;
 
-	texW = 1024;//Engine::get()->getSettings().screen.width;
-	texH = 1024;//Engine::get()->getSettings().screen.height;
+	// construct one 2D shadow-map texture per light
+	// [unfortunately one 3D texture for all lights does NOT work for depth-texture!, color-texture would probably work..]
+	for (int i = 0; i < MAX_LIGHTS; ++i) {
+		texShadows[i] = scene->getTextureFactory().createDepthTexture(texW, texH);
+		texShadows[i]->setFilter(TextureFilter::LINEAR, TextureFilter::LINEAR);
+		texShadows[i]->setWrapping(TextureWrapping::CLAMP, TextureWrapping::CLAMP);
+	}
 
-	texShadows = scene->getTextureFactory().createDepthTexture(texW, texH);
-	texShadows->setFilter(TextureFilter::LINEAR, TextureFilter::LINEAR);
-	texShadows->setWrapping(TextureWrapping::CLAMP, TextureWrapping::CLAMP);
-
-	fbShadows.attachTextureDepth(texShadows);
-	//sShadowGen = scene->getShaderFactory().create("shaderShadowMapVertex.glsl", "shaderShadowMapFragment.glsl");
+	//fbShadows.attachTextureDepth(texShadows);
 
 	sShadowGen = scene->getShaderFactory().createFromCode(
 		#include "../material/inc/shadowMapVertex.glsl"
@@ -67,24 +74,39 @@ ShadowRendererSimple::ShadowRendererSimple(Scene* scene) {
 
 void ShadowRendererSimple::update() {
 
-	scene->getCamera().push();
-
-	scene->getCamera().setScreenSize(texW, texH);
 	//glCullFace(GL_FRONT);
 	scene->setOverwriteShader(sShadowGen);
-	scene->getCamera().setPosition(scene->getLight(0).getPosition());
-	scene->setShadowPV(scene->getCamera().getPVMatrix());
 
-	fbShadows.enable();
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	scene->renderForShadows();
-	fbShadows.disable();
+	for (int i = 0; i < MAX_LIGHTS; ++i) {
 
-	scene->setOverwriteShader(nullptr);
-	//glCullFace(GL_BACK);
+		// skip inactive lights
+		if (!scene->getLight(i).isActive()) {continue;}
 
-	scene->getCamera().pop();
-	texShadows->bind(7);
+		// skip non shadow casting lights
+		if (!scene->getLight(i).getCastsShadows()) {continue;}
+
+		// render
+		scene->getCamera().push();
+
+		scene->getCamera().setScreenSize(texW, texH);
+		scene->getCamera().setPosition(scene->getLight(i).getPosition());
+		scene->setShadowPV(scene->getCamera().getPVMatrix(), i);
+
+		// attach corresponding texture
+		fbShadows.attachTextureDepth(texShadows[i]);
+
+		fbShadows.enable();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		scene->renderForShadows();
+		fbShadows.disable();
+
+		scene->setOverwriteShader(nullptr);
+		//glCullFace(GL_BACK);
+
+		scene->getCamera().pop();
+		//texShadows->bind(7);		// ???
+
+	}
 
 }
 

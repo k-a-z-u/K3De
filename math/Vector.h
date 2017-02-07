@@ -2,6 +2,8 @@
 #define VECTOR_H
 
 #include <cmath>
+#include <cstdint>
+#include <cstdlib>
 
 struct Vec2;
 struct Vec3;

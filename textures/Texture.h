@@ -37,14 +37,17 @@ private:
 	/** the texture's data format */
 	GLuint format;
 
-//	/** the tiling to apply to this texture when used as a material */
-//	Vec2 tiling;
+	/** the texture's width */
+	int width;
+
+	/** the texture's height */
+	int height;
 
 
 public:
 
 	/** ctor */
-	Texture(GLuint type) : type(type), id(0) {
+	Texture(const GLuint type, const int width, const int height) : type(type), id(0), width(width), height(height) {
 		create();
 	}
 
@@ -57,12 +60,13 @@ public:
 		return format == GL_COMPRESSED_ALPHA || format == GL_ALPHA;
 	}
 
-//	/** get the texture's tiling */
-//	const Vec2 getTiling() const {return tiling;}
+	int getWidth() const override {
+		return width;
+	}
 
-//	/** set the texture's tiling */
-//	void setTiling(const Vec2& tiling) {this->tiling = tiling;}
-
+	int getHeight() const override {
+		return height;
+	}
 
 	void bind(const TextureUnit idx) const override {
 		assertUnbound(key(idx));

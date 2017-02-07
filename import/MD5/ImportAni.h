@@ -14,7 +14,7 @@
 
 namespace MD5 {
 
-	class AniImport {
+	class ImportAnimation {
 
 	private:
 
@@ -24,7 +24,7 @@ namespace MD5 {
 	public:
 
 		/** ctor */
-		AniImport(const float scale) : scale(scale) {
+		ImportAnimation(const float scale) : scale(scale) {
 			;
 		}
 

@@ -14,6 +14,9 @@ struct RenderState {
 		Mat4 PVM;
 	} matrices;
 
+	int screenHeight;
+	int screenWidht;
+
 	RenderPass pass;
 
 };

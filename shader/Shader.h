@@ -15,6 +15,7 @@
 #include "../gl/UBO.h"
 
 #include <set>
+#include <sstream>
 
 class Shader {
 
@@ -43,27 +44,30 @@ public:
 		if (programID) {glDeleteProgram(programID); programID = 0;}
 	}
 
+	/** openGL handle */
+	GLuint getProgram() const {
+		return programID;
+	}
+
 	void loadVertexShader(const std::string& code) {
 		vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
 		Error::assertOK();
-		std::cout << "----------------------------------" << std::endl;
-		std::cout << code << std::endl;
+		debugCode(code);
 		compile(vertexShaderID, code);
 	}
 
 	void loadFragmentShader(const std::string& code) {
 		fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 		Error::assertOK();
-		std::cout << "----------------------------------" << std::endl;
-		std::cout << code << std::endl;
+		debugCode(code);
 		compile(fragmentShaderID, code);
 	}
 
+	/** not supported by openGl ES! */
 	void loadGeometryShader(const std::string& code) {
 		geomentryShaderID = glCreateShader(GL_GEOMETRY_SHADER);
 		Error::assertOK();
-		std::cout << "----------------------------------" << std::endl;
-		std::cout << code << std::endl;
+		debugCode(code);
 		compile(geomentryShaderID, code);
 	}
 
@@ -82,13 +86,20 @@ public:
 		// Check the program
 		GLint res;
 		glGetProgramiv(programID, GL_LINK_STATUS, &res);
-		if (res == GL_FALSE) {
+
+		//if (res == GL_FALSE) {
 			int logLength;
 			glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &logLength);
-			std::string log; log.resize(logLength-1); log.reserve(logLength);
-			glGetProgramInfoLog(programID, logLength, NULL, (char*) log.data());
-			std::cout << "log: " << log << std::endl;
-			throw "error while linking program";
+			if (logLength > 0) {
+				std::string log; log.resize(logLength-1); log.reserve(logLength);
+				glGetProgramInfoLog(programID, logLength, NULL, (char*) log.data());
+				std::cout << "log: " << log << std::endl;
+			}
+
+		//}
+
+		if (res == GL_FALSE) {
+			throw Exception("error while linking program");
 		}
 
 		cleanup();
@@ -111,6 +122,7 @@ public:
 	}
 
 	GLint getCachedUniformLocation(const std::string& name) const {
+		assertBound();
 		const auto it = uniforms.find(name);
 		if (it == uniforms.end()) {
 			const GLint id = glGetUniformLocation(programID, name.c_str());
@@ -125,7 +137,7 @@ public:
 	/** get the ID for a uniform named "name" */
 	GLuint getUniformLocation(const std::string& name) const {
 		const GLint id = getCachedUniformLocation(name);
-		if (id == -1) {throw "uniform not found: " + name;}
+		if (id == -1) {throw Exception("uniform not found: " + name);}
 		return id;
 	}
 
@@ -206,6 +218,23 @@ public:
 	}
 
 private:
+
+	void debugCode(const std::string str) {
+
+		std::stringstream ss;
+
+		int line = 1;
+		ss << line << '\t';
+		for (char c : str) {
+			ss << c;
+			if (c == '\n') {ss << ++line << '\t';}
+		}
+
+		ss << "\n\n\n";
+
+		std::cout << ss.str() << std::endl;
+
+	}
 
 	/** ensure the ID is currently bound */
 	inline void assertBound() const {

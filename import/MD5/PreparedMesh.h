@@ -31,6 +31,7 @@ namespace MD5 {
 			return res;
 		}
 
+		/** adjusted base-vertices depending on the given pose/skeleton */
 		std::vector<AttrVertexNormalTangent> getVertices(const AbsoluteFrame& frame, const bool swapYZ) const {
 
 			// output
@@ -44,8 +45,8 @@ namespace MD5 {
 					res[i].setVertex(Vec3(vn.vertex.x, vn.vertex.z, vn.vertex.y)); // swap
 					res[i].setNormal(Vec3(vn.normal.x, vn.normal.z, vn.normal.y)); // swap
 				} else {
-					res[i].setVertex(Vec3(vn.vertex.x, vn.vertex.y, vn.vertex.z)); // swap
-					res[i].setNormal(Vec3(vn.normal.x, vn.normal.y, vn.normal.z)); // swap
+					res[i].setVertex(Vec3(vn.vertex.x, vn.vertex.y, vn.vertex.z));
+					res[i].setNormal(Vec3(vn.normal.x, vn.normal.y, vn.normal.z));
 				}
 			}
 

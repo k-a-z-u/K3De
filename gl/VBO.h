@@ -131,6 +131,11 @@ public:
 		upload(data.data(), data.size()*sizeof(T), sync);
 	}
 
+	/** number of contained elements */
+	size_t size() const {
+		return numElements;
+	}
+
 private:
 
 	/** allocate a dynamic memory-region of the given size */

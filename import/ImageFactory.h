@@ -74,7 +74,7 @@ private:
 		jpeg_create_decompress(& info);   //fills info structure
 
 		//if the jpeg file doesn't load
-		if(!fp) {throw "error reading JPEG";}
+		if(!fp) {throw Exception("jpeg not found: " + filename);}
 
 		jpeg_stdio_src(&info, fp);
 		jpeg_read_header(&info, TRUE);   // read jpeg file header

@@ -44,6 +44,18 @@ public:
 		return Time(this->_ms - other._ms);
 	}
 
+	Time operator + (const Time other) const {
+		return Time(this->_ms + other._ms);
+	}
+
+	bool operator < (const Time other) const {
+		return this->_ms < other._ms;
+	}
+
+	bool operator > (const Time other) const {
+		return this->_ms > other._ms;
+	}
+
 };
 
 

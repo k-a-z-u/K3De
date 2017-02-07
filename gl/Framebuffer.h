@@ -30,10 +30,12 @@ public:
 
 	void bind() {
 		glBindFramebuffer(GL_FRAMEBUFFER, fbID);
+		Error::assertOK();
 	}
 
 	void unbind() {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		Error::assertOK();
 	}
 
 	/** attach the given texture as the idx-th color-target */
@@ -43,7 +45,8 @@ public:
 		//glFramebufferTexture(GL_FRAMEBUFFER, id, texture->getID(), 0);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, id, GL_TEXTURE_2D, texture->getID(), 0);
 		Error::assertOK();
-		colorBuffers.push_back(id);
+		if (colorBuffers.size() < (idx+1)) {colorBuffers.resize(idx+1);}
+		colorBuffers[idx] = id;
 		unbind();
 	}
 
@@ -77,12 +80,13 @@ public:
 		if (colorBuffers.empty()) {
 			// no color buffers set. just rendering the depth-channel (e.g. shadows)
 			glDrawBuffer(GL_NONE);
+			Error::assertOK();
 		} else {
 			// attach all configured color buffers
 			glDrawBuffers(colorBuffers.size(), colorBuffers.data());
+			Error::assertOK();
 		}
 
-		Error::assertOK();
 		const GLenum res = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		_assertEqual(GL_FRAMEBUFFER_COMPLETE, res, "framebuffer is not complete!");
 

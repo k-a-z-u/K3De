@@ -16,6 +16,7 @@ class MeshFactory {
 
 private:
 
+	const char* NAME = "MeshFac";
 	std::vector<std::unique_ptr<IMesh>> meshes;
 
 public:
@@ -69,6 +70,8 @@ InstanceMesh* MeshFactory::createNewInstance(IMesh* srcMesh) {
 }
 
 IndexedMesh* MeshFactory::createMesh(const std::string fileName, const bool normalize, const bool centerAtOrigin) {
+
+	Debug(NAME, "loading mesh: " + fileName);
 
 	// create a new, empty mesh
 	IndexedMesh* mesh = new IndexedMesh();

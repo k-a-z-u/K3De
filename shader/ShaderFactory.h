@@ -46,7 +46,7 @@ public:
 		Shader* s = new Shader();
 		s->loadVertexShader(srcVertex);
 		s->loadFragmentShader(srcPixel);
-		s->loadGeometryShader(srcGeo);
+		s->loadGeometryShader(srcGeo);		// not supported by opengl es
 		s->link();
 		shader.push_back(std::make_unique(s));
 		return s;

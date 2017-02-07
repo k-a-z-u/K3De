@@ -78,11 +78,17 @@ public:
 
 	/** get the bump-map material */
 	MaterialBumpMap* getBumpMap() const {return bumpMap;}
-	void setBumpMap(MaterialBumpMap* map) {this->bumpMap = map;}
+	void setBumpMap(MaterialBumpMap* map) {
+		if (!useLigthing) {throw Exception("bump-mapping requires lighting to be enabled!");}
+		this->bumpMap = map;
+	}
 
 	/** get the specular material */
 	MaterialSpecular* getSpecular() const {return specular;}
-	void setSpecular(MaterialSpecular* specular) {this->specular = specular;}
+	void setSpecular(MaterialSpecular* specular) {
+		if (!useLigthing) {throw Exception("specular-lighting requires lighting to be enabled!");}
+		this->specular = specular;
+	}
 
 
 	/** whether this material uses normal maps somewhere */

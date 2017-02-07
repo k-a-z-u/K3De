@@ -21,7 +21,9 @@ private:
 	Mat4 matrix;
 	Scene* scene;
 
-	Material* material;
+//	Material* material = nullptr;
+//	Material2* material2 = nullptr;
+
 	std::vector<float> glyphEdges;
 	Vec2 pos;
 	float size;
@@ -33,8 +35,31 @@ public:
 
 	/** ctor */
 	Text2(Scene* scene, Material* material, const std::vector<float>& glyphEdges) :
-		scene(scene), material(material), glyphEdges(glyphEdges), pos(0.5, 0.5), size(1.0), color(1,1,1,1) {
+	    scene(scene), glyphEdges(glyphEdges), pos(0.5, 0.5), size(1.0), color(1,1,1,1) {
 		matrix = Mat4::identity();
+		setMaterial(material);
+	}
+
+	/** ctor */
+	Text2(Scene* scene, Material2* material2) :
+	    scene(scene), pos(0.5, 0.5), size(1.0), color(1,1,1,1) {
+		matrix = Mat4::identity();
+
+		// get font glyps [4 floats] from XML
+		const std::string sGlyphs = material2->getUserValues()["glyphs"];
+		std::istringstream ss(sGlyphs);
+		std::string token;
+
+		// split comma separated string
+		while(std::getline(ss, token, ',')) {
+			const float val = std::stof(token);
+			glyphEdges.push_back(val);
+		}
+
+		if (glyphEdges.size() % 4 != 0) {throw "number of glyphs must be multiple of 4";}
+
+		setMaterial(material2);
+
 	}
 
 	/** set the text's color */
@@ -76,13 +101,16 @@ public:
 	/** render this object */
 	virtual void render(const SceneState&, const RenderState&) override {
 
-		material->bind();
+		if (material) {material->bind();}
+		if (material2) {material2->bind();}
+
 		vao.bind();
-
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
-
+		Error::assertOK();
 		vao.unbind();
-		material->unbind();
+
+		if (material2) {material2->unbind();}
+		if (material) {material->unbind();}
 
 	}
 
@@ -153,12 +181,14 @@ private:
 	}
 
 	Vec2 getTexCoordStart(const char c) const {
-		const int idx = (c - 32) * 4;
+		int idx = (c - 32) * 4;
+		if (idx < 32) {idx = 32;}	// e.g. return key
 		return Vec2(glyphEdges[idx+0], glyphEdges[idx+3]);
 	}
 
 	Vec2 getTexCoordEnd(const char c) const {
-		const int idx = (c - 32) * 4;
+		int idx = (c - 32) * 4;
+		if (idx < 32) {idx = 32;}	// e.g. return key
 		return Vec2(glyphEdges[idx+2], glyphEdges[idx+1]);
 	}
 

@@ -16,6 +16,12 @@ public:
 
 	virtual void unbind(const TextureUnit idx) const = 0;
 
+	/** texture's width */
+	virtual int getWidth() const = 0;
+
+	/** texture's height */
+	virtual int getHeight() const = 0;
+
 	/** is this an alpha-channel-only texture? */
 	virtual bool isAlphaOnly() const = 0;
 

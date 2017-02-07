@@ -81,12 +81,14 @@ public:
 	void render(const SceneState&, const RenderState&) override {
 
 		if (material) {material->bind();}
+		if (material2) {material2->bind();}
 
 		vao.bind();
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 		Error::assertOK();
 		vao.unbind();
 
+		if (material2) {material2->unbind();}
 		if (material) {material->unbind();}
 
 	}

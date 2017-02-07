@@ -17,7 +17,7 @@ public:
 	virtual void update() = 0;
 
 	/** get the rendered shadow texture */
-	virtual Texture* getShadowTexture() = 0;
+	virtual Texture* getShadowTexture(const int lightIdx) = 0;
 
 	/** glsl code to determine the amount of shadowing of the current fragment */
 	virtual std::string getShadowAmountCalculationGLSL() = 0;

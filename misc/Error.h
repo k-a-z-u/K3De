@@ -14,6 +14,9 @@ public:
 	/** assert there are no openGL errors */
 	static inline void assertOK() {
 		const GLenum err = glGetError();
+		if (err != GL_NO_ERROR) {
+			int i = 0; (void) i;
+		}
 		_assertEqual(GL_NO_ERROR, err, "an openGL error occurred");
 	}
 #else

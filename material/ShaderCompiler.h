@@ -80,7 +80,7 @@ std::string ShaderCompiler::getVertexShader() {
 	shader += "out vec3 normal_M;\n";
 	shader += "out vec3 tangent_M;\n";
 	shader += "out vec3 vertex_M;\n";
-	shader += "out vec3 eye_M;\n";
+	shader += "out vec3 surfaceToEye_M;\n";
 	shader += "out vec4 color_M;\n";
 
 	if (mat->getReceivesShadows()) {
@@ -115,8 +115,8 @@ std::string ShaderCompiler::getVertexShader() {
 	/** the vertex's tangent in world-space */
 	shader += "\ttangent_M = (mat3(M) * tangent);\n";		// tangents are NOT translated (only scaled and rotated) -> 3x3 matrix suffices
 
-	/** the eye-vector in world-space */
-	shader += "\teye_M = normalize(camPos - vertex_M);\n";
+	/** the surface_to_camera in world-space */
+	shader += "\tsurfaceToEye_M = normalize(camPos - vertex_M);\n";
 
 	/** the eye-vector in world-space */
 	shader += "\tcolor_M = color;\n";
@@ -142,6 +142,8 @@ std::string ShaderCompiler::getFragmentShader() {
 	// sanity checks
 	if (!mat->getAmbient()) {throw "ambient material missing!";}
 
+	ShaderParamsOLD params;
+
 	std::string shader;
 	shader += getShaderVersion();
 
@@ -152,6 +154,9 @@ std::string ShaderCompiler::getFragmentShader() {
 	shader += "in vec3 normal_M;\n";
 	shader += "in vec3 tangent_M;\n";
 	shader += "in vec3 eye_M;\n";
+	shader += "in vec3 surfaceToEye_M;\n";
+
+	shader += "uniform vec3 camPos;\n";
 
 	shader +=
 		#include "inc/lightFragment.glsl"
@@ -164,6 +169,7 @@ std::string ShaderCompiler::getFragmentShader() {
 
 	// add ambient parts to the header
 	shader += mat->getAmbient()->getHeaderCode();
+	mat->getAmbient()->addVariables(params);
 
 	// add normal-map parts to the header
 	if (mat->usesNormalMap()) {
@@ -171,12 +177,17 @@ std::string ShaderCompiler::getFragmentShader() {
 			#include "inc/normalMapFragment.glsl"
 		;
 		shader += mat->getBumpMap()->getHeaderCode();
+		mat->getBumpMap()->addVariables(params);
 	}
 
 	// add specular parts to the header
 	if (mat->getSpecular()) {
 		shader += mat->getSpecular()->getHeaderCode();
+		mat->getSpecular()->addVariables(params);
 	}
+
+	shader += params.getVariables();
+	shader += params.getFunctions();
 
 	// add output parts to the header
 	shader += "out vec4 color;\n";
@@ -214,19 +225,24 @@ std::string ShaderCompiler::getFragmentShader() {
 			shader += "\tvec3 N = normalize(normal_M);\n";							// simple normal
 		}
 
-		shader += "\tvec3 E = normalize(eye_M);\n";
+		//shader += "\tvec3 E = normalize(camPos - vertex_M);\n";					// is this one more accurate? [non-interpolated between vertices?!]
+		shader += "\tvec3 E = normalize(surfaceToEye_M);\n";						// surface to camera [unit vector]
+
+
 
 		// calculate variable light stuff (different for every light)
 		shader += "\tvec3 lightPos_M = getLightPos(0);\n";
 		shader += "\tvec3 lightColor = getLightColor(0);\n";
 
-		shader += "\tvec3 L = normalize(lightPos_M - vertex_M);\n";
-		shader += "\tfloat theta = clamp( dot(N, L), 0.0f, 1.0f);\n";
+		shader += "\tvec3 L = normalize(lightPos_M - vertex_M);\n";					// from surface towards the light [unit-vector]
+		//shader += "\tfloat theta = clamp( dot(N, L), 0.0f, 1.0f);\n";				// diffuse color [= normal lighting]
+		shader += "\tfloat theta = max( 0.0f, dot(N, L) );\n";					// faster??
 
 		// use specular lighting?
 		if (mat->getSpecular()) {
 			shader += "\tvec3 R = reflect(-L, N);\n";
-			shader += "\tfloat alpha = clamp( dot(E, R), 0.0f, 1.0f);\n";
+			//shader += "\tfloat cosAlpha = clamp( dot(E, R), 0.0f, 1.0f);\n";		// TODO: check!
+			shader += "\tfloat cosAlpha = max( 0.0f, dot(E, R) );\n";				// same es above but faster??
 			shader += mat->getSpecular()->getMainCode();
 		}
 
@@ -239,13 +255,20 @@ std::string ShaderCompiler::getFragmentShader() {
 		// diffuse color
 		shader += "\t\t(ambient.rgb * (lightColor * theta) * 1.0)";
 
-		// specular color
+		// specular color (if any)
 		if (mat->getSpecular()) {
-			shader += "+\n\t\t(specularColor * pow(alpha, specularShininess))";
+			shader += "+\n\t\t(specularColor) * pow(cosAlpha, specularShininess)";
 		}
 
 		// done
-		shader += ";\n\tcolor.a = ambient.a;\n";
+		shader += ";\n";
+
+		// gamma correction [if any]
+		//shader += "\tconst vec3 gamma = vec3(1.0/0.9);\n";
+		//shader += "\tcolor.rgb = pow(color.rgb, gamma);\n";
+
+		// set alpha
+		shader += "\tcolor.a = ambient.a;\n";
 
 	} else {
 
@@ -260,59 +283,66 @@ std::string ShaderCompiler::getFragmentShader() {
 }
 
 std::string ShaderCompiler::getGeometryShader() {
+
 	throw "TODO";
+	/*
+	std::string geo =
 
-	//		std::string geo = R"(
+	 getShaderVersion() +
 
-	//					#version 330 core
+	 R"(
 
-	//					uniform mat4 M;
-	//					uniform mat4 V;
-	//					uniform mat4 P;
+			#version 330 core
 
-	//					layout (triangles) in;
-	//					layout (triangle_strip, max_vertices = 3) out;
+			uniform mat4 M;
+			uniform mat4 V;
+			uniform mat4 P;
 
-	//					in      vec3  normal_M[];
-	//					//float normal_scale = 0.5;
+			layout (triangles) in;
+			layout (triangle_strip, max_vertices = 3) out;
 
-	//					void main() {
+			//in vec3 vertex_M[3];
+			in vec3  normal_M[3];
+			//float normal_scale = 0.5;
 
-	//						int i;
+			void main() {
 
-	//						for (i = 0; i < gl_in.length(); ++i) {
-	//							gl_Position = gl_in[i].gl_Position;
-	//							EmitVertex();
-	//						}
+				for (int i = 0; i < gl_in.length(); ++i) {
+					gl_Position = gl_in[i].gl_Position;
+					EmitVertex();
+				}
 
-	//						gl_Position = gl_in[i].gl_Position;
+				gl_Position = gl_in[i].gl_Position;
 
-	//						EndPrimitive();
+				EndPrimitive();
 
-	//			//			vec4 v0     = vec4(0);//gl_in[0].gl_Position;
-	//			//			vec4 v1     = vec4(1);//gl_in[0].gl_Position; //v0 + vec4(normal_M[0] * normal_scale, 0);
-	//			//			vec4 v2     = vec4(2);
+	//			vec4 v0     = vec4(0);//gl_in[0].gl_Position;
+	//			vec4 v1     = vec4(1);//gl_in[0].gl_Position; //v0 + vec4(normal_M[0] * normal_scale, 0);
+	//			vec4 v2     = vec4(2);
 
-	//			//			gl_Position = P*V*M * v0;	EmitVertex();
-	//			//			gl_Position = P*V*M * v1;	EmitVertex();
-	//			//			gl_Position = P*V*M * v2;	EmitVertex();
+	//			gl_Position = P*V*M * v0;	EmitVertex();
+	//			gl_Position = P*V*M * v1;	EmitVertex();
+	//			gl_Position = P*V*M * v2;	EmitVertex();
 
-	//			//			EndPrimitive();
+	//			EndPrimitive();
 
-	//			//			// we simply transform and emit the incoming vertex - this is v0 of our
-	//			//			// line segment
+	//			// we simply transform and emit the incoming vertex - this is v0 of our
+	//			// line segment
 
-	//			//			gl_Position = P*V*M * v0;
-	//			//			EmitVertex();
+	//			gl_Position = P*V*M * v0;
+	//			EmitVertex();
 
-	//			//			// we calculate v1 of our line segment
-	//			//
-	//			//			gl_Position = P*V*M * v1;
-	//			//			EmitVertex();
+	//			// we calculate v1 of our line segment
+	//
+	//			gl_Position = P*V*M * v1;
+	//			EmitVertex();
 
-	//			//			EndPrimitive();
-	//					}
-	//				)";
+	//			EndPrimitive();
+			}
+		)";
+
+	return geo;
+	*/
 
 }
 
@@ -328,10 +358,12 @@ Shader* ShaderCompiler::compileShader(Material* mat, Scene* scene) {
 	const std::string codeVertex = sc.getVertexShader();
 	const std::string codeFragment = sc.getFragmentShader();
 	//const std::string codeGeometry = sc.getGeometryShader();
-	Shader* s = scene->getShaderFactory().createFromCode(codeVertex, codeFragment);
+
+	Shader* s = scene->getShaderFactory().createFromCode(codeVertex, codeFragment);//, codeGeometry);
 	s->bind();
 
 	ShaderState st;
+
 	mat->getAmbient()->configureShader(s, st);
 	if (mat->getBumpMap())		{mat->getBumpMap()->configureShader(s, st);}
 	if (mat->getSpecular())		{mat->getSpecular()->configureShader(s, st);}

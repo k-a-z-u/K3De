@@ -32,6 +32,10 @@ public:
 				"float specularShininess = " + std::to_string(shininess) + ";\n";
 	}
 
+	void addVariables(ShaderParamsOLD& params) override {
+
+	}
+
 	virtual void configureShader(Shader* shader, ShaderState& state) override {
 		(void) shader;
 		(void) state;

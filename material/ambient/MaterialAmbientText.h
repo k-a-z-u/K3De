@@ -44,6 +44,10 @@ public:
 
 	}
 
+	void addVariables(ShaderParamsOLD& params) override {
+
+	}
+
 	virtual void configureShader(Shader* shader, ShaderState& state) override {
 		shader->setInt("texAmbient0", state.nextFreeTextureSlot);
 		textures.set(state.nextFreeTextureSlot, texAmbient0);

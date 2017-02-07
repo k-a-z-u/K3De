@@ -13,6 +13,7 @@ inline void setBound(const unsigned int id) const {
 }
 
 inline void setUnbound(const unsigned int id) const {
+	(void) id;
 	bound() = -1;
 }
 

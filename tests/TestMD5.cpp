@@ -6,7 +6,7 @@
 #include "../import/MD5/ImportMesh.h"
 #include "../import/MD5/ImportAni.h"
 
-
+/*
 TEST(MD5, import) {
 
 	std::string str =
@@ -321,6 +321,6 @@ TEST(MD5, live) {
 	}
 
 }
-
+*/
 
 #endif

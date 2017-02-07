@@ -18,17 +18,16 @@
 
 namespace MD5 {
 
-	class Import {
+	class ImportMesh {
 
 	private:
 
-
-		const char* NAME = "MD5";
+		const char* NAME = "MD5Mesh";
 		float scale = 1.0;
 
 	public:
 
-		Import(const float scale) : scale(scale) {
+		ImportMesh(const float scale) : scale(scale) {
 			;
 		}
 

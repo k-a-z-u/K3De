@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "Camera.h"
-#include "Light.h"
+#include "Lighting.h"
 #include "Renderable.h"
 
 #include "../world/Water.h"
@@ -17,6 +17,7 @@
 #include "../mesh/MeshFactory.h"
 #include "../shader/ShaderFactory.h"
 #include "../textures/TextureFactory.h"
+#include "../material2/MaterialFactory.h"
 
 #include "../2D/UI.h"
 #include "../2D/SpriteFactory.h"
@@ -40,13 +41,9 @@ class Scene {
 
 protected:
 
-	/** lighting */
-	struct Lights {
-		LightAttributes light[8];
-		int num;
-	} lights __attribute__((packed));
+	Lighting lighting;
 
-	UBO uboLights;
+
 
 	/** camera */
 	Camera cam;
@@ -86,17 +83,19 @@ protected:
 	ShaderFactory shaderFac;
 	TextureFactory textureFac;
 	SpriteFactory spriteFac;
+	MaterialFactory matFac;
+
 	Vec2 clipY;
 
 	RenderState rs;
 	SceneState ss;
 
 	Shader* overwriteShader;
-	Mat4 shadowPV;
+	//Mat4 shadowPV;
 
 public:
 
-	Scene() : waterRenderer(nullptr), shadowRenderer(nullptr), postProcRenderer(nullptr), skybox(nullptr) {
+	Scene() : waterRenderer(nullptr), shadowRenderer(nullptr), postProcRenderer(nullptr), skybox(nullptr), matFac(this) {
 		setup();
 	}
 
@@ -119,16 +118,26 @@ public:
 		clipY.y = max;
 	}
 
-
-
-	/** set the number of lights to use */
-	void setNumLights(const int num) {
-		lights.num = num;
+	/** maximal number of lights? */
+	int getMaxLights() const {
+		return MAX_LIGHTS;
 	}
 
+
+
+//	/** set the number of lights to use */
+//	void setNumLights(const int num) {
+//		lights.num = num;
+//	}
+
+//	/** get the number of active lights to use */
+//	int getNumLights() const {
+//		return lights.num;
+//	}
+
 	/** get the light behind the given index */
-	Light getLight(const int idx) {
-		return Light(&lights.light[idx]);
+	Light& getLight(const int idx) {
+		return lighting.getLight(idx);
 	}
 
 	/** add the given renderable to the scene */
@@ -182,6 +191,9 @@ public:
 	/** get the scene's sprite-factory */
 	SpriteFactory& getSpriteFactory() {return spriteFac;}
 
+	/** get the scene's material-factory */
+	MaterialFactory& getMaterialFactory() {return matFac;}
+
 	/** get the scene's camera */
 	Camera& getCamera() {return cam;}
 
@@ -192,7 +204,7 @@ public:
 		this->overwriteShader = shader;
 	}
 
-	void setShadowPV(const Mat4& mat) {
+	void setShadowPV(const Mat4& mat, const int lightIdx) {
 
 		// this bias matrix is used to convert from [-1;+1] to [0;+1]
 		// adding this directly to the matrix saves time within the shaders!
@@ -204,7 +216,9 @@ public:
 		};
 		static const Mat4 mBias = Mat4::fromRawRowMajor(bias);
 
-		this->shadowPV = mBias * mat;
+		//this->shadowPV = mBias * mat;
+		//lights.light[lightIdx].setShadowPV(mBias * mat);
+		lighting.getLight(lightIdx).setShadowPV(mBias * mat);
 
 	}
 
@@ -213,7 +227,7 @@ public:
 
 
 	/** scene will be rendered soon */
-	virtual void onBeforeRender() = 0;
+	virtual void onBeforeRender() {;}
 
 	void setClearColor(const Vec4& color) {
 		this->clearColor = color;
@@ -257,7 +271,9 @@ public:
 		rs.matrices.PV = cam.getPVMatrix();
 
 		for (Renderable* r : renderables)	{
-			renderThis(r, rs);	// TODO remove elements not casting a shadow
+			if (r->castsShadows()) {
+				renderThis(r, rs);
+			}
 		}
 		for (Terrain* t : terrains)			{renderThis(t, rs);}
 
@@ -326,13 +342,13 @@ private:
 		if (s->hasUniform("P"))				{s->setMatrix("P", rs.matrices.P);}//cam.getPMatrix());}
 		if (s->hasUniform("PV"))			{s->setMatrix("PV", rs.matrices.PV);}
 		if (s->hasUniform("PVM"))			{s->setMatrix("PVM", rs.matrices.PVM);}
-		if (s->hasUniform("PVshadow"))		{s->setMatrix("PVshadow", shadowPV);}
+//		if (s->hasUniform("PVshadow"))		{s->setMatrix("PVshadow", shadowPV);}
 		if (s->hasUniform("time"))			{s->setFloat("time", ss.getCurrentTime().seconds());}
 
 		// configure fixed parameters once [constant between frames]
-		if (s->hasUniformBlock("Lights"))	{s->setVarOnce("Lights", uboLights);}
-		if (s->hasUniform("screenWidth"))	{s->setFloatOnce("screenWidth", getScreenSize().width);}
-		if (s->hasUniform("screenHeight"))	{s->setFloatOnce("screenHeight", getScreenSize().height);}
+		if (s->hasUniformBlock("Lights"))	{s->setVarOnce("Lights", lighting.getUBO());}
+		if (s->hasUniform("screenWidth"))	{s->setFloatOnce("screenWidth", rs.screenWidht);}
+		if (s->hasUniform("screenHeight"))	{s->setFloatOnce("screenHeight", rs.screenHeight);}
 
 		// render the object
 		r->render(ss, rs);
@@ -351,89 +367,6 @@ private:
 
 };
 
-#include "WaterRenderer.h"
-#include "ShadowRenderer.h"
-#include "ShadowRendererSimple.h"
-#include "PostProcessRenderer.h"
-//#include "ShadowRendererESM.h"
 
-/** add a new water to the scene */
-void Scene::addWater(Water* w) {
-	w->setReflect(waterRenderer->texReflect);
-	w->setRefract(waterRenderer->texRefract);
-	waters.push_back(w);
-}
-
-void Scene::setup() {
-	clipY = Vec2(-9999,+9999);
-	cam.setPosition(2, 2, 2);
-	cam.setLookAt(0,0,0);
-	cam.setUp(0,1,0);
-	cam.setFOV(45);
-	overwriteShader = nullptr;
-}
-
-void Scene::setEnableShadows(bool enable) {
-	if(enable) {
-		if (!shadowRenderer) {shadowRenderer = new ShadowRendererSimple(this);}
-	} else {
-		if (shadowRenderer) {delete shadowRenderer; shadowRenderer = nullptr;}
-	}
-}
-
-void Scene::setEnableWater(bool enable) {
-	if(enable) {
-		if (!waterRenderer) {waterRenderer = new WaterRenderer(this);}
-	} else {
-		if (waterRenderer) {delete waterRenderer; waterRenderer = nullptr;}
-	}
-}
-
-void Scene::render() {
-
-	// timing update
-	ss.lastRenderStart = ss.renderStart;
-	ss.renderStart = Time::runtime();
-
-	// inform the scene
-	onBeforeRender();
-
-	// inform every renderable about the pending render process
-	for (Renderable* r : renderables) {r->onBeforeRender(ss);}
-	for (Renderable* r : ui.elements) {r->onBeforeRender(ss);}
-
-	// update the light-uniform
-	uboLights.upload((uint8_t*)&lights, sizeof(lights));
-	uboLights.bind();
-
-
-	if (waterRenderer)	{waterRenderer->update();}
-
-	if (shadowRenderer)	{shadowRenderer->update();}
-
-	if (postProcRenderer) {postProcRenderer->begin();}
-
-	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		getCamera().setScreenSize();
-
-		renderForNormal();
-		renderUI();
-
-	if (postProcRenderer) {
-		postProcRenderer->end();
-		rs.matrices.V = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
-		rs.matrices.P = Mat4::identity();
-		rs.matrices.PV = rs.matrices.P * rs.matrices.V;
-		glDisable(GL_CULL_FACE);
-		glDisable(GL_DEPTH_TEST);
-		renderThis(postProcRenderer, rs);
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
-	}
-
-	// time it took to render the current frame
-	ss.lastRenderDuration = Time::runtime() - ss.renderStart;
-
-}
 
 #endif // SCENE_H

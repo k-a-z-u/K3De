@@ -77,6 +77,10 @@ public:
 		return "\tvec4 ambient = getAmbient();\n";
 	}
 
+	void addVariables(ShaderParamsOLD& params) override {
+
+	}
+
 	virtual void configureShader(Shader* shader, ShaderState& state) override {
 
 		shader->setInt("texAmbient", state.nextFreeTextureSlot);

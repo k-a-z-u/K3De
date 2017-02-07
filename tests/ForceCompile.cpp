@@ -22,6 +22,14 @@
 #include "../mesh/IndexedMesh.h"
 #include "../mesh/InstanceMesh.h"
 #include "../mesh/MeshVertex.h"
+#include "../mesh/MD5Mesh.h"
+
+#include "../import/ObjImport.h"
+#include "../import/MD5/ImportAni.h"
+#include "../import/MD5/ImportMesh.h"
+
+#include "../material/MaterialFactory.h"
+#include "../material/MaterialFactoryImpl.h"
 
 #include "../scene/Scene.h"
 #include "../scene/WaterRenderer.h"

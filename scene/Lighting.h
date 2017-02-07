@@ -3,6 +3,7 @@
 
 #include "../gl/UBO.h"
 #include "Light.h"
+#include "../material/ProgramVariables.h"
 
 /**
  * describes the scene's lighting
@@ -10,8 +11,6 @@
 class Lighting {
 
 private:
-
-	#define MAX_LIGHTS		8
 
 	/** UBO to be uploaded into the GPU [per Frame] */
 	LightAttributes __attribute__((packed)) lightData[MAX_LIGHTS];

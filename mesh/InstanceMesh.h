@@ -37,9 +37,9 @@ public:
 	}
 
 	void render(const SceneState& ss, const RenderState& rs) override {
-		if (material) {material->bind();}
+		if (material2) {material2->bind();}
 		mesh->render(ss, rs);
-		if (material) {material->unbind();}
+		if (material2) {material2->unbind();}
 	}
 
 };

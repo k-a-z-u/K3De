@@ -2,8 +2,8 @@
 
 #include "Tests.h"
 #include "../K3De.h"
-#include "../material2/Material2.h"
-#include "../material2/MaterialFactory.h"
+#include "../material/Material2.h"
+#include "../material/MaterialFactory.h"
 #include "../shader/ShaderDebug.h"
 #include "../3D/Plane.h"
 

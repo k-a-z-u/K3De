@@ -1,6 +1,9 @@
 #ifndef PROGRAMVARIABLES_H
 #define PROGRAMVARIABLES_H
 
+#define MAX_LIGHTS				8
+
+
 #define VERT_VERTEX_POS			"vertex"
 #define VERT_VERTEX_COLOR		"color"
 #define VERT_VERTEX_NORMAL		"normal"

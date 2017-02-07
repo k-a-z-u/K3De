@@ -10,6 +10,10 @@
 #include "parts/Specular.h"
 #include "parts/Lighting.h"
 
+#include "../scene/ShadowRenderer.h"
+#include "../scene/Scene.h"
+#include "../textures/Texture2D.h"
+
 
 void MaterialFactory::loadUserValues(Material2* mat, XMLElem* elem) {
 

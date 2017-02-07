@@ -1,8 +1,7 @@
 #ifndef RENDERABLE_H
 #define RENDERABLE_H
 
-#include "../material/Material.h"
-#include "../material2/Material2.h"
+#include "../material/Material2.h"
 #include "../shader/Shader.h"
 #include "../math/Math.h"
 
@@ -20,25 +19,20 @@ protected:
 	Shader* shader;
 
 	/** the material to use for coloring this object */
-	Material* material;
-
 	Material2* material2;
 
 public:
 
 	/** ctor */
-	Renderable() : enabled(true), shader(nullptr), material(nullptr), material2(nullptr) {;}
+	Renderable() : enabled(true), shader(nullptr), material2(nullptr) {;}
 
 	/** dtor */
 	virtual ~Renderable() {;}
 
 
-	Material* getMaterial() {return material;}
-	void setMaterial(Material* mat) {this->material = mat;}
-
 	/** does this renderable cast shadows? */
 	bool castsShadows() const {
-		return (material && material->getCastsShadows()) || (material2 && material2->getCastsShadows());
+		return (material2 && material2->getCastsShadows());
 	}
 
 
@@ -64,6 +58,10 @@ public:
 	void setMaterial(Material2* mat) {
 		this->material2 = mat;
 		this->shader = mat->getShader();
+	}
+
+	Material2* getMaterial() const {
+		return this->material2;
 	}
 
 };

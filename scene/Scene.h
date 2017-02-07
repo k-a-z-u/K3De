@@ -17,7 +17,7 @@
 #include "../mesh/MeshFactory.h"
 #include "../shader/ShaderFactory.h"
 #include "../textures/TextureFactory.h"
-#include "../material2/MaterialFactory.h"
+#include "../material/MaterialFactory.h"
 
 #include "../2D/UI.h"
 #include "../2D/SpriteFactory.h"

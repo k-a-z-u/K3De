@@ -123,7 +123,7 @@ public:
 
 	void render(const SceneState&, const RenderState&) override {
 
-		material->bind();
+		material2->bind();
 		vao.bind();
 
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
@@ -131,7 +131,7 @@ public:
 		Error::assertOK();
 
 		vao.unbind();
-		material->unbind();
+		material2->unbind();
 
 	}
 

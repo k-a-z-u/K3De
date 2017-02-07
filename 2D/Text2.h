@@ -33,12 +33,12 @@ private:
 
 public:
 
-	/** ctor */
-	Text2(Scene* scene, Material* material, const std::vector<float>& glyphEdges) :
-	    scene(scene), glyphEdges(glyphEdges), pos(0.5, 0.5), size(1.0), color(1,1,1,1) {
-		matrix = Mat4::identity();
-		setMaterial(material);
-	}
+//	/** ctor */
+//	Text2(Scene* scene, Material2* material, const std::vector<float>& glyphEdges) :
+//	    scene(scene), glyphEdges(glyphEdges), pos(0.5, 0.5), size(1.0), color(1,1,1,1) {
+//		matrix = Mat4::identity();
+//		setMaterial(material);
+//	}
 
 	/** ctor */
 	Text2(Scene* scene, Material2* material2) :
@@ -101,7 +101,6 @@ public:
 	/** render this object */
 	virtual void render(const SceneState&, const RenderState&) override {
 
-		if (material) {material->bind();}
 		if (material2) {material2->bind();}
 
 		vao.bind();
@@ -110,7 +109,6 @@ public:
 		vao.unbind();
 
 		if (material2) {material2->unbind();}
-		if (material) {material->unbind();}
 
 	}
 

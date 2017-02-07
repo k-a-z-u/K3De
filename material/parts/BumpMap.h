@@ -29,7 +29,7 @@ namespace MatPart {
 
 			// rotation matrix for bump-map-normals using mat3(tagent, bitangent, normal)
 			//material->getVertexParams().addMainLine("\tnormalRotMat = mat3("VERT_VERTEX_TANGENT", cross("VERT_VERTEX_NORMAL", "VERT_VERTEX_TANGENT"), "VERT_VERTEX_NORMAL");");
-			material->getVertexParams().addMainLine("normalRotMat = mat3("FRAG_TANGENT_WORLD_POS", normalize(cross("FRAG_NORMAL_WORLD_POS", "FRAG_TANGENT_WORLD_POS")), "FRAG_NORMAL_WORLD_POS");");
+			material->getVertexParams().addMainLine("normalRotMat = mat3(" FRAG_TANGENT_WORLD_POS ", normalize(cross(" FRAG_NORMAL_WORLD_POS ", " FRAG_TANGENT_WORLD_POS ")), " FRAG_NORMAL_WORLD_POS ");");
 
 			// fragment shader
 			material->getFragmentParams().addVariable("normalRotMat", "in mat3 normalRotMat;");

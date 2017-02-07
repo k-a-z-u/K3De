@@ -87,7 +87,7 @@ public:
 
 	virtual void render(const SceneState& ss, const RenderState& rs) override {
 
-		material->bind();
+		material2->bind();
 
 		lastVisible = 0;
 		for (TerrainPart& part : parts) {
@@ -108,7 +108,7 @@ public:
 
 		}
 
-		material->unbind();
+		material2->unbind();
 
 	}
 

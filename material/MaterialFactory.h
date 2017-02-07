@@ -4,8 +4,9 @@
 #include "Material2.h"
 #include "../lib/tinyxml2/tinyxml2.h"
 #include "../Exception.h"
-#include "../scene/Scene.h"
 #include "xml.h"
+
+class Scene;
 
 class MaterialFactory {
 

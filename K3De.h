@@ -6,6 +6,6 @@
 
 #include "EngineImpl.h"
 #include "scene/SceneImpl.h"
-#include "material2/MaterialFactoryImpl.h"
+#include "material/MaterialFactoryImpl.h"
 
 #endif // K3DE_H

@@ -12,7 +12,7 @@ private:
 	VAO vao;
 	VBOArrayStatic<AttrVertexTexture> vertices;
 	Mat4 matrix;
-	Material* material;
+	Material2* material;
 	std::string text;
 
 	Vec2 pos;
@@ -21,7 +21,7 @@ private:
 
 public:
 
-	Text(Material* material) : material(material), pos(0.5f, 0.5f) {
+	Text(Material2* material) : material(material), pos(0.5f, 0.5f) {
 		matrix = Mat4::identity();
 		charSize = Vec2(0.1f, 0.2f);
 		stridePercent = Vec2(1.0f, 1.0f);

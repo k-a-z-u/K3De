@@ -6,6 +6,7 @@
 #include "../xml.h"
 #include "HasModifiers.h"
 #include "Buildable.h"
+#include "../ProgramVariables.h"
 
 namespace MatPart {
 

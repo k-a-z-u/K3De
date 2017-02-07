@@ -61,8 +61,9 @@ protected:
 public:
 
 
-	Material* getMaterial() {return material;}
-	void setMaterial(Material* mat) {this->material = mat;}
+	Material2* getMaterial() {return material2;}
+
+	void setMaterial(Material2* mat) {this->material2 = mat;}
 
 	const Mat4& getMatrix() const override {
 		return transform.getMatrix();
@@ -70,14 +71,14 @@ public:
 
 	void render(const SceneState&, const RenderState&) override {
 
-		if (material) {material->bind();}
+		if (material2) {material2->bind();}
 
 		vao.bind();
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 		Error::assertOK();
 		vao.unbind();
 
-		if (material) {material->unbind();}
+		if (material2) {material2->unbind();}
 
 	}
 

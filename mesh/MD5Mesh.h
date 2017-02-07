@@ -190,7 +190,6 @@ public:
 
 	void render(const SceneState&, const RenderState&) override {
 
-		if (material) {material->bind();}
 		if (material2) {material2->bind();}
 
 		vao.bind();
@@ -198,7 +197,6 @@ public:
 		Error::assertOK();
 		vao.unbind();
 
-		if (material) {material->unbind();}
 		if (material2) {material2->unbind();}
 
 #ifdef DEBUG_NORMALS

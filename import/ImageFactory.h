@@ -6,16 +6,28 @@
 #include <string>
 #include <png.h>
 #include <jpeglib.h>
+#include "TGA.h"
 
 class ImageFactory {
 
 public:
 
 	static Image load(const std::string& filename) {
-		std::string ext = filename.substr(filename.length() - 3, 3);
+		const std::string ext = filename.substr(filename.length() - 3, 3);
 		if (ext == "png") {return loadPNG(filename);}
 		if (ext == "jpg") {return loadJPG(filename);}
-		throw "unsupported format";
+		if (ext == "tga") {TGA tga; return tga.get(Resource(filename));}
+		throw "unsupported format for: " + filename;
+	}
+
+	static Image load(const Resource& res) {
+		const std::string filename = res.getName();
+		const std::string ext = filename.substr(filename.length() - 3, 3);
+		const Data d = ResourceFactory::get().get(res);
+		if (ext == "png") {return loadPNG(d);}
+		if (ext == "jpg") {return loadJPG(d);}
+		if (ext == "tga") {TGA tga; return tga.get(res);}
+		throw "unsupported format for: " + res.getName();
 	}
 
 public:
@@ -62,8 +74,13 @@ private:
 
 	static Image loadJPG(const std::string& filename) {
 
+		throw Exception("TODO");
+
+	}
+
+	static Image loadJPG(const Data& d) {
+
 		Image img;
-		FILE* fp = fopen(filename.c_str(), "rb");  //open the file
 
 		unsigned char* rowptr[1];
 		unsigned char* jdata;
@@ -73,10 +90,7 @@ private:
 		info.err = jpeg_std_error(&err);
 		jpeg_create_decompress(& info);   //fills info structure
 
-		//if the jpeg file doesn't load
-		if(!fp) {throw Exception("jpeg not found: " + filename);}
-
-		jpeg_stdio_src(&info, fp);
+		jpeg_mem_src(&info, d.get(), d.size());
 		jpeg_read_header(&info, TRUE);   // read jpeg file header
 
 		jpeg_start_decompress(&info);    // decompress the file
@@ -114,16 +128,20 @@ private:
 
 		//----- create OpenGL tex map (omit if not needed) -------
 
-		fclose(fp);                    //close the file
-
 		return img;
 
 	}
 
-	static Image loadPNG(const std::string& filename) {
+	static void PngReadCallback(png_structp pngPtr, png_bytep data, png_size_t length) {
+		png_voidp a = png_get_io_ptr(pngPtr);
+		uint8_t** src = (uint8_t**) a;
+		memcpy(data, *src, length);
+		*src += length;
+	}
+
+	static Image loadPNG(const Data& d) {
 
 		Image img;
-		FILE* fp = fopen(filename.c_str(), "rb");
 
 		png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 		if (!png) {throw "Could not allocate read struct\n";}
@@ -134,9 +152,9 @@ private:
 		if (setjmp(png_jmpbuf(png))) {throw "error 3";}
 
 		// custom read callback function. starts to read at data and will increment the ptr with every read. thus: &data
-		//uint8_t* data = src.getData();
-		//png_set_read_fn(png, (void*) &data, PngReadCallback);
-		png_init_io(png, fp);
+		const uint8_t* data = d.get();
+		png_set_read_fn(png, (void*) &data, PngReadCallback);
+		//png_init_io(png, fp);
 
 		// read the details of the png
 		png_read_info(png, info_ptr);
@@ -180,10 +198,15 @@ private:
 		png_read_image(png, rows);
 
 		// cleanup
-		png_destroy_read_struct(&png, &info_ptr, nullptr);		
-		fclose(fp);
+		png_destroy_read_struct(&png, &info_ptr, nullptr);
 
 		return img;
+
+	}
+
+	static Image loadPNG(const std::string& filename) {
+
+		throw Exception("TODO");
 
 	}
 

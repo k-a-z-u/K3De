@@ -16,11 +16,14 @@
 
 #include "../Debug.h"
 
+#include "../data/Data.h"
+#include <sstream>
+
 class ObjImport {
 
 public:
 
-	struct Data {
+	struct _Data {
 		std::vector<Vec3> vertices;
 		std::vector<Vec2> texCoords;
 		std::vector<Vec3> normals;
@@ -39,6 +42,25 @@ public:
 		Debug("OBJ", "loading file: " + file);
 
 		std::ifstream is(file);
+		std::string line;
+		while(getline(is, line)) {parseLine(line);}
+
+		Debug("OBJ", "got " << uniqueVertices.size() << " vertices and " << (indices.size()/3) << " triangles");
+
+		// normalize the object? (scale to a max size of 1.0)
+		if (normalize)		{doNormalize();}
+
+		// put object's center-of-mass to (0,0,0) ?
+		if (centerAtOrigin)	{doCenter();}
+
+	}
+
+	void load(const Data& data, const bool normalize = false, const bool centerAtOrigin = false) {
+
+		Debug("OBJ", "loading data ");
+
+		std::string str ((char*)data.get(), data.size());
+		std::stringstream is(str);
 		std::string line;
 		while(getline(is, line)) {parseLine(line);}
 

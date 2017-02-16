@@ -33,7 +33,9 @@
 #include "tests/Tests.h"
 int runTests(int argc, char** argv) {
 
-	::testing::GTEST_FLAG(filter) = "*DemoScene1.*";
+	//::testing::GTEST_FLAG(filter) = "*DemoScene1.*";
+	::testing::GTEST_FLAG(filter) = "*7Z*";
+
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
 

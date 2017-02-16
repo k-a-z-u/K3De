@@ -14,7 +14,7 @@
 #include "../scene/Scene.h"
 #include "../textures/Texture2D.h"
 
-PXMLNode recurse(XMLElem* elem) {
+static inline PXMLNode recurse(XMLElem* elem) {
 	PXMLNode node(elem->Name());
 	FOREACH_ATTR(attr, elem) {
 	//for (const XMLAttr* attr = elem->FirstAttribute(); attr != nullptr; attr = attr->Next()) {
@@ -52,15 +52,21 @@ void MaterialFactory::loadUserValues(Material2* mat, XMLElem* elem) {
 void MaterialFactory::loadTextures(Material2* mat, XMLElem* elem) {
 	if (!elem) {return;}
 	FOREACH_ELEM_NAMED("texture", tex, elem) {
+
 		const std::string id = XML_ID(tex);
 		const std::string file = tex->FirstChildElement("file")->GetText();
 		const bool compress = tex->BoolAttribute("compress", true);
 		const bool mipMaps = tex->BoolAttribute("mipMaps", true);
 		const int idx = mat->getTextures().size();	// next free index
-		Texture2D* texture = scene->getTextureFactory().create(mat->dataPath + file, compress, mipMaps);
+
+		//Texture2D* texture = scene->getTextureFactory().create(mat->dataPath + file, compress, mipMaps);
+
+		Resource res(mat->dataPath + file);
+		Texture2D* texture = scene->getTextureFactory().create(res, compress, mipMaps);
 		MatPart::LoadedTexture t(id, idx, texture);
 		mat->getTextures().add(t);
 		mat->paramsFragment.addVariable(id, "uniform sampler2D " + id + ";");
+
 	}
 }
 

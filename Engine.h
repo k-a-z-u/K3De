@@ -1,9 +1,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-
-
-
 #include <iostream>
 
 #include "EngineSettings.h"
@@ -11,7 +8,7 @@
 #include "Debug.h"
 #include "Exception.h"
 #include "import/Image.h"
-//#include "scene/Scene.h"
+
 
 #include <KLib/Assertions.h>
 #include <GLFW/glfw3.h>
@@ -77,9 +74,7 @@ public:
 	}
 
 	/** set the current scene */
-	void setScene(Scene* scene) {
-		this->scene = scene;
-	}
+	inline void setScene(Scene* scene);
 
 	/** get the current scene */
 	Scene* getScene() {
@@ -106,13 +101,26 @@ public:
 
 	}
 
-	/** render the current scene */
-	inline void render();
 
 	/** get the engine's configuration */
 	const EngineSettings& getSettings() const {return settings;}
 
+
+	void enqueueRender() {
+		//auto renderOnce = [] () {
+		//	Engine::get()->render();
+		//};
+		//MainLoop::get().add(renderOnce);
+		tick();
+	}
+
+	/** one step further. render, other actions, etc. */
+	inline void tick();
+
 private:
+
+	/** render the current scene */
+	inline void render();
 
 	/** hidden singleton access. public singleton access has additional checks */
 	static Engine* singleton() {
@@ -169,6 +177,7 @@ private:
 		glfwSetKeyCallback(window, keyCallback);
 
 	}
+
 
 private:
 

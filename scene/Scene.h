@@ -7,12 +7,11 @@
 #include "Lighting.h"
 #include "Renderable.h"
 
-#include "../world/Water.h"
-#include "../world/Terrain.h"
+
 
 #include "../3D/AABBRenderable.h"
 
-#include "../world/Skybox.h"
+
 
 #include "../mesh/MeshFactory.h"
 #include "../shader/ShaderFactory.h"
@@ -25,6 +24,10 @@
 #include "FPS.h"
 #include "RenderState.h"
 #include "SceneState.h"
+
+class Water;
+class Terrain;
+class SkyBox;
 
 class ShadowRenderer;
 class WaterRenderer;
@@ -125,18 +128,6 @@ public:
 		return MAX_LIGHTS;
 	}
 
-
-
-//	/** set the number of lights to use */
-//	void setNumLights(const int num) {
-//		lights.num = num;
-//	}
-
-//	/** get the number of active lights to use */
-//	int getNumLights() const {
-//		return lights.num;
-//	}
-
 	/** get the light behind the given index */
 	Light& getLight(const int idx) {
 		_assertTrue(idx < MAX_LIGHTS, "light index out of bounds");
@@ -166,16 +157,11 @@ public:
 	}
 
 	/** get the current screen size */
-	ScreenSize getScreenSize() const {
-		return Engine::get()->getScreenSize();
-	}
+	ScreenSize getScreenSize() const;
 
 	/** get the current screen size */
-	const ScreenSize* getScreenSizePtr() const {
-		static ScreenSize screen;					// TODO: fix
-		screen = Engine::get()->getScreenSize();
-		return &screen;
-	}
+	const ScreenSize* getScreenSizePtr() const;
+
 
 	/** get current FPS, given by the last render-time */
 	float getFPS() const {
@@ -229,8 +215,13 @@ public:
 	ShadowRenderer* getShadowRenderer() {return shadowRenderer;}
 
 
+	/** scene is set as the currently active scene */
+	virtual void onBecomesActive() {;}
+
 	/** scene will be rendered soon */
 	virtual void onBeforeRender() {;}
+
+
 
 	void setClearColor(const Vec4& color) {
 		this->clearColor = color;
@@ -251,122 +242,22 @@ private:
 	inline void render();
 
 	/** render everything visible to water reflection and refraction */
-	void renderForWater() {
-
-		rs.matrices.P = cam.getPMatrix();
-		rs.matrices.V = cam.getVMatrix();
-		rs.matrices.PV = cam.getPVMatrix();
-
-		for (Renderable* r : renderables)	{renderThis(r, rs);}
-		for (Terrain* t : terrains)			{renderThis(t, rs);}
-		if (skybox)							{renderThis(skybox, rs);}
-		for (Renderable* ps : particles)	{renderThis(ps, rs);}
-
-	}
+	inline void renderForWater();
 
 public:
 
 	/** render everything casting a shadow */
-	void renderForShadows() {
-
-		rs.matrices.P = cam.getPMatrix();
-		rs.matrices.V = cam.getVMatrix();
-		rs.matrices.PV = cam.getPVMatrix();
-
-		for (Renderable* r : renderables)	{
-			if (r->castsShadows()) {
-				renderThis(r, rs);
-			}
-		}
-		for (Terrain* t : terrains)			{renderThis(t, rs);}
-
-	}
+	inline void renderForShadows();
 
 private:
 
 	/** render everything for the normal pass */
-	void renderForNormal() {
+	inline void renderForNormal();
 
-		rs.matrices.P = cam.getPMatrix();
-		rs.matrices.V = cam.getVMatrix();
-		rs.matrices.PV = cam.getPVMatrix();
-
-		for (Renderable* r : renderables)	{renderThis(r, rs);}
-		for (Water* w : waters)				{renderThis(w, rs);}
-		for (Terrain* t : terrains)			{renderThis(t, rs);}
-		if (skybox)							{renderThis(skybox, rs);}
-		for (Renderable* ps : particles)	{renderThis(ps, rs);}
-
-	}
-
-	void renderUI() {
-
-		// this matrix mirros the y axis (0,0 = upper left)
-		// and changes the area from [-1:+1] to [0:1]
-		// -> (0,0) = upper left, (1,1) = lower right
-		rs.matrices.V = {2,0,0,0, 0,-2.0,0,0, 0,0,1,0, -1.0,+1.0,0,1};
-		rs.matrices.P = Mat4::identity();
-		rs.matrices.PV = rs.matrices.P * rs.matrices.V;
-
-		// TODO: enable culling to speed things up?? or doesn't this change anything at all?
-		glDisable(GL_CULL_FACE);
-		glDisable(GL_DEPTH_TEST);
-		for (Renderable* s : ui.elements)	{renderThis(s, rs);}
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
-
-	}
+	inline void renderUI();
 
 	/** render one object (if enabled, visible, ...) */
-	void renderThis(Renderable* r, RenderState& rs) {
-
-		// skip disabled elements
-		if (!r->isEnabled()) {return;}
-
-		// skip invisible elements
-		//rs.matrices.PV = cam.getPVMatrix();
-		//rs.matrices.VM = cam.getVMatrix() * r->getMatrix();
-		rs.matrices.PVM = rs.matrices.P * rs.matrices.V * r->getMatrix();
-
-		if (!r->isVisible(rs.matrices.PVM)) {return;}
-
-		// get shader and perform sanity check
-		Shader* s = (overwriteShader) ? (overwriteShader) : (r->getShader());
-		_assertNotNull(s, "shader is null");
-
-		// activate the shader
-		s->bind();
-
-		// configure variable parameters [changing almost every frame]
-		if (s->hasUniform("clipY"))			{s->setVector("clipY", clipY);}
-		if (s->hasUniform("camPos"))		{s->setVector("camPos", cam.getPosition());}
-		if (s->hasUniform("M"))				{s->setMatrix("M", r->getMatrix());}
-		if (s->hasUniform("V"))				{s->setMatrix("V", rs.matrices.V);}//cam.getVMatrix());}
-		if (s->hasUniform("P"))				{s->setMatrix("P", rs.matrices.P);}//cam.getPMatrix());}
-		if (s->hasUniform("PV"))			{s->setMatrix("PV", rs.matrices.PV);}
-		if (s->hasUniform("PVM"))			{s->setMatrix("PVM", rs.matrices.PVM);}
-//		if (s->hasUniform("PVshadow"))		{s->setMatrix("PVshadow", shadowPV);}
-		if (s->hasUniform("time"))			{s->setFloat("time", ss.getCurrentTime().seconds());}
-
-		// configure fixed parameters once [constant between frames]
-		if (s->hasUniformBlock("Lights"))	{s->setVarOnce("Lights", lighting.getUBO());}
-		if (s->hasUniform("screenWidth"))	{s->setFloatOnce("screenWidth", rs.screenWidht);}
-		if (s->hasUniform("screenHeight"))	{s->setFloatOnce("screenHeight", rs.screenHeight);}
-
-		// render the object
-		r->render(ss, rs);
-
-		// disable the shader
-		s->unbind();
-
-//		HasAABB* m = dynamic_cast<HasAABB*>(r);
-//		if (m) {
-//			AABBRenderable rr(m);
-//			if (s->hasUniform("M"))			{s->setMatrix("M", rr.getMatrix());}
-//			rr.render(rs);
-//		}
-
-	}
+	inline void renderThis(Renderable* r, RenderState& rs);
 
 };
 

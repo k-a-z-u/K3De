@@ -5,6 +5,8 @@
 #include "../lib/tinyxml2/tinyxml2.h"
 #include "../Exception.h"
 #include "xml.h"
+#include "../data/Resource.h"
+#include "../data/ResourceFactory.h"
 
 class Scene;
 
@@ -22,7 +24,7 @@ public:
 		;
 	}
 
-	/** load material from file */
+//	/** load material from file */
 	Material2* load(const std::string& file) {
 
 		Debug(NAME, "loading: " + file);
@@ -35,6 +37,50 @@ public:
 
 		XMLDoc doc;
 		assertOK(doc.LoadFile(file.c_str()), doc, "error while loading file");
+
+		XMLElem* root = doc.FirstChildElement("material");
+		if (root == nullptr) {throw Exception("missing root element");}
+
+		const std::string name = root->Attribute("name");
+		mat->paramsFragment.setName(name);
+		mat->paramsVertex.setName(name);
+
+		loadTextures(mat, root->FirstChildElement("textures"));
+		loadModifiers(mat, root->FirstChildElement("modifiers"));
+		loadUserValues(mat, root->FirstChildElement("user"));
+
+		XMLElem* xmlMat = root->FirstChildElement("config");
+
+		setClipping(mat, xmlMat);
+		buildLighting(mat, xmlMat);
+		buildDiffuse(mat, xmlMat);
+		buildShadow(mat, xmlMat);
+		buildBumpMap(mat, xmlMat);
+		buildSpecular(mat, xmlMat);
+
+		buildPixel(mat);
+
+		compile(mat);
+
+		return mat;
+
+	}
+
+	Material2* load(const Resource& res) {
+
+		Engine::get()->enqueueRender();
+
+		Debug(NAME, "loading: " + res.getName());
+
+		Data data = ResourceFactory::get().get(res);
+
+		// create a new material
+		Material2* mat = new Material2();
+		mat->dataPath = getFolder(res.getName());
+
+		XMLDoc doc;
+		//assertOK(doc.LoadFile(file.c_str()), doc, "error while loading file");
+		assertOK(doc.Parse((const char*)data.get(), data.size()), doc, "error while parsing XML");
 
 		XMLElem* root = doc.FirstChildElement("material");
 		if (root == nullptr) {throw Exception("missing root element");}

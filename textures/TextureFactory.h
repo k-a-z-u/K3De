@@ -135,6 +135,36 @@ public:
 
 	}
 
+	/** create a new texture using the given resource */
+	Texture2D* create(const Resource res, bool compressed = true, bool mipMaps = true) {
+
+		// create and add a new texture
+		Texture2D* tex = new Texture2D(-1, -1);
+		textures.push_back(std::make_unique(tex));
+
+		auto funcDecode = [this, res, tex, compressed, mipMaps] () {
+
+			// decode the image file
+			//Image img = ImageFactory::load(includePath + file);
+			Image img = ImageFactory::load(res);
+
+			auto funcUpload = [this, tex, img, compressed, mipMaps] () {
+				void* data = (void*) img.getData().data();
+				const int formatIn = getFormatIn(img);
+				const int formatOut = getFormatOut(img, compressed);
+				upload(tex, data, img.getWidth(), img.getHeight(), formatIn, formatOut, mipMaps);
+			};
+
+			MainLoop::get().add(funcUpload);
+
+		};
+
+
+		GlobalThreadPool::get().add(funcDecode);
+
+		return tex;
+
+	}
 
 
 	int getFormatIn(const Image& img) const {

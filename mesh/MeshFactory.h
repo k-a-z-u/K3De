@@ -7,6 +7,7 @@
 #include "MeshVertex.h"
 #include "../misc/Memory.h"
 #include "../import/ObjImport.h"
+#include "../data/Resource.h"
 
 class IMesh;
 class IndexedMesh;
@@ -23,6 +24,9 @@ public:
 
 	/** create a new mesh by loading the given file */
 	inline IndexedMesh* createMesh(const std::string fileName, const bool normalize = false, const bool centerAtOrigin = false);
+
+	/** create a new mesh by loading the resource */
+	inline IndexedMesh* createMesh(const Resource& res, const bool normalize = false, const bool centerAtOrigin = false);
 
 	/** create a new instance-wrapper around the given source mesh [allows position,rotation,scale without modifying the mesh] */
 	inline InstanceMesh* createNewInstance(IMesh* mesh);
@@ -82,6 +86,42 @@ IndexedMesh* MeshFactory::createMesh(const std::string fileName, const bool norm
 	// import from .OBJ file
 	ObjImport imp;
 	imp.load(fileName, normalize, centerAtOrigin);
+
+	// append vertices and faces [=indices]
+	mesh->vertices.append(imp.getIndexedMeshVerticesWithTangent());
+	mesh->indices.append(imp.getIndexedMeshIndices());
+
+	// upload both
+	mesh->vertices.upload();
+	mesh->indices.upload();
+
+	// final setup
+	mesh->configure();
+
+	// calculate BBox
+	for (const AttrVertexNormalTexture& vnt : imp.getIndexedMeshVertices()) {
+		mesh->bbox.add(vnt.getVertex());
+	}
+
+	// done
+	return mesh;
+
+}
+
+IndexedMesh* MeshFactory::createMesh(const Resource& res, const bool normalize, const bool centerAtOrigin) {
+
+	Debug(NAME, "loading mesh: " + res.getName());
+	Data data = ResourceFactory::get().get(res);
+
+	// create a new, empty mesh
+	IndexedMesh* mesh = new IndexedMesh();
+
+	// add to the list of meshes [e.g. for scene cleanup]
+	meshes.push_back(std::make_unique(mesh));
+
+	// import from .OBJ file
+	ObjImport imp;
+	imp.load(data, normalize, centerAtOrigin);
 
 	// append vertices and faces [=indices]
 	mesh->vertices.append(imp.getIndexedMeshVerticesWithTangent());

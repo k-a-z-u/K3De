@@ -22,6 +22,7 @@
 #include "../2D/UI.h"
 #include "../2D/SpriteFactory.h"
 
+#include "FPS.h"
 #include "RenderState.h"
 #include "SceneState.h"
 
@@ -87,6 +88,7 @@ protected:
 
 	Vec2 clipY;
 
+	FPS fps;
 	RenderState rs;
 	SceneState ss;
 
@@ -137,6 +139,7 @@ public:
 
 	/** get the light behind the given index */
 	Light& getLight(const int idx) {
+		_assertTrue(idx < MAX_LIGHTS, "light index out of bounds");
 		return lighting.getLight(idx);
 	}
 
@@ -176,7 +179,7 @@ public:
 
 	/** get current FPS, given by the last render-time */
 	float getFPS() const {
-		return ss.getFPS();
+		return fps.get();
 	}
 
 	/** get the scene's mesh-factory */

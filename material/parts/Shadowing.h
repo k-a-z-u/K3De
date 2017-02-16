@@ -70,7 +70,7 @@ namespace MatPart {
 				"	vec3 sc = shadowCoord.xyz / shadowCoord.w;\n"
 
 				// add some clearance to prevent almost-equal-z artifcats
-				"	sc.z -= 0.00025f;\n"
+			    "	sc.z -= 0.0001f;\n"
 
 				// apply UV distortion [if any]
 				"	sc = modShadowCoord(sc);\n"

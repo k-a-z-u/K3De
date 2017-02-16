@@ -162,6 +162,7 @@ private:
 	// render to texture
 	Framebuffer fbStart;
 	Texture* texDepth = nullptr;
+	Renderbuffer rbDepth;
 	Framebuffer fbChain;
 
 	Scene* scene = nullptr;
@@ -243,8 +244,11 @@ PostProcessRenderer::PostProcessRenderer(Scene* scene) {
 	start = new PostProcessStage("start", scene, texW, texH);
 
 	// framebuffer fbStart renders to texture
+	fbStart.bind();
 	fbStart.attachTextureColor(0, start->getOutput());
-	fbStart.attachTextureDepth(texDepth);
+	//fbStart.attachTextureDepth(texDepth);
+	fbStart.attachRenderbufferDepth(&rbDepth, texW, texH);		// slightly faster when depth is not needed
+	fbStart.unbind();
 
 }
 
@@ -258,6 +262,9 @@ void PostProcessRenderer::showResult(const SceneState& ss, const RenderState& rs
 	std::vector<PostProcessStage*> chain;
 	out->buildChain(chain);
 
+	// enable the chain's framebuffer
+	fbChain.bind();
+
 	// render all inputs to the final postprocessing shader
 	if (!chain.empty()) {
 
@@ -267,17 +274,16 @@ void PostProcessRenderer::showResult(const SceneState& ss, const RenderState& rs
 			// ensure that this chain's link is rendered into a texture, attached to a framebuffer
 			// this output-texture will be used as the input texture for the next link within the chain
 			fbChain.attachTextureColor(0, s->getOutput());
-			fbChain.enable();
 
 			// render it
 			s->render(rr, rs);
 
-			// stop using the framebuffer
-			fbChain.disable();
-
 		}
 
 	}
+
+	// stop using the chain's framebuffer [= render to display]
+	fbChain.unbind();
 
 	// and render the final output [chain's last link] to screen [no framebuffer]
 	out->render(rr, rs);
@@ -286,30 +292,20 @@ void PostProcessRenderer::showResult(const SceneState& ss, const RenderState& rs
 
 }
 
-//void PostProcessRenderer::render(const SceneState& ss, const RenderState& rs) {
-////	texColor->bind(0);
-////	texDepth->bind(1);
-
-////	Shader* s = getShader();
-////	if (s->hasUniform("texColor"))	{s->setInt("texColor", 0);}		// TODO: once!
-////	if (s->hasUniform("texDepth"))	{s->setInt("texDepth", 1);}		// TODO: once!
-////	Sprite2D::render(ss, rs);
-
-////	texDepth->unbind(1);
-////	texColor->unbind(0);
-//}
-
 void PostProcessRenderer::begin3D() {
 
-	// render into the configured framebuffer
-	fbStart.enable();
+	// benchmarks indicated, this is the fastest solution:
+	// use 2 framebuffers
+
+	// render into the 3D-destination framebuffer
+	fbStart.bind();
 
 }
 
 void PostProcessRenderer::end3D() {
 
-	// stop rendering into the configured framebuffer
-	fbStart.disable();
+	// stop rendering into the 3D-destination framebuffer
+	fbStart.unbind();
 
 }
 

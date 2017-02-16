@@ -10,22 +10,19 @@
 #include "../gl/VAO.h"
 #include "../gl/VBOArray.h"
 #include "../scene/Renderable.h"
+#include "Transformable2D.h"
 #include "../scene/Scene.h"
+#include "Rect.h"
 
-class Text2 : public Renderable {
+class Text2 : public Renderable, public Transformable2D {
 
 private:
 
 	VAO vao;
 	VBOArrayStatic<AttrVertexTextureColor> vertices;
-	Mat4 matrix;
 	Scene* scene;
 
-//	Material* material = nullptr;
-//	Material2* material2 = nullptr;
-
 	std::vector<float> glyphEdges;
-	Vec2 pos;
 	float size;
 	Vec4 color;
 
@@ -42,8 +39,7 @@ public:
 
 	/** ctor */
 	Text2(Scene* scene, Material2* material2) :
-	    scene(scene), pos(0.5, 0.5), size(1.0), color(1,1,1,1) {
-		matrix = Mat4::identity();
+		scene(scene), size(1.0), color(1,1,1,1) {
 
 		// get font glyps [4 floats] from XML
 		const std::string sGlyphs = material2->getUserValues()["glyphs"];
@@ -62,27 +58,32 @@ public:
 
 	}
 
+	const Mat4& getMatrix() const override {
+		return Transformable2D::getMatrix();
+	}
+
+
 	/** set the text's color */
 	void setColor(const Vec4& color) {
 		this->color = color;
 		rebuild();
 	}
 
-	/** set the font's position */
-	void setPosition(const Vec2 xy) {
-		if (xy == this->pos) {return;}
-		this->pos = xy;
-		rebuild();
-	}
+//	/** set the font's position */
+//	void setPosition(const Vec2 xy) {
+////		if (xy == this->pos) {return;}
+////		this->pos = xy;
+//		rebuild();
+//	}
 
 	/** set the font's size */
-	void setSize(const float size) {
+	void setFontSize(const float size) {
 		this->size = size;
 		rebuild();
 	}
 
 	/** get the font's size */
-	float getSize() const {
+	float getFontSize() const {
 		return this->size;
 	}
 
@@ -112,9 +113,6 @@ public:
 
 	}
 
-	const Mat4& getMatrix() const override {
-		return matrix;
-	}
 
 	virtual bool isVisible(const Mat4& MVP) const override {
 		(void) MVP;
@@ -123,12 +121,21 @@ public:
 
 private:
 
+	struct Rect {
+		float x1;
+		float y1;
+		float x2;
+		float y2;
+	};
+
 	void rebuild() {
 
-		vertices.clear();
+		// text starts at (0,0) and, depending on chars, lines and size
+		// has a corresponding width/height
+		// normal affine transforms can be used for positioning
+		Vec2 pos(0,0);
 
-		// start at the given starting position (lower-left)
-		Vec2 pos = this->pos;
+		vertices.clear();
 
 		for (char c : text) {
 
@@ -138,8 +145,8 @@ private:
 
 			// newline?
 			if (c == '\n') {
-				pos.x = this->pos.x;
-				pos.y += si.y;
+				pos.x = 0;		// reset x
+				pos.y += si.y;	// increment y
 				continue;
 			}
 
@@ -148,6 +155,10 @@ private:
 
 			const Vec2 v1 = pos;
 			const Vec2 v2 = pos + Vec2(si.x, si.y);
+
+			// update size information
+			if (v2.x > width_01)	{width_01 = v2.x;}
+			if (v2.y > height_01)	{height_01 = v2.y;}
 
 			const AttrVertexTextureColor vt1(v1.x, v1.y, 0,	t1.x, t2.y, color.r, color.g, color.b, color.a);
 			const AttrVertexTextureColor vt2(v2.x, v1.y, 0,	t2.x, t2.y,	color.r, color.g, color.b, color.a);

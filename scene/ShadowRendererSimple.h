@@ -35,7 +35,7 @@ public:
 	/** get the shadow-map-texture for the given light */
 	inline Texture* getShadowTexture(const int lightIdx) {return texShadows[lightIdx];}
 
-	inline std::string getShadowAmountCalculationGLSL() override;
+	//inline std::string getShadowAmountCalculationGLSL() override;
 
 };
 
@@ -77,39 +77,51 @@ void ShadowRendererSimple::update() {
 	//glCullFace(GL_FRONT);
 	scene->setOverwriteShader(sShadowGen);
 
+	// store current camera
+	scene->getCamera().push();
+
+	// switch to shadow's resolution
+	scene->getCamera().setScreenSize(texW, texH);
+
+	// enable framebuffer rendering
+	fbShadows.bind();
+
+	// only shadow, no color
+	fbShadows.noColor();
+
+	// process each potential light
 	for (int i = 0; i < MAX_LIGHTS; ++i) {
 
 		// skip inactive lights
 		if (!scene->getLight(i).isActive()) {continue;}
 
-		// skip non shadow casting lights
+		// skip non-shadow-casting lights
 		if (!scene->getLight(i).getCastsShadows()) {continue;}
 
-		// render
-		scene->getCamera().push();
-
-		scene->getCamera().setScreenSize(texW, texH);
+		// setup
 		scene->getCamera().setPosition(scene->getLight(i).getPosition());
 		scene->setShadowPV(scene->getCamera().getPVMatrix(), i);
 
 		// attach corresponding texture
 		fbShadows.attachTextureDepth(texShadows[i]);
 
-		fbShadows.enable();
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// render
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_DEPTH_BUFFER_BIT);
 		scene->renderForShadows();
-		fbShadows.disable();
-
-		scene->setOverwriteShader(nullptr);
-		//glCullFace(GL_BACK);
-
-		scene->getCamera().pop();
-		//texShadows->bind(7);		// ???
 
 	}
 
+	// disable framebuffer rendering
+	fbShadows.unbind();
+
+	// restore
+	scene->setOverwriteShader(nullptr);
+	scene->getCamera().pop();
+
 }
 
+/*
 std::string ShadowRendererSimple::getShadowAmountCalculationGLSL() {
 
 	const float size = 0.22f;		// TODO: make flexible?
@@ -197,5 +209,6 @@ std::string ShadowRendererSimple::getShadowAmountCalculationGLSL() {
 
 	return ss.str();
 }
+*/
 
 #endif // SHADOWRENDERERSIMPLE_H

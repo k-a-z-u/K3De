@@ -106,22 +106,22 @@ public:
 
 
 	/** create a new texture using the given input file */
-	Texture2D* create(const std::string file, bool compressed = true) {
+	Texture2D* create(const std::string file, bool compressed = true, bool mipMaps = true) {
 
 		// create and add a new texture
 		Texture2D* tex = new Texture2D(-1, -1);
 		textures.push_back(std::make_unique(tex));
 
-		auto funcDecode = [this, file, tex, compressed] () {
+		auto funcDecode = [this, file, tex, compressed, mipMaps] () {
 
 			// decode the image file
 			Image img = ImageFactory::load(includePath + file);
 
-			auto funcUpload = [this, tex, img, compressed] () {
+			auto funcUpload = [this, tex, img, compressed, mipMaps] () {
 				void* data = (void*) img.getData().data();
 				const int formatIn = getFormatIn(img);
 				const int formatOut = getFormatOut(img, compressed);
-				upload(tex, data, img.getWidth(), img.getHeight(), formatIn, formatOut);
+				upload(tex, data, img.getWidth(), img.getHeight(), formatIn, formatOut, mipMaps);
 			};
 
 			MainLoop::get().add(funcUpload);
@@ -185,7 +185,7 @@ public:
 
 	}
 
-	void upload(Texture* tex, const void* data, const int w, const int h, const int formatIn, const int formatOut) {
+	void upload(Texture* tex, const void* data, const int w, const int h, const int formatIn, const int formatOut, const bool mipmaps = true) {
 
 		tex->format = formatOut;
 		tex->width = w;
@@ -207,7 +207,7 @@ public:
 		// linear-filtering
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		if (mipmaps) {
+		if (this->mipmaps && mipmaps) {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		} else {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -220,7 +220,7 @@ public:
 		}
 
 		// generate mip-maps?
-		if (mipmaps) {
+		if (this->mipmaps && mipmaps) {
 			glGenerateMipmap(GL_TEXTURE_2D);
 			Error::assertOK();
 		}

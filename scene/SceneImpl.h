@@ -92,16 +92,14 @@ void Scene::render() {
 			rs.matrices.P = Mat4::identity();
 			rs.matrices.PV = rs.matrices.P * rs.matrices.V;
 		}
-		glDisable(GL_CULL_FACE);
-		glDisable(GL_DEPTH_TEST);
-		//renderThis(postProcRenderer, rs);
+
 		postProcRenderer->showResult(ss, rs);
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
+
 	}
 
 	// time it took to render the current frame
 	ss.lastRenderDuration = Time::runtime() - ss.renderStart;
+	fps.rendered();
 
 }
 

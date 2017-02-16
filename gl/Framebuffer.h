@@ -11,6 +11,16 @@
 
 class Framebuffer {
 
+	#include "../misc/BindOnce.h"
+
+	inline void assertBound() const {
+		_assertTrue(isBound(fbID), "bind() the Framebuffer first");
+	}
+
+	inline void assertUnbound() const {
+		_assertFalse(isBound(fbID), "Framebuffer is already bound!");
+	}
+
 private:
 
 	GLuint fbID;
@@ -29,25 +39,36 @@ public:
 	}
 
 	void bind() {
+		assertUnbound();
 		glBindFramebuffer(GL_FRAMEBUFFER, fbID);
 		Error::assertOK();
+		setBound(fbID);
 	}
 
 	void unbind() {
+		assertBound();
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		Error::assertOK();
+		setUnbound(fbID);
 	}
 
 	/** attach the given texture as the idx-th color-target */
 	void attachTextureColor(const int idx, Texture* texture) {
-		bind();
+		assertBound();
+		//bind();
 		const GLuint id = GL_COLOR_ATTACHMENT0 + idx;
 		//glFramebufferTexture(GL_FRAMEBUFFER, id, texture->getID(), 0);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, id, GL_TEXTURE_2D, texture->getID(), 0);
 		Error::assertOK();
 		if (colorBuffers.size() < (idx+1)) {colorBuffers.resize(idx+1);}
 		colorBuffers[idx] = id;
-		unbind();
+		//unbind();
+	}
+
+	/** when only depth is rendered, set color-texture to "empty" */
+	void noColor() {
+		assertBound();
+		glDrawBuffer(GL_NONE);
 	}
 
 	void detachColorTextures() {
@@ -56,26 +77,28 @@ public:
 
 	/** attach the given texture to the depth-channel */
 	void attachTextureDepth(Texture* texture) {
-		bind();
+		assertBound();
+		//bind();
 		// todo assert that the texture is a depth texture
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texture->getID(), 0);
 		Error::assertOK();
-		unbind();
+		//unbind();
 	}
 
 	/** attach the given Renderbuffer as depth-buffer of the given size */
 	void attachRenderbufferDepth(Renderbuffer* buf, const int w, const int h) {
-		bind();
+		assertBound();
+		//bind();
 		buf->bind();
 		buf->setToDepthMode(w, h);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buf->getID());
 		Error::assertOK();
-		unbind();
+		//unbind();
 	}
 
 	void enable() {
 
-		bind();
+		//bind();
 
 		if (colorBuffers.empty()) {
 			// no color buffers set. just rendering the depth-channel (e.g. shadows)
@@ -87,8 +110,8 @@ public:
 			Error::assertOK();
 		}
 
-		const GLenum res = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-		_assertEqual(GL_FRAMEBUFFER_COMPLETE, res, "framebuffer is not complete!");
+		//const GLenum res = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		//_assertEqual(GL_FRAMEBUFFER_COMPLETE, res, "framebuffer is not complete!");
 
 	}
 

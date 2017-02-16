@@ -32,11 +32,6 @@ public:
 		return lastRenderDuration;
 	}
 
-	/** current scene FPS */
-	float getFPS() const {
-		return 1.0f / lastRenderDuration.seconds();
-	}
-
 };
 
 #endif // SCENE_STATE_H

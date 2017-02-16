@@ -14,15 +14,38 @@
 #include "../scene/Scene.h"
 #include "../textures/Texture2D.h"
 
+PXMLNode recurse(XMLElem* elem) {
+	PXMLNode node(elem->Name());
+	FOREACH_ATTR(attr, elem) {
+	//for (const XMLAttr* attr = elem->FirstAttribute(); attr != nullptr; attr = attr->Next()) {
+		const std::string aName = attr->Name();
+		const std::string aVal = attr->Value();
+		node.attributes[aName] = aVal;
+	}
+	//for (const XMLNode* node = elem->FirstChild(); node != nullptr; node = node->NextSibling()) {
+	FOREACH_ELEM(sub, elem) {
+
+		if (sub->ToText()) {
+			continue;}	// skip text nodes
+		node.children.push_back(recurse(sub));
+	}
+	return node;
+}
 
 void MaterialFactory::loadUserValues(Material2* mat, XMLElem* elem) {
 
 	if (!elem) {return;}
+
+	// structured
 	FOREACH_ELEM_NAMED("value", eVal, elem) {
 		const std::string id = XML_ID(eVal);
 		const std::string value = eVal->FirstChild()->Value();
 		mat->getUserValues()[id] = value;
 	}
+
+	// whole subtree
+	mat->userNode = recurse(elem);
+	(void) mat;
 
 }
 
@@ -31,9 +54,10 @@ void MaterialFactory::loadTextures(Material2* mat, XMLElem* elem) {
 	FOREACH_ELEM_NAMED("texture", tex, elem) {
 		const std::string id = XML_ID(tex);
 		const std::string file = tex->FirstChildElement("file")->GetText();
-		const bool compress = tex->BoolAttribute("compress");
+		const bool compress = tex->BoolAttribute("compress", true);
+		const bool mipMaps = tex->BoolAttribute("mipMaps", true);
 		const int idx = mat->getTextures().size();	// next free index
-		Texture2D* texture = scene->getTextureFactory().create(mat->dataPath + file, compress);
+		Texture2D* texture = scene->getTextureFactory().create(mat->dataPath + file, compress, mipMaps);
 		MatPart::LoadedTexture t(id, idx, texture);
 		mat->getTextures().add(t);
 		mat->paramsFragment.addVariable(id, "uniform sampler2D " + id + ";");
@@ -89,6 +113,8 @@ void MaterialFactory::buildDiffuse(Material2* mat, XMLElem* cfg) {
 
 		}
 
+#warning "todo: if only for materials with alpha"
+#warning "add alpha/blending support to the materials def"
 		// early opt-out for almost transparent pixels
 		mat->paramsFragment.addMainLine("vec4 diffuseColor = getDiffuseColor();");
 		mat->paramsFragment.addMainLine("if (diffuseColor.a < 0.01) {discard;}");
@@ -247,58 +273,46 @@ void MaterialFactory::buildPixel(Material2 *mat) {
 
 		mat->paramsFragment.usedVariable("lights");
 
-		// process each [active] light
-		for (int i = 0; i < 8; ++i) {
+		// add processing for each light
+		for (int i = 0; i < MAX_LIGHTS; ++i) {
 
 			const std::string si = std::to_string(i);
-			mat->paramsFragment.addMainLine("");
-			mat->paramsFragment.addMainLine("// LIGHT" + si);
+			mat->paramsFragment.addMainSection("light " + si);
 
-			// only enabled lights
+			// check whether the light is enabled
 			mat->paramsFragment.addMainLine("if (" + lighting.isEnabled(si) + ") {"); {
-			//mat->paramsFragment.addMainLine("if (1==1) {"); {
 
 				// calculate variable light stuff (different for every light)
 				mat->paramsFragment.addMainLine("vec3 lightPos_M = " + lighting.getPos(si) + ";", 2);	//getLightPos(" + si + ");", 2);
-				//mat->paramsFragment.usedFunction("getLightPos");
 
 				// attenuation over distance
-				mat->paramsFragment.addMainLine("float lightAttenuationLinear = " + lighting.getAttenuationLinear(si) + ";" , 2);//getLightAttenuation(" + si + ");", 2);
-				mat->paramsFragment.addMainLine("float lightAttenuationQuadratic = " + lighting.getAttenuationQuadratic(si) + ";" , 2);//getLightAttenuation(" + si + ");", 2);
+				mat->paramsFragment.addMainLine("float lightAttenLinear = " + lighting.getAttenuationLinear(si) + ";" , 2);//getLightAttenuation(" + si + ");", 2);
+				mat->paramsFragment.addMainLine("float lightAttenQuad = " + lighting.getAttenuationQuadratic(si) + ";" , 2);//getLightAttenuation(" + si + ");", 2);
 				mat->paramsFragment.addMainLine("float distToLight = length(lightPos_M - vertex_M);", 2);
-				mat->paramsFragment.addMainLine("float lightStrength = 1.0 / (1.0 + (lightAttenuationLinear*distToLight) + (lightAttenuationQuadratic*distToLight*distToLight));", 2);
 
-				// user defined impact [0:1]
-				mat->paramsFragment.addMainLine("float lightImpact = " + lighting.getImpact(si) + ";", 2);// getLightImpact(" + si + ");", 2);
+				// combine both, attenuation over distance and user-defined overall impact [usually 1.0]
+				mat->paramsFragment.addMainLine("float lightStrength = " + lighting.getImpact(si) + " / (1.0 + (lightAttenLinear*distToLight) + (lightAttenQuad*distToLight*distToLight));", 2);
 
 				#define MIN_LIGHT_STRENGTH		"0.002"
-
-				// combined strength
-				mat->paramsFragment.addMainLine("float lightValue = lightImpact * lightStrength;", 2);
 
 				// also add [costly] shadow to strenght?
 				if (mat->receivesShadows) {
 
-					#warning "todo: shadow depending on light index"
-					mat->paramsFragment.addMainLine("", 2);
-					mat->paramsFragment.addMainLine("// shadowing", 2);
+					mat->paramsFragment.addMainSection("shadowing", 2);
 					mat->paramsFragment.addMainLine(
-						"if (lightValue > " MIN_LIGHT_STRENGTH " && " + lighting.castsShadows(si) + ") {"
-						"	lightValue *= getShadowAmount(texShadowMap["+si+"], "+si+");"
+						"if (lightStrength > " MIN_LIGHT_STRENGTH " && " + lighting.castsShadows(si) + ") {"
+							"lightStrength *= getShadowAmount(texShadowMap["+si+"], "+si+");"
 						"}", 2
 					);
 
 				}
 
-
 				// if the remaining strength is too low, just skip this light for performance reasons
-				mat->paramsFragment.addMainLine("", 2);
-				mat->paramsFragment.addMainLine("// light still visible?", 2);
-				mat->paramsFragment.addMainLine("if (lightValue > " MIN_LIGHT_STRENGTH ") {", 2); {
+				mat->paramsFragment.addMainSection("light still visible?", 2);
+				mat->paramsFragment.addMainLine("if (lightStrength > " MIN_LIGHT_STRENGTH ") {", 2); {
 
 					// light's diffuse color
-					mat->paramsFragment.addMainLine("", 3);
-					mat->paramsFragment.addMainLine("// diffuse color", 3);
+					mat->paramsFragment.addMainSection("diffuse color", 3);
 
 					mat->paramsFragment.addMainLine("vec3 lightColor = " + lighting.getColor(si) + ";", 3);
 
@@ -306,25 +320,23 @@ void MaterialFactory::buildPixel(Material2 *mat) {
 					mat->paramsFragment.addMainLine("vec3 L = normalize(lightPos_M - vertex_M);", 3);
 					mat->paramsFragment.usedVariable("vertex_M");
 
-					// diffuse color [= normal lighting]
-					//shader += "\tfloat theta = clamp( dot(N, L), 0.0f, 1.0f);\n";
-					mat->paramsFragment.addMainLine("float theta = max( 0.0f, dot(N, L) );", 3);		// faster
+					// diffuse angle
+					mat->paramsFragment.addMainLine("float theta = max( 0.0f, dot(N, L) );", 3);
 
 					// add diffuse color
-					mat->paramsFragment.addMainLine("color.rgb += diffuseColor.rgb * lightColor * lightValue * theta;", 3);
+					mat->paramsFragment.addMainLine("color.rgb += diffuseColor.rgb * lightColor * lightStrength * theta;", 3);
 
 					// use specular lighting?
 					if (mat->useSpecular) {
 
 						mat->paramsFragment.addMainSection("specular", 3);
 
+						// specular angle
 						mat->paramsFragment.addMainLine("vec3 R = reflect(-L, N);", 3);
-
-						//shader += "\tfloat cosAlpha = clamp( dot(E, R), 0.0f, 1.0f);\n";		// TODO: check!
-						mat->paramsFragment.addMainLine("float cosAlpha = max( 0.0f, dot(E, R) );", 3);				// same es above but faster??
+						mat->paramsFragment.addMainLine("float cosAlpha = max( 0.0f, dot(E, R) );", 3);
 
 						// add specular color
-						mat->paramsFragment.addMainLine("color.rgb += specularColor * pow(cosAlpha, specularShininess) * lightValue;", 3);
+						mat->paramsFragment.addMainLine("color.rgb += specularColor * pow(cosAlpha, specularShininess) * lightStrength;", 3);
 
 					}
 

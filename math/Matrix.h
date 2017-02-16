@@ -3,6 +3,7 @@
 
 #include "Vector.h"
 #include <cstring>
+#include <string>
 #include <initializer_list>
 
 #include <xmmintrin.h>
@@ -216,6 +217,16 @@ public:
 		return copy;
 	}
 
+	std::string asString() const {
+		std::string res;
+		for (int y = 0; y < size; ++y) {
+			for (int x = 0; x < size; ++x) {
+				res += std::to_string(values[x+y*size]) + "\t";
+			}
+			res += "\n";
+		}
+		return res;
+	}
 
 private:
 

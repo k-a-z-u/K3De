@@ -6,6 +6,7 @@
 #include "ShaderParamsFragment.h"
 #include "ShaderParamsVertex.h"
 #include "ElementLookup.h"
+#include "pxml.h"
 
 class Shader;
 
@@ -44,6 +45,9 @@ private:
 	/** path the material stores all its data at */
 	std::string dataPath;
 
+	/** the whole <user> node of the material [if any] */
+	PXMLNode userNode;
+
 private:
 
 	ShaderParamsVertex paramsVertex;
@@ -55,6 +59,8 @@ private:
 
 public:
 
+	using UserKeyValue = std::unordered_map<std::string, std::string>;
+
 	/** get all modifiers used within this material */
 	const ElementLookup<MatPart::Modifier*>& getModifiers() const {return modifiers;}
 	ElementLookup<MatPart::Modifier*>& getModifiers() {return modifiers;}
@@ -63,9 +69,12 @@ public:
 	const ElementLookup<MatPart::LoadedTexture>& getTextures() const {return textures;}
 	ElementLookup<MatPart::LoadedTexture>& getTextures() {return textures;}
 
-	/** get all textures used within this material */
-	const std::unordered_map<std::string, std::string>& getUserValues() const {return userValues;}
-	std::unordered_map<std::string, std::string>& getUserValues() {return userValues;}
+	/** get all user-defined values used within this material */
+	const UserKeyValue& getUserValues() const {return userValues;}
+	UserKeyValue& getUserValues() {return userValues;}
+
+	/** get the material's user node */
+	const PXMLNode& getUserNode() const {return userNode;}
 
 	const ShaderParamsFragment& getFragmentParams() const {return paramsFragment;}
 	ShaderParamsFragment& getFragmentParams() {return paramsFragment;}

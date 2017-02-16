@@ -89,23 +89,27 @@ public:
 
 	/** set the TextureFilter to use when down/up-scaling this texture */
 	void setFilter(const TextureFilter min, const TextureFilter mag) {
+		// assert bound!
 		glTexParameteri(type, GL_TEXTURE_MAG_FILTER, getFilter(mag));	Error::assertOK();
 		glTexParameteri(type, GL_TEXTURE_MIN_FILTER, getFilter(min));	Error::assertOK();
 	}
 
 	/** set the wrapping mode to use for the (s,t) coordinates */
 	void setWrapping(const TextureWrapping wrapS, const TextureWrapping wrapT) {
+		// assert bound!
 		glTexParameteri(type, GL_TEXTURE_WRAP_S, getWrapping(wrapS));
 		glTexParameteri(type, GL_TEXTURE_WRAP_T, getWrapping(wrapT));
 	}
 
 	/** set anisotropic filtering */
 	void setAnisotropic(const float val) {
+		// assert bound!
 		glTexParameterf(type, GL_TEXTURE_MAX_ANISOTROPY_EXT, val);
 	}
 
 	/** generate MipMaps for this texture */
 	void generateMipMaps() {
+		// assert bound!
 		glGenerateMipmap(type);
 		Error::assertOK();
 	}

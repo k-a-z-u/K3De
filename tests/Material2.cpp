@@ -63,7 +63,7 @@ TEST(Material2, build1) {
 		const float s = 6;
 		scene.getLight(0).setPosition(cos(rad)*s, s, sin(rad)*s);
 
-		Engine::get()->render();
+//		Engine::get()->tick();
 		std::this_thread::sleep_for(std::chrono::milliseconds(30));
 	}
 

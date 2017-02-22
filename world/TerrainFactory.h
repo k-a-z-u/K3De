@@ -7,6 +7,7 @@
 #include "../import/ImageFactory.h"
 #include "Terrain.h"
 #include "../math/Math.h"
+#include "../3D/Estimator.h"
 
 
 class TerrainFactory {
@@ -76,17 +77,21 @@ public:
 		const int xVertices = ts.w;
 		const int yVertices = ts.h;
 
+
+
 		// create all vertices (the whole terrain)
-		std::vector<VertexNormalTexture> vertices;
+		std::vector<AttrVertexNormalTangentTexture> vertices;
 		for (int py = 0; py < yVertices; ++py) {
 			for (int px = 0; px < xVertices; ++px) {
 				const Vec3 v = getVertex(px, py, ts);
-				const Vec3 n(0,1,0);
+				const Vec3 n(0, 1, 0);
+				const Vec3 ta(0, 0, 0);	// later...
 				const Vec2 t = getTexCoord(px, py, ts);
-				vertices.push_back( VertexNormalTexture(v, n, t) );
+				vertices.push_back( AttrVertexNormalTangentTexture(v, n, ta, t) );
 				ts.terrain->params.vertices.push_back(v);
 			}
 		}
+
 
 //		// calculate normals for each vertex using eigenvalues
 //		for (int py = 0; py < ts.h; ++py) {
@@ -180,10 +185,16 @@ public:
 						part.indices.append(idx3);
 						part.indices.append(idx2);
 
+						// estimate the tangent for all 3 vertices
+						Estimator::estimateTangents(part.vertices[idx1], part.vertices[idx3], part.vertices[idx2]);
+
 						// second triangle
 						part.indices.append(idx1);
 						part.indices.append(idx4);
 						part.indices.append(idx3);
+
+						// estimate the tangent for all 3 vertices
+						Estimator::estimateTangents(part.vertices[idx1], part.vertices[idx4], part.vertices[idx3]);
 
 					}
 				}

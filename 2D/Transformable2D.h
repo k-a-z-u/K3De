@@ -41,10 +41,10 @@ public:
 		auto H = hom.getMatrix();
 
 		matrix = {
-		    H(0,0),		H(0,1),		0,		H(0,2),
-		    H(1,0),		H(1,1),		0,		H(1,2),
-		    0,			0,			1,		0,
-		    H(2,0),		H(2,1),		0,		H(2,2),
+		    (float)H(0,0),		(float)H(0,1),		(float)0,		(float)H(0,2),
+			(float)H(1,0),		(float)H(1,1),		(float)0,		(float)H(1,2),
+			(float)0,			(float)0,			(float)1,		(float)0,
+			(float)H(2,0),		(float)H(2,1),		(float)0,		(float)H(2,2),
 		};
 		matrix.transpose();
 

@@ -4,211 +4,47 @@
 
 #include "Image.h"
 #include <string>
-#include <png.h>
-#include <jpeglib.h>
-#include "TGA.h"
+
+
+#include "image/TGA.h"
+#include "image/JPG.h"
+#include "image/PNG.h"
 
 class ImageFactory {
 
 public:
 
-	static Image load(const std::string& filename) {
-		const std::string ext = filename.substr(filename.length() - 3, 3);
-		if (ext == "png") {return loadPNG(filename);}
-		if (ext == "jpg") {return loadJPG(filename);}
-		if (ext == "tga") {TGA tga; return tga.get(Resource(filename));}
-		throw "unsupported format for: " + filename;
-	}
+//	static Image load(const std::string& filename) {
+//		const std::string ext = getExt(filename);
+//		if (ext == "png") {return K3De::PNG::load(d);}
+//		if (ext == "jpg") {return K3De::JPG::load(d);}
+//		if (ext == "tga") {return K3De::TGA::load(d);}
+//		throw Exception("unsupported format for: " + filename);
+//	}
 
 	static Image load(const Resource& res) {
 		const std::string filename = res.getName();
-		const std::string ext = filename.substr(filename.length() - 3, 3);
+		const std::string ext = getExt(filename);
 		const Data d = ResourceFactory::get().get(res);
-		if (ext == "png") {return loadPNG(d);}
-		if (ext == "jpg") {return loadJPG(d);}
-		if (ext == "tga") {TGA tga; return tga.get(res);}
-		throw "unsupported format for: " + res.getName();
+		if (ext == "png") {return K3De::PNG::load(d);}
+		if (ext == "jpg") {return K3De::JPG::load(d);}
+		if (ext == "tga") {return K3De::TGA::load(d);}
+		throw Exception("unsupported format for: " + res.getName());
 	}
 
-public:
-
-	static void saveJPG(const std::string& file, const Image& img) {
-
-		struct jpeg_compress_struct cinfo;
-		struct jpeg_error_mgr jerr;
-
-		JSAMPROW row_pointer[1];
-
-		FILE* fp = fopen(file.c_str(), "wb");
-		if (!fp) {throw "error";}
-
-		cinfo.err = jpeg_std_error( &jerr );
-		jpeg_create_compress(&cinfo);
-		jpeg_stdio_dest(&cinfo, fp);
-
-		cinfo.image_width = img.getWidth();
-		cinfo.image_height = img.getHeight();
-
-		switch (img.format) {
-			case ImageFormat::IMAGE_GREY:	cinfo.input_components = 1;	cinfo.in_color_space = JCS_GRAYSCALE; break;
-			case ImageFormat::IMAGE_RGB:	cinfo.input_components = 3;	cinfo.in_color_space = JCS_RGB; break;
-			default: throw "unsupported format";
-		}
-
-		jpeg_set_defaults( &cinfo );
-		jpeg_start_compress( &cinfo, TRUE );
-
-		while( cinfo.next_scanline < cinfo.image_height ) {
-			uint8_t* ptr = (uint8_t*) &img.getDataPtr()[ cinfo.next_scanline * cinfo.image_width * cinfo.input_components];
-			row_pointer[0] = ptr;
-			jpeg_write_scanlines( &cinfo, row_pointer, 1 );
-		}
-
-		jpeg_finish_compress(&cinfo);
-		jpeg_destroy_compress(&cinfo);
-		fclose(fp);
-
+	static void save(const std::string& filename, const Image& img) {
+		const std::string ext = getExt(filename);
+		if (ext == "jpg") {return K3De::JPG::save(filename, img);}
+		if (ext == "tga") {return K3De::TGA::save(filename, img);}
+		throw Exception("unsupported format for: " + filename);
 	}
 
 private:
 
-	static Image loadJPG(const std::string& filename) {
-
-		throw Exception("TODO");
-
+	static inline std::string getExt(const std::string& file) {
+		return file.substr(file.length() - 3, 3);
 	}
 
-	static Image loadJPG(const Data& d) {
-
-		Image img;
-
-		unsigned char* rowptr[1];
-		unsigned char* jdata;
-		struct jpeg_decompress_struct info;
-		struct jpeg_error_mgr err;
-
-		info.err = jpeg_std_error(&err);
-		jpeg_create_decompress(& info);   //fills info structure
-
-		jpeg_mem_src(&info, d.get(), d.size());
-		jpeg_read_header(&info, TRUE);   // read jpeg file header
-
-		jpeg_start_decompress(&info);    // decompress the file
-
-		//set width and height
-		img.w = info.output_width;
-		img.h = info.output_height;
-		const int channels = info.num_components;
-
-		switch (channels) {
-			case 1: img.format = ImageFormat::IMAGE_GREY; break;
-			case 3: img.format = ImageFormat::IMAGE_RGB; break;
-			case 4: img.format = ImageFormat::IMAGE_RGBA; break;
-			default: throw "unsupported format";
-		}
-
-		img.data.resize(img.w*img.h*channels);
-
-		//--------------------------------------------
-		// read scanlines one at a time & put bytes
-		//    in jdata[] array. Assumes an RGB image
-		//--------------------------------------------
-		jdata = img.data.data();
-		while (info.output_scanline < info.output_height) {
-
-			// Enable jpeg_read_scanlines() to fill our jdata array
-			rowptr[0] = (unsigned char *)jdata +  // secret to method
-					channels * info.output_width * info.output_scanline;
-
-			jpeg_read_scanlines(&info, rowptr, 1);
-		}
-		//---------------------------------------------------
-
-		jpeg_finish_decompress(&info);   //finish decompressing
-
-		//----- create OpenGL tex map (omit if not needed) -------
-
-		return img;
-
-	}
-
-	static void PngReadCallback(png_structp pngPtr, png_bytep data, png_size_t length) {
-		png_voidp a = png_get_io_ptr(pngPtr);
-		uint8_t** src = (uint8_t**) a;
-		memcpy(data, *src, length);
-		*src += length;
-	}
-
-	static Image loadPNG(const Data& d) {
-
-		Image img;
-
-		png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-		if (!png) {throw "Could not allocate read struct\n";}
-
-		png_infop info_ptr = png_create_info_struct(png);
-		if (!info_ptr) {throw "error 2";}
-
-		if (setjmp(png_jmpbuf(png))) {throw "error 3";}
-
-		// custom read callback function. starts to read at data and will increment the ptr with every read. thus: &data
-		const uint8_t* data = d.get();
-		png_set_read_fn(png, (void*) &data, PngReadCallback);
-		//png_init_io(png, fp);
-
-		// read the details of the png
-		png_read_info(png, info_ptr);
-		const int w = png_get_image_width(png, info_ptr);
-		const int h = png_get_image_height(png, info_ptr);
-		const int c = png_get_channels(png, info_ptr);
-		const int bits = png_get_bit_depth(png, info_ptr);
-
-		// sanity check
-		if (png_get_color_type(png, info_ptr) == PNG_COLOR_TYPE_PALETTE) {
-			throw Exception("indexed PNGs are not supported");
-			// use imagemagick to convert:
-			// convert icon_flag_blue.png -strip png32:icon_flag_blue2.png
-		}
-
-		// adjust target
-		if		(c == 1 && bits == 8)	{img.format = ImageFormat::IMAGE_GREY;}
-		else if (c == 2 && bits == 8)	{img.format = ImageFormat::IMAGE_GREY_ALPHA;}
-		else if	(c == 3 && bits == 8)	{img.format = ImageFormat::IMAGE_RGB;}
-		else if (c == 4 && bits == 8)	{img.format = ImageFormat::IMAGE_RGBA;}
-		else							{throw "unsupported format";}
-
-		// resize target
-		img.w = w;
-		img.h = h;
-		img.data.resize(w*h*c*bits/8);
-
-		// create array of row-pointers
-		uint8_t* rows[h];
-		for (int y = 0; y < h; ++y) {
-			rows[y] = &img.data[y*w*c*bits/8];
-//			switch(img.format) {
-//				case ImageFormat::IMAGE_GREY:		rows[y] = &img.data[y*w*1]; break;
-//				case ImageFormat::IMAGE_GREY_ALPHA:	rows[y] = &img.data[y*w*2]; break;
-//				case ImageFormat::IMAGE_RGB:		rows[y] = &img.data[y*w*3]; break;
-//				case ImageFormat::IMAGE_RGBA:		rows[y] = &img.data[y*w*4]; break;
-//			}
-		}
-
-		// read
-		png_read_image(png, rows);
-
-		// cleanup
-		png_destroy_read_struct(&png, &info_ptr, nullptr);
-
-		return img;
-
-	}
-
-	static Image loadPNG(const std::string& filename) {
-
-		throw Exception("TODO");
-
-	}
 
 };
 

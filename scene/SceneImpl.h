@@ -23,8 +23,9 @@ const ScreenSize* Scene::getScreenSizePtr() const {
 }
 
 void Scene::addWater(Water* w) {
-	w->setReflect(waterRenderer->texReflect);
-	w->setRefract(waterRenderer->texRefract);
+	if (!waterRenderer) {throw Exception("set the water-renderer first!");}
+//	w->setReflect(waterRenderer->texReflect);
+//	w->setRefract(waterRenderer->texRefract);
 	waters.push_back(w);
 }
 

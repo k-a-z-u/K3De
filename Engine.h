@@ -105,17 +105,9 @@ public:
 	/** get the engine's configuration */
 	const EngineSettings& getSettings() const {return settings;}
 
-
-	void enqueueRender() {
-		//auto renderOnce = [] () {
-		//	Engine::get()->render();
-		//};
-		//MainLoop::get().add(renderOnce);
-		tick();
-	}
-
 	/** one step further. render, other actions, etc. */
 	inline void tick();
+
 
 private:
 
@@ -145,11 +137,11 @@ private:
 //		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
 //		Error::assertOK();
 
-//		// anti-aliasing?
-//		if (settings.antiAliasing) {
-//			glfwWindowHint(GLFW_SAMPLES, settings.antiAliasing);
-//			Error::assertOK();
-//		}
+		// anti-aliasing?
+		if (settings.antiAliasing) {
+			glfwWindowHint(GLFW_SAMPLES, settings.antiAliasing);
+			Error::assertOK();
+		}
 
 		// create a window
 		window = glfwCreateWindow( settings.screen.width, settings.screen.height, settings.title.c_str(), NULL, NULL);

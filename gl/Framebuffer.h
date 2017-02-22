@@ -53,7 +53,7 @@ public:
 	}
 
 	/** attach the given texture as the idx-th color-target */
-	void attachTextureColor(const int idx, Texture* texture) {
+	void attachTextureColor(const unsigned int idx, Texture* texture) {
 		assertBound();
 		//bind();
 		const GLuint id = GL_COLOR_ATTACHMENT0 + idx;
@@ -96,9 +96,9 @@ public:
 		//unbind();
 	}
 
-	void enable() {
+	void setupColorTextures() {
 
-		//bind();
+		assertBound();
 
 		if (colorBuffers.empty()) {
 			// no color buffers set. just rendering the depth-channel (e.g. shadows)
@@ -116,7 +116,7 @@ public:
 	}
 
 	void disable() {
-		unbind();
+		//unbind();
 	}
 
 private:

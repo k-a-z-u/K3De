@@ -19,11 +19,34 @@ TEST(DemoScene1, scene) {
 
 	Scene scene;
 	scene.setEnableShadows(true);
+	Engine::get()->setScene(&scene);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	scene.setClearColor( Vec4(0,0,0,1) );
+	scene.getLight(0).setColor(1,1,1);
+	scene.getLight(0).setImpact(0.6);
+	scene.getLight(0).setAttenuationLinear(0.0);
+	scene.getLight(0).setAttenuationQuadratic(0.01);
+	scene.getLight(0).setActive(true);
+	scene.getLight(0).setCastsShadows(true);
+
+	scene.getLight(1).setColor(1,1,1);
+	scene.getLight(1).setImpact(0.6);
+	scene.getLight(1).setAttenuationLinear(0.0);
+	scene.getLight(1).setAttenuationQuadratic(0.01);
+	scene.getLight(1).setActive(true);
+	scene.getLight(1).setPosition(0, 5, 0);
+	scene.getLight(1).setCastsShadows(true);
+
+	scene.getLight(2).setColor(0,0,1); scene.getLight(2).setPosition(+1,1,+1); scene.getLight(2).setImpact(1.99); scene.getLight(2).setAttenuationQuadratic(3.25); scene.getLight(2).setActive(true); scene.getLight(2).setCastsShadows(false);
+	scene.getLight(3).setColor(0,1,0); scene.getLight(3).setPosition(-1,1,+1); scene.getLight(3).setImpact(1.99); scene.getLight(3).setAttenuationQuadratic(3.25); scene.getLight(3).setActive(true); scene.getLight(3).setCastsShadows(false);
+	//scene.getLight(4).setColor(1,0,0); scene.getLight(4).setPosition(+1,1,-1); scene.getLight(4).setImpact(1.99); scene.getLight(4).setAttenuationQuadratic(3.25); scene.getLight(4).setActive(true); scene.getLight(4).setCastsShadows(false);
+
+	scene.setClearColor(Vec4(0,0,0,1));
+
+
+
 
 	MaterialFactory& fac = scene.getMaterialFactory();
 
@@ -93,28 +116,8 @@ TEST(DemoScene1, scene) {
 //	scene.setNumLights(1);
 //	scene.getLight(0).setColor(1,1,1);
 
-	scene.getLight(0).setColor(1,1,1);
-	scene.getLight(0).setImpact(0.6);
-	scene.getLight(0).setAttenuationLinear(0.0);
-	scene.getLight(0).setAttenuationQuadratic(0.01);
-	scene.getLight(0).setActive(true);
-	scene.getLight(0).setCastsShadows(true);
 
-	scene.getLight(1).setColor(1,1,1);
-	scene.getLight(1).setImpact(0.6);
-	scene.getLight(1).setAttenuationLinear(0.0);
-	scene.getLight(1).setAttenuationQuadratic(0.01);
-	scene.getLight(1).setActive(true);
-	scene.getLight(1).setPosition(0, 5, 0);
-	scene.getLight(1).setCastsShadows(true);
 
-	scene.getLight(2).setColor(0,0,1); scene.getLight(2).setPosition(+1,1,+1); scene.getLight(2).setImpact(1.99); scene.getLight(2).setAttenuationQuadratic(3.25); scene.getLight(2).setActive(true); scene.getLight(2).setCastsShadows(false);
-	scene.getLight(3).setColor(0,1,0); scene.getLight(3).setPosition(-1,1,+1); scene.getLight(3).setImpact(1.99); scene.getLight(3).setAttenuationQuadratic(3.25); scene.getLight(3).setActive(true); scene.getLight(3).setCastsShadows(false);
-	//scene.getLight(4).setColor(1,0,0); scene.getLight(4).setPosition(+1,1,-1); scene.getLight(4).setImpact(1.99); scene.getLight(4).setAttenuationQuadratic(3.25); scene.getLight(4).setActive(true); scene.getLight(4).setCastsShadows(false);
-
-	scene.setClearColor(Vec4(0,0,0,1));
-
-	Engine::get()->setScene(&scene);
 
 
 	float rad = 1;
@@ -154,7 +157,10 @@ TEST(DemoScene1, scene) {
 			frames = 0;
 		}
 
-		Engine::get()->render();
+		Engine::get()->tick();
+		//Engine::get()->render();
+
+
 //		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 //		Image img = Engine::get()->getFrame();

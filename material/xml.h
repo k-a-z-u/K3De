@@ -1,5 +1,5 @@
-#ifndef XML_H
-#define XML_H
+#ifndef HELPER_XML_H
+#define HELPER_XML_H
 
 #include "../lib/tinyxml2/tinyxml2.h"
 
@@ -10,16 +10,16 @@ using XMLElem = tinyxml2::XMLElement;
 using XMLAttr = tinyxml2::XMLAttribute;
 using XMLText = tinyxml2::XMLText;
 
-#define FOREACH_ATTR(attr, root) \
+#define XML_FOREACH_ATTR(attr, root) \
 for (const XMLAttr* attr = root->FirstAttribute(); attr != nullptr; attr = attr->Next())
 
-#define FOREACH_NODE(sub, root) \
+#define XML_FOREACH_NODE(sub, root) \
 for (const XMLNode* sub = root->FirstChild(); sub != nullptr; sub = sub->NextSibling())
 
-#define FOREACH_ELEM(sub, root) \
+#define XML_FOREACH_ELEM(sub, root) \
 for (XMLElem* sub = (XMLElem*)root->FirstChild(); sub != nullptr; sub = (XMLElem*)sub->NextSibling())
 
-#define FOREACH_ELEM_NAMED(name, sub, root) \
+#define XML_FOREACH_ELEM_NAMED(name, sub, root) \
 for (XMLElem* sub = root->FirstChildElement(name); sub != nullptr; sub = sub->NextSiblingElement(name))
 
 #define XML_ID(node)		node->Attribute("xml:id")
@@ -29,4 +29,4 @@ for (XMLElem* sub = root->FirstChildElement(name); sub != nullptr; sub = sub->Ne
 
 
 
-#endif // XML_H
+#endif // HELPER_XML_H

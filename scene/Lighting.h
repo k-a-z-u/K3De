@@ -13,7 +13,10 @@ class Lighting {
 private:
 
 	/** UBO to be uploaded into the GPU [per Frame] */
-	LightAttributes __attribute__((packed)) lightData[MAX_LIGHTS];
+	//LightAttributes __attribute__((packed)) lightData[MAX_LIGHTS];
+#pragma pack(push,1)
+	LightAttributes lightData[MAX_LIGHTS];
+#pragma pack(pop)
 
 	/** wrapper to modify the UBO-data */
 	Light lights[MAX_LIGHTS];

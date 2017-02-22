@@ -25,50 +25,48 @@ public:
 	}
 
 //	/** load material from file */
-	Material2* load(const std::string& file) {
+//	Material2* load(const std::string& file) {
 
-		Debug(NAME, "loading: " + file);
+//		Debug(NAME, "loading: " + file);
 
-		// create a new material
-		Material2* mat = new Material2();
+//		// create a new material
+//		Material2* mat = new Material2();
 
-		// set the data-path to search for included files
-		mat->dataPath = getFolder(file);
+//		// set the data-path to search for included files
+//		mat->dataPath = getFolder(file);
 
-		XMLDoc doc;
-		assertOK(doc.LoadFile(file.c_str()), doc, "error while loading file");
+//		XMLDoc doc;
+//		assertOK(doc.LoadFile(file.c_str()), doc, "error while loading file");
 
-		XMLElem* root = doc.FirstChildElement("material");
-		if (root == nullptr) {throw Exception("missing root element");}
+//		XMLElem* root = doc.FirstChildElement("material");
+//		if (root == nullptr) {throw Exception("missing root element");}
 
-		const std::string name = root->Attribute("name");
-		mat->paramsFragment.setName(name);
-		mat->paramsVertex.setName(name);
+//		const std::string name = root->Attribute("name");
+//		mat->paramsFragment.setName(name);
+//		mat->paramsVertex.setName(name);
 
-		loadTextures(mat, root->FirstChildElement("textures"));
-		loadModifiers(mat, root->FirstChildElement("modifiers"));
-		loadUserValues(mat, root->FirstChildElement("user"));
+//		loadTextures(mat, root->FirstChildElement("textures"));
+//		loadModifiers(mat, root->FirstChildElement("modifiers"));
+//		loadUserValues(mat, root->FirstChildElement("user"));
 
-		XMLElem* xmlMat = root->FirstChildElement("config");
+//		XMLElem* xmlMat = root->FirstChildElement("config");
 
-		setClipping(mat, xmlMat);
-		buildLighting(mat, xmlMat);
-		buildDiffuse(mat, xmlMat);
-		buildShadow(mat, xmlMat);
-		buildBumpMap(mat, xmlMat);
-		buildSpecular(mat, xmlMat);
+//		setClipping(mat, xmlMat);
+//		buildLighting(mat, xmlMat);
+//		buildDiffuse(mat, xmlMat);
+//		buildShadow(mat, xmlMat);
+//		buildBumpMap(mat, xmlMat);
+//		buildSpecular(mat, xmlMat);
 
-		buildPixel(mat);
+//		buildPixel(mat);
 
-		compile(mat);
+//		compile(mat);
 
-		return mat;
+//		return mat;
 
-	}
+//	}
 
 	Material2* load(const Resource& res) {
-
-		Engine::get()->enqueueRender();
 
 		Debug(NAME, "loading: " + res.getName());
 
@@ -105,6 +103,8 @@ public:
 		buildPixel(mat);
 
 		compile(mat);
+
+		Engine::get()->tick();
 
 		return mat;
 

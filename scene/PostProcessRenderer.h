@@ -190,7 +190,7 @@ public:
 
 	/** build a new post-process stage */
 	PostProcessStage* newStage(const std::string& name) {
-		std::unique_ptr<PostProcessStage> uptr = std::make_unique<PostProcessStage>(name, scene, texW, texH);
+		std::unique_ptr<PostProcessStage> uptr = std::make_unique_args<PostProcessStage>(name, scene, texW, texH);
 		PostProcessStage* ptr = uptr.get();
 		stages.push_back(std::move(uptr));
 		return ptr;
@@ -198,7 +198,7 @@ public:
 
 	/** build a new post-process stage */
 	PostProcessStage* newStage(const std::string& name, const int texW, const int texH) {
-		std::unique_ptr<PostProcessStage> uptr = std::make_unique<PostProcessStage>(name, scene, texW, texH);
+		std::unique_ptr<PostProcessStage> uptr = std::make_unique_args<PostProcessStage>(name, scene, texW, texH);
 		PostProcessStage* ptr = uptr.get();
 		stages.push_back(std::move(uptr));
 		return ptr;

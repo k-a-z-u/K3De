@@ -9,7 +9,7 @@
 void Engine::tick() {
 
 	// process some elements from the main loop
-	static const Time timeLimit = Time::fromMSec(50);
+	static const Time timeLimit = Time::fromMSec(100);
 	MainLoop::get().execTime(timeLimit);
 
 	// render the current scene

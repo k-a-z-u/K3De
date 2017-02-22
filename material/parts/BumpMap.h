@@ -3,6 +3,7 @@
 
 
 #include "Buildable.h"
+#include "../ShaderVariable.h"
 
 namespace MatPart {
 
@@ -13,7 +14,9 @@ namespace MatPart {
 		virtual void build(Material2* material, XMLElem* elem) override {
 
 			// vertex shader
-			material->getVertexParams().addVariable("normalRotMat", "out mat3 normalRotMat;");
+			//material->getVertexParams().addVariable("normalRotMat", "out mat3 normalRotMat;");
+			material->getVertexParams().addVariable(ShaderVariable(ShaderVariable::Mode::OUTBOUND, ShaderVariable::Type::MAT3, "normalRotMat"));
+
 
 //			// get the matrix describing the bump-maps coordinate system (normal, tangent, bitangent)
 //			material->getVertexParams().addFunction("getNormalRotationMatrix", R"(
@@ -32,7 +35,8 @@ namespace MatPart {
 			material->getVertexParams().addMainLine("normalRotMat = mat3(" FRAG_TANGENT_WORLD_POS ", normalize(cross(" FRAG_NORMAL_WORLD_POS ", " FRAG_TANGENT_WORLD_POS ")), " FRAG_NORMAL_WORLD_POS ");");
 
 			// fragment shader
-			material->getFragmentParams().addVariable("normalRotMat", "in mat3 normalRotMat;");
+			material->getFragmentParams().addVariable(ShaderVariable(ShaderVariable::Mode::INBOUND, ShaderVariable::Type::MAT3, "normalRotMat"));
+			//material->getFragmentParams().addVariable("normalRotMat", "in mat3 normalRotMat;");
 			material->getFragmentParams().usedVariable("normalRotMat");
 
 			XMLElem* eTex = elem->FirstChildElement("texture");

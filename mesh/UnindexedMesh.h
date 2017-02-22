@@ -63,7 +63,7 @@ public:
 
 	Material2* getMaterial() {return material2;}
 
-	void setMaterial(Material2* mat) {this->material2 = mat;}
+	//void setMaterial(Material2* mat) {this->material2 = mat;}
 
 	const Mat4& getMatrix() const override {
 		return transform.getMatrix();

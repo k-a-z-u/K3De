@@ -3,26 +3,30 @@
 
 #include "../math/Math.h"
 
+#define setBit(val, bit)		(val |  (1 << bit))
+#define clearBit(val, bit)		(val & ~(1 << bit))
 
+#pragma pack(push,1)
 struct LightAttributes {
 
-	float x, y, z;				// position
-	float r, g, b;				// color
+	// 4x4 bytes
+	float x, y, z, w;			// position
 
+	// 4x4 bytes
+	float r, g, b, a;			// color
+
+	// 4x4 bytes
 	float impact;				// "brightness"
 	float attenuationLinear;	// attenuation over linear distance
 	float attenuationQuadratic;	// attenuation over quadratic distance
+	uint32_t flags;				// active? casts shadows?
 
-	uint32_t enabled;			// active?
-	uint32_t castsShadows;		// casts shadows?
-
-	uint32_t pad1;
-
+	// 4x4 bytes
 	Mat4 shadowPV;
 
 
 	LightAttributes() :
-	    x(0), y(0), z(0), r(0), g(0), b(0), impact(1.0), attenuationLinear(0), attenuationQuadratic(0), enabled(0), castsShadows(0) {;}
+		x(0), y(0), z(0), r(0), g(0), b(0), impact(1.0), attenuationLinear(0), attenuationQuadratic(0), flags(0) {;}
 
 	void setPosition(const float x, const float y, const float z) {this->x = x; this->y = y; this->z = z;}
 	void setColor(const float r, const float g, const float b) {this->r = r; this->g = g; this->b = b;}
@@ -32,11 +36,22 @@ struct LightAttributes {
 
 	void setShadowPV(const Mat4& mat) {shadowPV = mat.transposed();}
 
-	void setActive(const bool enabled) {this->enabled = enabled ? 1 : 0;}
-	void setCastsShadows(const bool casts) {this->castsShadows = casts ? 1 : 0;}
+	void setActive(const bool enabled) {
+		if (enabled) {flags = setBit(flags, 0);} else {flags = clearBit(flags, 0);}
+	}
+	bool isActive() const {
+		return flags & (1 << 0);
+	}
 
-} __attribute__((packed));
+	void setCastsShadows(const bool casts) {
+		if (casts) {flags = setBit(flags, 1);} else {flags = clearBit(flags, 1);}
+	}
+	bool getCastsShadows() const {
+		return flags & (1 << 1);
+	}
 
+};// __attribute__((packed));
+#pragma pack(pop)
 
 
 /** wrapper around LightAttributes */
@@ -120,12 +135,12 @@ public:
 
 	/** configure whether this light casts shadows */
 	void setCastsShadows(const bool cast) {
-		attrs->castsShadows = cast;
+		attrs->setCastsShadows(cast);
 	}
 
 	/** does this light cast shadows? */
 	bool getCastsShadows() const {
-		return attrs->castsShadows;
+		return attrs->getCastsShadows();
 	}
 
 
@@ -134,7 +149,7 @@ public:
 	}
 
 	bool isActive() const {
-		return attrs->enabled;
+		return attrs->isActive();
 	}
 
 

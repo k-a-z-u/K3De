@@ -9,6 +9,7 @@
 #include "parts/Shadowing.h"
 #include "parts/Specular.h"
 #include "parts/Lighting.h"
+#include "parts/Clipping.h"
 
 #include "../scene/ShadowRenderer.h"
 #include "../scene/Scene.h"
@@ -16,14 +17,14 @@
 
 static inline PXMLNode recurse(XMLElem* elem) {
 	PXMLNode node(elem->Name());
-	FOREACH_ATTR(attr, elem) {
+	XML_FOREACH_ATTR(attr, elem) {
 	//for (const XMLAttr* attr = elem->FirstAttribute(); attr != nullptr; attr = attr->Next()) {
 		const std::string aName = attr->Name();
 		const std::string aVal = attr->Value();
 		node.attributes[aName] = aVal;
 	}
 	//for (const XMLNode* node = elem->FirstChild(); node != nullptr; node = node->NextSibling()) {
-	FOREACH_ELEM(sub, elem) {
+	XML_FOREACH_ELEM(sub, elem) {
 
 		if (sub->ToText()) {
 			continue;}	// skip text nodes
@@ -37,7 +38,7 @@ void MaterialFactory::loadUserValues(Material2* mat, XMLElem* elem) {
 	if (!elem) {return;}
 
 	// structured
-	FOREACH_ELEM_NAMED("value", eVal, elem) {
+	XML_FOREACH_ELEM_NAMED("value", eVal, elem) {
 		const std::string id = XML_ID(eVal);
 		const std::string value = eVal->FirstChild()->Value();
 		mat->getUserValues()[id] = value;
@@ -50,8 +51,9 @@ void MaterialFactory::loadUserValues(Material2* mat, XMLElem* elem) {
 }
 
 void MaterialFactory::loadTextures(Material2* mat, XMLElem* elem) {
+
 	if (!elem) {return;}
-	FOREACH_ELEM_NAMED("texture", tex, elem) {
+	XML_FOREACH_ELEM_NAMED("texture", tex, elem) {
 
 		const std::string id = XML_ID(tex);
 		const std::string file = tex->FirstChildElement("file")->GetText();
@@ -65,14 +67,16 @@ void MaterialFactory::loadTextures(Material2* mat, XMLElem* elem) {
 		Texture2D* texture = scene->getTextureFactory().create(res, compress, mipMaps);
 		MatPart::LoadedTexture t(id, idx, texture);
 		mat->getTextures().add(t);
-		mat->paramsFragment.addVariable(id, "uniform sampler2D " + id + ";");
+		//mat->paramsFragment.addVariable(id, "uniform sampler2D " + id + ";");
+		mat->paramsFragment.addVariable(ShaderVariable(ShaderVariable::Mode::UNIFORM, ShaderVariable::Type::TEXTURE_2D, id));
 
 	}
+
 }
 
 void MaterialFactory::loadModifiers(Material2* mat, XMLElem* elem) {
 	if (!elem) {return;}
-	FOREACH_ELEM(node, elem) {
+	XML_FOREACH_ELEM(node, elem) {
 		MatPart::Modifier* mod = MatPart::ModifierFactory::get(mat, node);
 		_assertNotNull(mod, "coding error. modifier is null?!");
 		mat->modifiers.add(mod);
@@ -100,6 +104,7 @@ void MaterialFactory::buildDiffuse(Material2* mat, XMLElem* cfg) {
 
 		XMLElem* eTex = elem->FirstChildElement("texture");
 		XMLElem* eCol = elem->FirstChildElement("color");
+		XMLElem* eWater = elem->FirstChildElement("water");
 
 		// diffuse texture
 		if (eTex) {
@@ -117,12 +122,50 @@ void MaterialFactory::buildDiffuse(Material2* mat, XMLElem* cfg) {
 
 			mat->paramsFragment.addFunction("getDiffuseColor", "vec4 getDiffuseColor() {return " + mpCol.get() + ";}", {}, {});
 
+		// water surface?
+		} else if (eWater) {
+
+			//mat->paramsFragment.addVariable("texReflect", "uniform sampler2D texReflect;");
+			//mat->paramsFragment.addVariable("texRefract", "uniform sampler2D texRefract;");
+
+			mat->paramsFragment.addVariable(ShaderVariable(ShaderVariable::Mode::UNIFORM, ShaderVariable::Type::TEXTURE_2D, "texReflect"));
+			mat->paramsFragment.addVariable(ShaderVariable(ShaderVariable::Mode::UNIFORM, ShaderVariable::Type::TEXTURE_2D, "texRefract"));
+
+			MatPart::SourceTexture texReflect("texReflect", scene->getWaterRenderer()->getReflect());
+			MatPart::SourceTexture texRefract("texRefract", scene->getWaterRenderer()->getRefract());
+
+			texReflect.buildModifiers(mat, eWater);
+			texRefract.buildModifiers(mat, eWater);
+
+			mat->paramsFragment.addFunction("getDiffuseColor", std::string() +
+				"vec4 getDiffuseColor() {\n" +
+
+				// texture coordinates
+			    "	vec2 uvRefract = (" + FRAG_VERTEX_SCREEN_POS + ".xy / " + FRAG_VERTEX_SCREEN_POS + ".w) * 0.5 + vec2(0.5, 0.5);\n" +
+				"	vec2 uvReflect = vec2(uvRefract.x, 1.0-uvRefract.y);\n" +
+
+				// texture values
+			    "	vec4 cReflect = " + texReflect.get("uvReflect") + ";\n" +
+			    "	vec4 cRefract = " + texRefract.get("uvRefract") + ";\n" +
+
+				// texture mix
+				"	vec3 N = vec3(0,1,0);\n" +
+				"	vec3 E = normalize(surfaceToEye_M);\n" +
+				"	float waterTexMix = pow(dot(N,E), 2.0);\n" +
+				"	return mix(cReflect, cRefract, waterTexMix);\n" +
+				"}", {FRAG_VERTEX_SCREEN_POS, "surfaceToEye_M", "texReflect", "texRefract"}, {}
+			);
+
+TODO("better solution??")
+			mat->paramsVertex.usedVariable(FRAG_VERTEX_SCREEN_POS);
+			mat->paramsVertex.addMainLine("vertex_S = gl_Position;");
+
 		}
 
-#warning "todo: if only for materials with alpha"
-#warning "add alpha/blending support to the materials def"
+TODO("todo: if only for materials with alpha")
+TODO("add alpha/blending support to the materials def")
 		// early opt-out for almost transparent pixels
-		mat->paramsFragment.addMainLine("vec4 diffuseColor = getDiffuseColor();");
+		mat->paramsFragment.addMainLine(ShaderVariable(ShaderVariable::Type::COLOR4, "diffuseColor").getDecl() + " = getDiffuseColor();");
 		mat->paramsFragment.addMainLine("if (diffuseColor.a < 0.01) {discard;}");
 		mat->paramsFragment.addMainLine("");
 
@@ -163,7 +206,7 @@ void MaterialFactory::buildBumpMap(Material2* mat, XMLElem* cfg) {
 
 	} else {
 
-#warning "only if lighting is used at all!"
+TODO("only if lighting is used at all!")
 		mat->paramsFragment.addFunction("getNormal", "vec3 getNormal() {return normalize(" FRAG_NORMAL_WORLD_POS ");}", {FRAG_NORMAL_WORLD_POS}, {});
 		mat->paramsFragment.usedVariable(FRAG_NORMAL_WORLD_POS);
 		mat->paramsVertex.usedVariable(FRAG_NORMAL_WORLD_POS);
@@ -171,7 +214,7 @@ void MaterialFactory::buildBumpMap(Material2* mat, XMLElem* cfg) {
 	}
 
 	// normal within the main code
-	mat->paramsFragment.addMain("\tvec3 N = getNormal();\n");
+	mat->paramsFragment.addMainLine(ShaderVariable(ShaderVariable::Type::POS3, "N").getDecl() + " = getNormal();", 1);
 
 }
 
@@ -179,30 +222,17 @@ void MaterialFactory::setClipping(Material2* mat, XMLElem* cfg) {
 
 	XMLElem* elem = cfg->FirstChildElement("usesClipping");
 	if (elem) {
-
 		mat->useClipping = true;
-		mat->paramsFragment.addVariable("clipY", "uniform vec2 clipY;", 1);
-
-		mat->paramsFragment.addFunction("doClip", R"(
-void doClip() {
-	bool clip = (vertex_M.y < clipY[0]) || (vertex_M.y > clipY[1]);
-	if (clip) {discard;}
-}
-		)", {"vertex_M", "clipY"}, {});
-
-		mat->paramsFragment.usedVariable("vertex_M");
-
-		// early opt out
-		mat->paramsFragment.addMain("\tdoClip();\n\n");
-
+		MatPart::Clipping clip;
+		clip.build(mat, elem);
+		mat->paramsFragment.addMainLine(clip.doClip(mat), 1);
+	} else {
+		mat->useClipping = false;
 	}
 
 }
 
 void MaterialFactory::buildSpecular(Material2* mat, XMLElem* cfg) {
-
-#warning "TODO: move to helper class"
-#warning "TODO: specular texture"
 
 	XMLElem* elem = cfg->FirstChildElement("specular");
 	if (elem) {
@@ -241,7 +271,7 @@ void MaterialFactory::buildPixel(Material2 *mat) {
 
 	if (mat->usesLighting() && mat->useSpecular) {
 
-		#warning "move to Lighting.h"
+		TODO("move to Lighting.h")
 
 		// surface to camera [unit vector] for specular lighting
 		mat->paramsFragment.addMainLine("vec3 E = normalize(" FRAG_SURFACE_TO_EYE ");");
@@ -283,21 +313,39 @@ void MaterialFactory::buildPixel(Material2 *mat) {
 		for (int i = 0; i < MAX_LIGHTS; ++i) {
 
 			const std::string si = std::to_string(i);
+
+			mat->paramsVertex.addMainSection("light " + si);
+
+			mat->paramsVertex.addMainLine("if (" + lighting.isEnabled(si) + ") {"); {
+
+				mat->paramsVertex.addMainLine(std::string() + FRAG_SHADOW_MAP_COORD + "[" + si + "] = lights.light["+si+"].pvShadow * vec4(vertex_M, 1.0);", 2);
+				mat->paramsVertex.usedVariable(FRAG_SHADOW_MAP_COORD);
+
+			} mat->paramsVertex.addMainLine("}");
+
+
+
+
+
+
 			mat->paramsFragment.addMainSection("light " + si);
 
 			// check whether the light is enabled
 			mat->paramsFragment.addMainLine("if (" + lighting.isEnabled(si) + ") {"); {
 
 				// calculate variable light stuff (different for every light)
-				mat->paramsFragment.addMainLine("vec3 lightPos_M = " + lighting.getPos(si) + ";", 2);	//getLightPos(" + si + ");", 2);
+				//mat->paramsFragment.addMainLine(ShaderVariable(ShaderVariable::Type::POS3, "lightPos_M").getDecl() + " = " + lighting.getPos(si) + ";", 2);	//getLightPos(" + si + ");", 2);
 
 				// attenuation over distance
-				mat->paramsFragment.addMainLine("float lightAttenLinear = " + lighting.getAttenuationLinear(si) + ";" , 2);//getLightAttenuation(" + si + ");", 2);
-				mat->paramsFragment.addMainLine("float lightAttenQuad = " + lighting.getAttenuationQuadratic(si) + ";" , 2);//getLightAttenuation(" + si + ");", 2);
-				mat->paramsFragment.addMainLine("float distToLight = length(lightPos_M - vertex_M);", 2);
+				//mat->paramsFragment.addMainLine("float lightAttenLinear = " + lighting.getAttenuationLinear(si) + ";" , 2);//getLightAttenuation(" + si + ");", 2);
+				//mat->paramsFragment.addMainLine("float lightAttenQuad = " + lighting.getAttenuationQuadratic(si) + ";" , 2);//getLightAttenuation(" + si + ");", 2);
+				mat->paramsFragment.addMainLine("lowp float distToLight = length(" + lighting.getPos(si) + " - vertex_M);", 2);
 
 				// combine both, attenuation over distance and user-defined overall impact [usually 1.0]
-				mat->paramsFragment.addMainLine("float lightStrength = " + lighting.getImpact(si) + " / (1.0 + (lightAttenLinear*distToLight) + (lightAttenQuad*distToLight*distToLight));", 2);
+				//mat->paramsFragment.addMainLine("float lightStrength = " + lighting.getImpact(si) + " / (1.0 + (lightAttenLinear*distToLight) + (lightAttenQuad*distToLight*distToLight));", 2);
+				mat->paramsFragment.addMainLine("lowp float lightStrength = " + lighting.getImpact(si) + " / ", 2);
+					mat->paramsFragment.addMainLine("(1.0f + (" + lighting.getAttenuationLinear(si) + "*distToLight) + ", 3);
+					mat->paramsFragment.addMainLine("(" + lighting.getAttenuationQuadratic(si) + "*distToLight*distToLight));", 3);
 
 				#define MIN_LIGHT_STRENGTH		"0.002"
 
@@ -307,7 +355,9 @@ void MaterialFactory::buildPixel(Material2 *mat) {
 					mat->paramsFragment.addMainSection("shadowing", 2);
 					mat->paramsFragment.addMainLine(
 						"if (lightStrength > " MIN_LIGHT_STRENGTH " && " + lighting.castsShadows(si) + ") {"
-							"lightStrength *= getShadowAmount(texShadowMap["+si+"], "+si+");"
+							"lightStrength *= getShadowAmount(texShadowMap["+si+"], "+si+");"						// faster or slower???
+							//"lightStrength *= getShadowAmount(texShadowMap["+si+"], shadowMapCoord["+si+"]);"		// faster or slower???
+
 						"}", 2
 					);
 
@@ -320,17 +370,17 @@ void MaterialFactory::buildPixel(Material2 *mat) {
 					// light's diffuse color
 					mat->paramsFragment.addMainSection("diffuse color", 3);
 
-					mat->paramsFragment.addMainLine("vec3 lightColor = " + lighting.getColor(si) + ";", 3);
+					//mat->paramsFragment.addMainLine(ShaderVariable(ShaderVariable::Type::COLOR3, "lightColor").getDecl() + " = " + lighting.getColor(si) + ";", 3);
 
 					// from surface towards the light [unit-vector]
-					mat->paramsFragment.addMainLine("vec3 L = normalize(lightPos_M - vertex_M);", 3);
+					mat->paramsFragment.addMainLine("vec3 L = normalize(" + lighting.getPos(si) + " - vertex_M);", 3);
 					mat->paramsFragment.usedVariable("vertex_M");
 
 					// diffuse angle
-					mat->paramsFragment.addMainLine("float theta = max( 0.0f, dot(N, L) );", 3);
+					mat->paramsFragment.addMainLine("lowp float theta = max( 0.0f, dot(N, L) );", 3);
 
 					// add diffuse color
-					mat->paramsFragment.addMainLine("color.rgb += diffuseColor.rgb * lightColor * lightStrength * theta;", 3);
+					mat->paramsFragment.addMainLine("color.rgb += diffuseColor.rgb * " + lighting.getColor(si) + " * lightStrength * theta;", 3);
 
 					// use specular lighting?
 					if (mat->useSpecular) {
@@ -339,7 +389,7 @@ void MaterialFactory::buildPixel(Material2 *mat) {
 
 						// specular angle
 						mat->paramsFragment.addMainLine("vec3 R = reflect(-L, N);", 3);
-						mat->paramsFragment.addMainLine("float cosAlpha = max( 0.0f, dot(E, R) );", 3);
+						mat->paramsFragment.addMainLine("lowp float cosAlpha = max( 0.0f, dot(E, R) );", 3);
 
 						// add specular color
 						mat->paramsFragment.addMainLine("color.rgb += specularColor * pow(cosAlpha, specularShininess) * lightStrength;", 3);
@@ -418,6 +468,8 @@ void MaterialFactory::compile(Material2 *mat) {
 		}
 	}
 
+TODO("TODO: assign fixed texture units for the following textures? less binding/unbinding")
+
 	// additionally bind the shadow textures?
 	if (mat->getReceivesShadows() && scene->getShadowRenderer()) {
 		for (int i = 0; i < MAX_LIGHTS; ++i) {
@@ -429,8 +481,19 @@ void MaterialFactory::compile(Material2 *mat) {
 		}
 	}
 
+	// additionally bind the water textures? [reflect/refract]
+	if (scene->getWaterRenderer()) {
+		if (mat->shader->hasUniform("texReflect")) {
+			mat->shader->setInt("texReflect", mat->bindTextures.size());
+			mat->bindTextures.add(scene->getWaterRenderer()->getReflect());
+		}
+		if (mat->shader->hasUniform("texRefract")) {
+			mat->shader->setInt("texRefract", mat->bindTextures.size());
+			mat->bindTextures.add(scene->getWaterRenderer()->getRefract());
+		}
+	}
 
-
+	// done
 	mat->shader->unbind();
 
 }

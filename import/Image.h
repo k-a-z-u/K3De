@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cmath>
 
+#include "../Exception.h"
 #include "Pixel.h"
 
 enum class ImageFormat {
@@ -127,6 +128,41 @@ public:
 		return out;
 	}
 
+
+	/** invert the Y axis [upside down] */
+	Image invertedY() const {
+
+		int bytes;
+		switch (format) {
+			case ImageFormat::IMAGE_GREY:		{bytes = 1; break;}
+			case ImageFormat::IMAGE_RGB:		{bytes = 3; break;}
+			case ImageFormat::IMAGE_RGBA:		{bytes = 4; break;}
+			case ImageFormat::IMAGE_GREY_ALPHA:	{bytes = 2; break;}
+			default:							throw Exception("not yet implemented");
+		}
+
+		Image out(w, h, format);
+
+		for (int y = 0; y < h; ++y) {
+			for (int x = 0; x < w; ++x) {
+
+				const int y1 = y;
+				const int y2 = h-y-1;
+
+				const int idx1 = (x + y1*w) * bytes;
+				const int idx2 = (x + y2*w) * bytes;
+
+				for (int b = 0; b < bytes; ++b) {
+					out.data[idx2+b] = data[idx1+b];
+				}
+
+			}
+		}
+
+		return out;
+
+	}
+
 	ImageFormat getFormat() const {return format;}
 
 
@@ -138,10 +174,10 @@ protected:
 		this->h = h;
 		this->format = fmt;
 		switch (fmt) {
-			case ImageFormat::IMAGE_RGB:		this->data.reserve(w*h*3); break;
-			case ImageFormat::IMAGE_RGBA:		this->data.reserve(w*h*4); break;
-			case ImageFormat::IMAGE_GREY:		this->data.reserve(w*h*1); break;
-			case ImageFormat::IMAGE_GREY_ALPHA:	this->data.reserve(w*h*2); break;
+			case ImageFormat::IMAGE_RGB:		this->data.resize(w*h*3); break;
+			case ImageFormat::IMAGE_RGBA:		this->data.resize(w*h*4); break;
+			case ImageFormat::IMAGE_GREY:		this->data.resize(w*h*1); break;
+			case ImageFormat::IMAGE_GREY_ALPHA:	this->data.resize(w*h*2); break;
 			default:							throw "not yet implemented";
 		}
 	}

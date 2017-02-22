@@ -11,6 +11,7 @@
 
 #include "../Exception.h"
 #include "../textures/ITexture.h"
+#include "ShaderVariable.h"
 
 class ShaderParams {
 
@@ -51,8 +52,12 @@ public:
 		this->name = name;
 	}
 
+	void addVariable(const ShaderVariable& sv) {
+		_addVariable(sv.getName(), sv.getDecl() + ";");
+	}
+
 	/** add a new variable with the given name and declaration */
-	void addVariable(const std::string& name, const std::string& decl, const int useCount = 0) {
+	void _addVariable(const std::string& name, const std::string& decl, const int useCount = 0) {
 		if (variables.find(name) != variables.end()) {return;}
 		const Variable var = Variable(variables.size(), name, decl, useCount);
 		variables.insert(std::pair<std::string, Variable>(name, var));

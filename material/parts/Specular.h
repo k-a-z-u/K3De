@@ -23,14 +23,19 @@ namespace MatPart {
 			if (shininess == 0) {throw Exception("shininess must not be 0");}
 			if (multiplier == 0) {throw Exception("multiplier must not be 0");}
 
+			ShaderVariable specularTexVal(ShaderVariable::Type::COLOR4, "specularTexVal") ;
+			ShaderVariable specularColor(ShaderVariable::Type::COLOR3, "specularColor") ;
+			ShaderVariable specularShininess(ShaderVariable::Type::SHININESS, "specularShininess");
+
+
 
 			if (std::string("fixed") == sub->Name()) {
 
 				// specular color is white: TODO!
-				material->getFragmentParams().addMainLine("const vec3 specularColor = vec3(1.0) * " + std::to_string(multiplier) + "f;");
+				material->getFragmentParams().addMainLine("const " + specularColor.getDecl() + " = vec3(1.0) * " + std::to_string(multiplier) + "f;");
 
 				// fixed shininess
-				material->getFragmentParams().addMainLine("const float specularShininess = " + std::to_string(shininess) + "f;");
+				material->getFragmentParams().addMainLine("const " + specularShininess.getDecl() + " = " + std::to_string(shininess) + "f;");
 
 			} else if (std::string("texture") == sub->Name()) {
 
@@ -39,22 +44,22 @@ namespace MatPart {
 				mpTex.build(material, sub);
 
 				// get its value
-				material->getFragmentParams().addMainLine("vec4 specularTexVal = " + mpTex.get() + ";");
+				material->getFragmentParams().addMainLine(specularTexVal.getDecl() + " = " + mpTex.get() + ";");
 
 				if (mpTex.getTexture()->isAlphaOnly()) {
 
 					// specular color comes from RGB value of the texture
-					material->getFragmentParams().addMainLine("const vec3 specularColor = vec3(1.0);");
+					material->getFragmentParams().addMainLine(specularColor.getDecl() + " = vec3(1.0);");
 
 				} else {
 
 					// specular color comes from RGB value of the texture
-					material->getFragmentParams().addMainLine("vec3 specularColor = specularTexVal.rgb * " + std::to_string(multiplier) + "f;");
+					material->getFragmentParams().addMainLine(specularColor.getDecl() + " = specularTexVal.rgb * " + std::to_string(multiplier) + "f;");
 
 				}
 
 				// specular shininess comes from the alpha [0:1] value of the texture multiplied by the maximum shininess [stretching]
-				material->getFragmentParams().addMainLine("float specularShininess = specularTexVal.a * " + std::to_string(shininess) + "f;");
+				material->getFragmentParams().addMainLine(specularShininess.getDecl() + " = specularTexVal.a * " + std::to_string(shininess) + "f;");
 
 			}
 

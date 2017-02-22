@@ -31,6 +31,8 @@ public:
 
 	virtual void setRotationRad(const float x_rad, const float y_rad ,const float z_rad) = 0;
 
+	virtual Vec3 getRotationDeg() const = 0;
+
 	virtual void setRotationDeg(const Vec3 deg) = 0;
 
 	virtual void setRotationDeg(const float x_deg, const float y_deg, const float z_deg) = 0;

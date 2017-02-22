@@ -39,6 +39,8 @@ public:
 
 	void setRotationRad(const float x_rad, const float y_rad ,const float z_rad) override {transform.setRotationRad(x_rad, y_rad, z_rad);}
 
+	Vec3 getRotationDeg() const override {return transform.getRotationDeg();}
+
 	void setRotationDeg(const Vec3 deg) override {transform.setRotationRad(Math::degToRad(deg.x), Math::degToRad(deg.y), Math::degToRad(deg.z));}
 
 	void setRotationDeg(const float x_deg, const float y_deg, const float z_deg) override {transform.setRotationRad(Math::degToRad(x_deg), Math::degToRad(y_deg), Math::degToRad(z_deg));}

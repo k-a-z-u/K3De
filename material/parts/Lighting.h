@@ -15,69 +15,56 @@ namespace MatPart {
 
 			(void) root;
 
-			mat->getFragmentParams().addVariable("lights",
+			std::string lights =
 
+				"\n"
 				"struct Light {\n"
 
-				"	float x,y,z;\n"
-				"	float r,g,b;\n"
+				"	highp vec3 pos;\n"			// 4 floats for position
+				"	float padPos;\n"
 
-				"	float impact;\n"
-				"	float attenuationLinear;\n"
-				"	float attenuationQuadratic;\n"
+				"	lowp vec3 color;\n"			// 4 floats for color
+				"	float padColor;\n"
 
-				"	int enabled;\n"
-				"	int castsShadows;\n"
+				"	lowp float impact;\n"		// 4x4 bytes for other options
+				"	lowp float attenuationLinear;\n"
+				"	lowp float attenuationQuadratic;\n"
+				"	int flags;\n"
 
-				"	int pad1;\n"
+				"	mediump mat4 pvShadow;\n"	// matrix
 
-				"	mat4 pvShadow;\n"
-
-
-				"};\n"
+				"};\n\n"
 
 				"layout (std140) uniform Lights {\n"
-					"Light light[8];\n"
+				"	Light light[8];\n"
 				"} lights;\n"
 
-			);
+			;
+
+			mat->getFragmentParams()._addVariable("lights", lights);
+			mat->getVertexParams()._addVariable("lights", lights);
 
 			mat->getFragmentParams().usedVariable("lights");
-
-			/** get the number of to-be-used lights */
-			//mat->getFragmentParams().addFunction("getNumLights",		"int getNumLights() {return lights.cnt;}", {"lights"}, {});
-			//mat->paramsFragment.usedVariable("lights");
-
-			/** get the position of the idx-th light */
-			//mat->getFragmentParams().addFunction("getLightPos",			"vec3 getLightPos(const int idx) {return vec3(lights.light[idx].x, lights.light[idx].y, lights.light[idx].z);}\n", {"lights"}, {});
-			//mat->paramsFragment.usedVariable("lights");
-
-			/** get the color of the idx-th ligth */
-			//mat->getFragmentParams().addFunction("getLightColor",		"vec3 getLightColor(const int idx) {return vec3(lights.light[idx].r, lights.light[idx].g, lights.light[idx].b);}\n", {"lights"}, {});
-			//mat->paramsFragment.usedVariable("lights");
-
-			/** get the impact of the idx-th ligth */
-			//mat->getFragmentParams().addFunction("getLightImpact",		"float getLightImpact(const int idx) {return lights.light[idx].impact;}\n", {"lights"}, {});
-
-			/** get the attenuation of the idx-th ligth */
-			//mat->getFragmentParams().addFunction("getLightAttenuation",	"float getLightAttenuation(const int idx) {return lights.light[idx].attenuation;}\n", {"lights"}, {});
+			mat->getVertexParams().usedVariable("lights");
 
 		}
 
 		std::string isEnabled(const std::string idx) const {
-			return "lights.light[" + idx + "].enabled == 1";
+			return "(lights.light[" + idx + "].flags & 1) != 0";
 		}
 
 		std::string castsShadows(const std::string idx) const {
-			return "lights.light[" + idx + "].castsShadows == 1";
+			return "(lights.light[" + idx + "].flags & 2) != 0";
 		}
 
 		std::string getPos(const std::string idx) const {
-			return "vec3(lights.light["+idx+"].x, lights.light["+idx+"].y, lights.light["+idx+"].z)";
+			//return "vec3(lights.light["+idx+"].x, lights.light["+idx+"].y, lights.light["+idx+"].z)";
+			return "lights.light["+idx+"].pos.xyz";
 		}
 
 		std::string getColor(const std::string idx) const {
-			return "vec3(lights.light["+idx+"].r, lights.light["+idx+"].g, lights.light["+idx+"].b)";
+			//return "vec3(lights.light["+idx+"].r, lights.light["+idx+"].g, lights.light["+idx+"].b)";
+			return "lights.light["+idx+"].color.rgb";
 		}
 
 		// att = 1.0 / (1.0 + 0.1*dist + 0.01*dist*dist)

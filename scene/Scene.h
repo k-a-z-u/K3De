@@ -157,10 +157,10 @@ public:
 	}
 
 	/** get the current screen size */
-	ScreenSize getScreenSize() const;
+	inline ScreenSize getScreenSize() const;
 
 	/** get the current screen size */
-	const ScreenSize* getScreenSizePtr() const;
+	inline const ScreenSize* getScreenSizePtr() const;
 
 
 	/** get current FPS, given by the last render-time */
@@ -213,6 +213,9 @@ public:
 
 	/** get the scene's shadow renderer */
 	ShadowRenderer* getShadowRenderer() {return shadowRenderer;}
+
+	/** get the scene's water renderer */
+	WaterRenderer* getWaterRenderer() {return waterRenderer;}
 
 
 	/** scene is set as the currently active scene */

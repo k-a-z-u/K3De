@@ -84,19 +84,22 @@ public:
 	/** execute elements from the main loop until there are no more elements, or the given duration is reached */
 	void execTime(const Time duration) {
 
+		// nothing to execute?
+		if (empty()) {return;}
+
 		// execute elements until this timestamp is reached
 		const Time until = Time::runtime() + duration;
 
 		// execute
 		while(true) {
 
+			execNext();
+
 			// reached time limit?
 			if (Time::runtime() > until) {break;}
 
 			// nothing to execute?
 			if (empty()) {break;}
-
-			execNext();
 
 		}
 

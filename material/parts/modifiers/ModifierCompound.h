@@ -17,7 +17,7 @@ namespace MatPart {
 		ModifierCompound(const std::string& id) : Modifier(id) {;}
 
 		virtual void build(Material2* material, XMLElem* node) override {
-			FOREACH_ELEM_NAMED("id", idNode, node) {
+			XML_FOREACH_ELEM_NAMED("id", idNode, node) {
 				const std::string id = idNode->FirstChild()->Value();
 				Modifier* mod = material->getModifiers().byID(id);
 				if (!mod) {throw Exception("there is no modifier with id: " + id);}

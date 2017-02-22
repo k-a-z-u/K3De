@@ -7,6 +7,10 @@
 #include "../math/Quaternion.h"
 
 #include "../Engine.h"
+#include "../scene/Scene.h"
+
+#include "../EngineImpl.h"
+#include "../scene/SceneImpl.h"
 
 #include "../gl/Framebuffer.h"
 #include "../gl/Renderbuffer.h"

@@ -20,7 +20,7 @@ private:
 	friend class TerrainFactory;
 
 	VAO vao;
-	VBOArrayStatic<AttrVertexNormalTexture> vertices;
+	VBOArrayStatic<AttrVertexNormalTangentTexture> vertices;
 	VBOArrayIndexStatic indices;
 	AABB bbox;
 
@@ -32,16 +32,20 @@ private:
 		vao.bind();
 
 		vertices.bind();
-		vao.setVertices(0, 8*4);
-		vao.setNormals(1, 8*4, 3*4);
-		vao.setTexCoords(2, 8*4, 6*4);
+//		vao.setVertices(0, 8*4);
+//		vao.setNormals(1, 8*4, 3*4);
+//		vao.setTexCoords(2, 8*4, 6*4);
+		vao.setVertices(0, 11*4);
+		vao.setNormals(1, 11*4, 3*4);
+		vao.setTangents(3, 11*4, 6*4);		// todo swap indicies [2,3] here and within shaders?
+		vao.setTexCoords(2, 11*4, 9*4);
 
 		indices.bind();
 
 		vao.unbind();
 
 		// update the bounding-box
-		for (const AttrVertexNormalTexture vnt : vertices.getData()) {
+		for (const AttrVertexNormalTangentTexture vnt : vertices.getData()) {
 			bbox.add(vnt.v);
 		}
 

@@ -9,7 +9,15 @@
 #include <xmmintrin.h>
 #include <pmmintrin.h>
 
-#define FORCE_LOOP_UNROLL	__attribute__((optimize("unroll-loops")))
+#if defined(__GNUC__)
+	#define FORCE_LOOP_UNROLL	__attribute__((optimize("unroll-loops")))
+	#define ALIGN(val)			__attribute__((aligned(16)))
+#elif defined(_WIN32)
+	#define FORCE_LOOP_UNROLL
+	#define ALIGN(val)			__declspec(align(32))
+#else
+	#error "todo!"
+#endif
 
 template <int size> class Matrix {
 
@@ -22,8 +30,9 @@ private:
 			Vec4 v1;
 			Vec4 v2;
 			Vec4 v3;
-		} vectors ;
-	}__attribute__ ((aligned (16)));
+		} vectors;
+	//} 
+	} ALIGN(16);
 
 
 public:

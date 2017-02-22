@@ -14,7 +14,16 @@ namespace MatPart {
 
 		ITexture* tex;
 
+
 	public:
+
+		SourceTexture() {
+			;
+		}
+
+		SourceTexture(const std::string& texID, ITexture* tex) : texID(texID), tex(tex) {
+			;
+		}
 
 		void build(Material2* material, XMLElem* node) override {
 

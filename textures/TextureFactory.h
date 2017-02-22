@@ -105,35 +105,34 @@ public:
 //	}
 
 
-	/** create a new texture using the given input file */
-	Texture2D* create(const std::string file, bool compressed = true, bool mipMaps = true) {
+//	/** create a new texture using the given input file */
+//	Texture2D* create(const std::string file, bool compressed = true, bool mipMaps = true) {
 
-		// create and add a new texture
-		Texture2D* tex = new Texture2D(-1, -1);
-		textures.push_back(std::make_unique(tex));
+//		// create and add a new texture
+//		Texture2D* tex = new Texture2D(-1, -1);
+//		textures.push_back(std::make_unique(tex));
 
-		auto funcDecode = [this, file, tex, compressed, mipMaps] () {
+//		auto funcDecode = [this, file, tex, compressed, mipMaps] () {
 
-			// decode the image file
-			Image img = ImageFactory::load(includePath + file);
+//			// decode the image file
+//			Image img = ImageFactory::load(includePath + file);
 
-			auto funcUpload = [this, tex, img, compressed, mipMaps] () {
-				void* data = (void*) img.getData().data();
-				const int formatIn = getFormatIn(img);
-				const int formatOut = getFormatOut(img, compressed);
-				upload(tex, data, img.getWidth(), img.getHeight(), formatIn, formatOut, mipMaps);
-			};
+//			//auto funcUpload = [this, tex, img, compressed, mipMaps] () {
+//				void* data = (void*) img.getData().data();
+//				const int formatIn = getFormatIn(img);
+//				const int formatOut = getFormatOut(img, compressed);
+//				upload(tex, data, img.getWidth(), img.getHeight(), formatIn, formatOut, mipMaps);
+//			//};
 
-			MainLoop::get().add(funcUpload);
+//			//MainLoop::get().add(funcUpload);
 
-		};
+//		};
 
+//		GlobalThreadPool::get().add(funcDecode);
 
-		GlobalThreadPool::get().add(funcDecode);
+//		return tex;
 
-		return tex;
-
-	}
+//	}
 
 	/** create a new texture using the given resource */
 	Texture2D* create(const Resource res, bool compressed = true, bool mipMaps = true) {
@@ -145,7 +144,6 @@ public:
 		auto funcDecode = [this, res, tex, compressed, mipMaps] () {
 
 			// decode the image file
-			//Image img = ImageFactory::load(includePath + file);
 			Image img = ImageFactory::load(res);
 
 			auto funcUpload = [this, tex, img, compressed, mipMaps] () {

@@ -65,48 +65,49 @@ InstanceMesh* MeshFactory::createNewInstance(IMesh* srcMesh) {
 	// create a new instance-wrapper around the given source
 	InstanceMesh* mesh = new InstanceMesh(srcMesh);
 
+TODO("TODO")
 	// add to the list of meshes [e.g. for scene cleanup]
-	meshes.push_back(std::make_unique(mesh));
+//	meshes.push_back(std::make_unique(mesh));
 
 	// done
 	return mesh;
 
 }
 
-IndexedMesh* MeshFactory::createMesh(const std::string fileName, const bool normalize, const bool centerAtOrigin) {
+//IndexedMesh* MeshFactory::createMesh(const std::string fileName, const bool normalize, const bool centerAtOrigin) {
 
-	Debug(NAME, "loading mesh: " + fileName);
+//	Debug(NAME, "loading mesh: " + fileName);
 
-	// create a new, empty mesh
-	IndexedMesh* mesh = new IndexedMesh();
+//	// create a new, empty mesh
+//	IndexedMesh* mesh = new IndexedMesh();
 
-	// add to the list of meshes [e.g. for scene cleanup]
-	meshes.push_back(std::make_unique(mesh));
+//	// add to the list of meshes [e.g. for scene cleanup]
+//	meshes.push_back(std::make_unique(mesh));
 
-	// import from .OBJ file
-	ObjImport imp;
-	imp.load(fileName, normalize, centerAtOrigin);
+//	// import from .OBJ file
+//	ObjImport imp;
+//	imp.load(fileName, normalize, centerAtOrigin);
 
-	// append vertices and faces [=indices]
-	mesh->vertices.append(imp.getIndexedMeshVerticesWithTangent());
-	mesh->indices.append(imp.getIndexedMeshIndices());
+//	// append vertices and faces [=indices]
+//	mesh->vertices.append(imp.getIndexedMeshVerticesWithTangent());
+//	mesh->indices.append(imp.getIndexedMeshIndices());
 
-	// upload both
-	mesh->vertices.upload();
-	mesh->indices.upload();
+//	// upload both
+//	mesh->vertices.upload();
+//	mesh->indices.upload();
 
-	// final setup
-	mesh->configure();
+//	// final setup
+//	mesh->configure();
 
-	// calculate BBox
-	for (const AttrVertexNormalTexture& vnt : imp.getIndexedMeshVertices()) {
-		mesh->bbox.add(vnt.getVertex());
-	}
+//	// calculate BBox
+//	for (const AttrVertexNormalTexture& vnt : imp.getIndexedMeshVertices()) {
+//		mesh->bbox.add(vnt.getVertex());
+//	}
 
-	// done
-	return mesh;
+//	// done
+//	return mesh;
 
-}
+//}
 
 IndexedMesh* MeshFactory::createMesh(const Resource& res, const bool normalize, const bool centerAtOrigin) {
 

@@ -34,6 +34,8 @@ struct Vec2 {
 	bool operator == (const Vec2& o) const {return (o.x == x) && (o.y == y);}
 	bool operator != (const Vec2& o) const {return (o.x != x) || (o.y != y);}
 
+	Vec2 operator - () const {return Vec2(-x, -y);}
+
 	float length() const {return std::sqrt( (x*x) + (y*y) );}
 
 	Vec2 normalized() const {return *this / length();}

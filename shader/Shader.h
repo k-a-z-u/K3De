@@ -54,6 +54,7 @@ public:
 		Error::assertOK();
 		debugCode(code);
 		compile(vertexShaderID, code);
+		Error::assertOK();
 	}
 
 	void loadFragmentShader(const std::string& code) {
@@ -61,6 +62,7 @@ public:
 		Error::assertOK();
 		debugCode(code);
 		compile(fragmentShaderID, code);
+		Error::assertOK();
 	}
 
 	/** not supported by openGl ES! */
@@ -69,6 +71,7 @@ public:
 		Error::assertOK();
 		debugCode(code);
 		compile(geomentryShaderID, code);
+		Error::assertOK();
 	}
 
 	void link() {
@@ -80,6 +83,8 @@ public:
 		if (vertexShaderID)		{glAttachShader(programID, vertexShaderID);}
 		if (fragmentShaderID)	{glAttachShader(programID, fragmentShaderID);}
 		if (geomentryShaderID)	{glAttachShader(programID, geomentryShaderID);}
+		Error::assertOK();
+
 		glLinkProgram(programID);
 		Error::assertOK();
 

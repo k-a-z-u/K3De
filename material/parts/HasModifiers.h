@@ -6,12 +6,16 @@
 #include "modifiers/ModifierColor.h"
 #include "../xml.h"
 
+class MaterialFactory;
+
 namespace MatPart {
 
 	/**
 	 * helper-base-class for everything that has attachable modifiers
 	 */
 	class HasModifiers {
+
+		friend class ::MaterialFactory;
 
 	protected:
 

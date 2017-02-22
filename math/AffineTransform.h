@@ -75,6 +75,11 @@ public:
 		return rotate;
 	}
 
+	/** get the current rotation (x,y,z) [in degree] */
+	Vec3 getRotationDeg() const {
+		return rotate * 180.0f / (float)M_PI;
+	}
+
 	/** configure the scaling */
 	void setScale(const float x, const float y, const float z) {
 		scale.x = x;

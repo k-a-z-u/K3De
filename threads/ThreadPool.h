@@ -28,14 +28,23 @@ public:
 		queues.clear();
 	}
 
+	std::vector<ThreadQueue*>& getQueue() {
+		return queues;
+	}
+
 	/** add a new to-be-executed action */
 	void add(ThreadQueue::Action a) {
 
-		auto comp = [] (ThreadQueue* a, ThreadQueue* b) {return a->size() < b->size();};
-		auto it = std::min_element(queues.begin(), queues.end(), comp);
+		// load balance
+//		auto comp = [] (ThreadQueue* a, ThreadQueue* b) {return a->size() < b->size();};
+//		auto it = std::min_element(queues.begin(), queues.end(), comp);
+//		ThreadQueue* tq = *it;
+//		tq->add(a);
 
-		ThreadQueue* tq = *it;
-		tq->add(a);
+		// round robin
+		static int target = 0;
+		target = (target + 1) % queues.size();
+		queues[target]->add(a);
 
 	}
 

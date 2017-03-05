@@ -15,12 +15,12 @@ class InstanceMesh : public Renderable, public Transformable {
 protected:
 
 	/** the mesh to render */
-	IMesh* mesh;
+	Renderable* mesh;
 
 public:
 
 	/** ctor */
-	InstanceMesh(IMesh* mesh) : mesh(mesh) {
+	InstanceMesh(Renderable* mesh) : mesh(mesh) {
 TODO("todo. ugly top copy those ones..")
 		this->shader = mesh->getShader();
 		this->material2 = mesh->getMaterial();

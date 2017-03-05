@@ -4,7 +4,11 @@
 #include <iostream>
 #include <iomanip>
 
-#define Debug(sys, str) std::cout << "[" << std::setw(10) << sys << "] " << str << std::endl;
+#if defined(WITH_DEBUG)
+    #define Debug(sys, str) std::cout << "[" << std::setw(10) << sys << "] " << str << std::endl;
+#else
+    #define Debug(sys, str)
+#endif
 
 //class Debug {
 

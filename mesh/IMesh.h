@@ -13,6 +13,7 @@ public:
 
 	virtual bool isVisible(const Mat4& MVP) const override {
 		// TODO: seems broken;
+		(void) MVP;
 		return true;//getAABBmodel().getTransformed(MVP).intersectsUnitCube();
 	}
 

@@ -42,7 +42,7 @@ namespace MatPart {
 
 		std::string getOffset(const std::string& uv) override {
 			const std::string modIn = (preAdjust) ? ("(" + uv + " + " + preAdjust->getOffset(uv) + ")") : (uv);
-			return "(" + tex.get(modIn) + ".rg * vec2(" + std::to_string(scale.x) + "f, " + std::to_string(scale.y) + "f))";
+			return "((" + tex.get(modIn) + ".rg - vec2(0.5, 0.5)) * vec2(" + std::to_string(scale.x) + "f, " + std::to_string(scale.y) + "f))";
 		}
 
 	};

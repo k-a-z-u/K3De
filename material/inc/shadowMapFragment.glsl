@@ -1,8 +1,7 @@
 R"=====(
 
-#version 300 es
+{VERSION}
 precision mediump float;
-
 
 void main(){
 

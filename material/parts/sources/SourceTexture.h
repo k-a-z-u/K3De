@@ -10,6 +10,7 @@ namespace MatPart {
 	private:
 
 		std::string texID;
+		std::string mode;
 		Vec2 tile = Vec2(1,1);
 
 		ITexture* tex;
@@ -46,6 +47,9 @@ namespace MatPart {
 			tile.x = node->FloatAttribute("tileX"); if (tile.x == 0) {tile.x = 1;}
 			tile.y = node->FloatAttribute("tileY"); if (tile.y == 0) {tile.y = 1;}
 
+			// mode
+			mode = (node->Attribute("mode")) ? (node->Attribute("mode")) : ("rgba");
+
 		}
 
 		/** get the underlying texture */
@@ -72,7 +76,12 @@ namespace MatPart {
 			if (tile != Vec2(1,1)) {uv = "(" + uv + " * vec2(" + std::to_string(tile.x) + "," + std::to_string(tile.y) + "))";}
 
 			// build output
-			std::string res = "texture(" + texID + ", " + uv + ")";
+			const std::string base = "texture(" + texID + ", " + uv + ")";
+			std::string res;
+			if		("rgba" == mode)	{res = base;}
+			else if (mode.empty())		{res = base;}
+			else if	("rgb" == mode)		{res = "vec4("+base+".rgb, 1.0)";}
+			else if ("grey" == mode)	{res = "vec4(vec3("+base+".a), 1.0)";}		// gray images are stored as alpha-only textures
 
 			// color modifier?
 			if (modColor) {

@@ -1502,7 +1502,9 @@ static SRes SzArEx_Open2(
     CSzArEx *p,
     ILookInStream *inStream,
     ISzAlloc *allocMain,
-    ISzAlloc *allocTemp)
+	ISzAlloc *allocTemp,
+	Int64 offset
+	)
 {
   Byte header[k7zStartHeaderSize];
   Int64 startArcPos;
@@ -1512,7 +1514,7 @@ static SRes SzArEx_Open2(
   CBuf buf;
   SRes res;
 
-  startArcPos = 0;
+  startArcPos = offset;
   RINOK(inStream->Seek(inStream, &startArcPos, SZ_SEEK_CUR));
 
   RINOK(LookInStream_Read2(inStream, header, k7zStartHeaderSize, SZ_ERROR_NO_ARCHIVE));
@@ -1623,9 +1625,9 @@ static SRes SzArEx_Open2(
 
 
 SRes SzArEx_Open(CSzArEx *p, ILookInStream *inStream,
-    ISzAlloc *allocMain, ISzAlloc *allocTemp)
+	ISzAlloc *allocMain, ISzAlloc *allocTemp, Int64 offset)
 {
-  SRes res = SzArEx_Open2(p, inStream, allocMain, allocTemp);
+  SRes res = SzArEx_Open2(p, inStream, allocMain, allocTemp, offset);
   if (res != SZ_OK)
     SzArEx_Free(p, allocMain);
   return res;

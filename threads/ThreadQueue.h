@@ -25,6 +25,7 @@ private:
 	std::vector<Action> actions;
 	std::mutex mtxActions;
 	bool enabled = false;
+	bool joinable = false;
 
 	std::thread thread;
 
@@ -57,19 +58,22 @@ public:
 		if (enabled) {return;}
 		enabled = true;
 		thread = std::thread(&ThreadQueue::loop, this);
+		joinable = true;
 		Debug(id, "started");
 	}
 
 	/** stop this queue */
 	void stop() {
 		enabled = false;
+		sema.notify();
 		Debug(id, "stopping");
 	}
 
 	/** wait for the thread to join */
 	void join() {
-		if (!enabled) {return;}
+		if (!joinable) {return;}
 		thread.join();
+		joinable = false;
 	}
 
 private:
@@ -92,6 +96,7 @@ private:
 
 		while(enabled) {
 			sema.wait();
+			if (!enabled) {break;}
 			execNext();
 		}
 

@@ -1,7 +1,8 @@
 #ifndef VAO_H
 #define VAO_H
 
-#include <GL/glew.h>
+#include "gl.h"
+
 #include "../misc/Error.h"
 
 class VAO {

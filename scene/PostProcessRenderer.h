@@ -67,12 +67,15 @@ class PostProcessStage {
 
 	std::string name;
 	Scene* scene;
-	int w;
-	int h;
+
+	/** textures are sized to texScale * 100% of the scene's size */
+	float texScale;
+	int w = 0;
+	int h = 0;
 
 	Multitexture texIn;
 
-	Texture* texOut;
+	Texture* texOut = nullptr;
 
 	Shader* shader = nullptr;
 
@@ -82,10 +85,9 @@ class PostProcessStage {
 
 public:
 
-	PostProcessStage(const std::string& name, Scene* scene, const int w, const int h) : name(name), scene(scene), w(w), h(h) {
-		texOut = scene->getTextureFactory().createRenderTexture(w, h);
-		texOut->setWrapping(TextureWrapping::CLAMP, TextureWrapping::CLAMP);
-		texOut->setFilter(TextureFilter::LINEAR, TextureFilter::LINEAR);
+	/** ctor */
+	PostProcessStage(const std::string& name, Scene* scene, const float texScale = 1.0f) : name(name), scene(scene), texScale(texScale) {
+		;
 	}
 
 	void setShader(Shader* s) {
@@ -104,15 +106,55 @@ public:
 		addInput(stage->getOutput());
 	}
 
+
+
 protected:
 
 	friend class PostProcessRenderer;
+
+	/** scene was resized. adjust textures [if needed] */
+	void resize(const int w, const int h) {
+
+		// new size
+		const int newW = w * texScale;
+		const int newH = h * texScale;
+
+		// no change? -> skip
+		if (newW == this->w && newH == this->h) {return;}
+
+		// store
+		this->w = newW;
+		this->h = newH;
+
+		// remove old textures [if any]
+		if (texOut) {scene->getTextureFactory().destroy(texOut); texOut = nullptr;}
+
+		// allocate new texture
+		texOut = scene->getTextureFactory().createRenderTexture(newW, newH);
+		texOut->setWrapping(TextureWrapping::CLAMP, TextureWrapping::CLAMP);
+		texOut->setFilter(TextureFilter::LINEAR, TextureFilter::LINEAR);
+
+		// update shader [e.g. the start stage has no shader as this one is output only]
+		if (shader) {
+			shader->bind();
+			for (size_t idx = 0; idx < texIn.get().size(); ++idx) {
+				const ITexture* tex = texIn.get()[idx];
+				const std::string name = "texColor" + std::to_string(idx);
+				if (shader->hasUniform(name+"_w"))		{shader->setFloat(name+"_w", tex->getWidth());}
+				if (shader->hasUniform(name+"_h"))		{shader->setFloat(name+"_h", tex->getHeight());}
+			}
+			shader->unbind();
+		}
+
+	}
 
 	void addInput(ITexture* tex) {
 		const size_t idx = texIn.add(tex);
 		const std::string name = "texColor" + std::to_string(idx);
 		shader->bind();				// slow, but called only during the setup phase
 		shader->setInt(name, idx);
+
+		// those will be changed when the scene is resized
 		if (shader->hasUniform(name+"_w")) {shader->setFloat(name+"_w", tex->getWidth());}
 		if (shader->hasUniform(name+"_h")) {shader->setFloat(name+"_h", tex->getHeight());}
 		shader->unbind();
@@ -128,7 +170,9 @@ protected:
 
 
 
-	void render(RenderRect& rr, const RenderState& rs) {
+	void render(RenderRect& rr, const RenderState& rs, const SceneState& ss) {
+
+		(void) rs;
 
 		scene->getCamera().push();
 		scene->getCamera().setScreenSize(w, h);
@@ -138,6 +182,10 @@ protected:
 //		const int h = (texIn) ? (texIn->getHeight()) : (rs.screenHeight);
 //		if (shader->hasUniform("screenWidth"))	{shader->setFloat("screenWidth", w);}
 //		if (shader->hasUniform("screenHeight"))	{shader->setFloat("screenHeight", h);}
+
+		// some variables
+		if (shader->hasUniform("time"))			{shader->setFloat("time", ss.getCurrentTime().seconds());}
+
 		texIn.bindAll();
 		rr.render();
 		texIn.unbindAll();
@@ -155,9 +203,9 @@ private:
 
 	friend class Scene;
 
-	// usually the screen's pixel size
-	int texW;
-	int texH;
+	// usually the screen's pixel size. updated on window/scene resize
+	int texW = 0;
+	int texH = 0;
 
 	// render to texture
 	Framebuffer fbStart;
@@ -188,20 +236,57 @@ public:
 	/** set the final element of the post-process stage which describes the whole chain in->out */
 	void setOutput(PostProcessStage* out) {this->out = out;}
 
-	/** build a new post-process stage */
-	PostProcessStage* newStage(const std::string& name) {
-		std::unique_ptr<PostProcessStage> uptr = std::make_unique_args<PostProcessStage>(name, scene, texW, texH);
+//	/** build a new post-process stage */
+//	PostProcessStage* newStage(const std::string& name) {
+//		std::unique_ptr<PostProcessStage> uptr = std::make_unique_args<PostProcessStage>(name, scene, texW, texH);
+//		PostProcessStage* ptr = uptr.get();
+//		stages.push_back(std::move(uptr));
+//		return ptr;
+//	}
+
+	/** build a new post-process stage. textures are sized with texScale * 100% of the scene's size [usually 1.0 -> 100%] */
+	PostProcessStage* newStage(const std::string& name, const float texScale = 1.0f) {
+		std::unique_ptr<PostProcessStage> uptr = std::make_unique_args<PostProcessStage>(name, scene, texScale);
 		PostProcessStage* ptr = uptr.get();
+		ptr->resize(
+		    Engine::get()->getSettings().screen.width,
+		    Engine::get()->getSettings().screen.height
+		);
 		stages.push_back(std::move(uptr));
 		return ptr;
 	}
 
-	/** build a new post-process stage */
-	PostProcessStage* newStage(const std::string& name, const int texW, const int texH) {
-		std::unique_ptr<PostProcessStage> uptr = std::make_unique_args<PostProcessStage>(name, scene, texW, texH);
-		PostProcessStage* ptr = uptr.get();
-		stages.push_back(std::move(uptr));
-		return ptr;
+	/** scene is resized */
+	void resize(const int w, const int h) {
+
+		// resize me?
+		if (texW != w || texH != h) {
+
+			// store
+			texW = w;
+			texH = h;
+
+			// remove old textures?
+			if (texDepth) {scene->getTextureFactory().destroy(texDepth);}
+
+			// allocate new ones
+			texDepth = scene->getTextureFactory().createDepthTexture(texW, texH);
+			texDepth->setFilter(TextureFilter::LINEAR, TextureFilter::LINEAR);
+
+		}
+
+		// resize all stages [including the start stage]
+		for (auto& stage : stages) {
+			stage->resize(w,h);
+		}
+
+		// framebuffer fbStart renders to texture
+		fbStart.bind();
+		fbStart.attachTextureColor(0, start->getOutput());
+		//fbStart.attachTextureDepth(texDepth);
+		fbStart.attachRenderbufferDepth(&rbDepth, texW, texH);		// slightly faster when depth is not needed
+		fbStart.unbind();
+
 	}
 
 
@@ -225,30 +310,18 @@ protected:
 PostProcessRenderer::PostProcessRenderer(Scene* scene) {
 
 	this->scene = scene;
-	texW = Engine::get()->getSettings().screen.width;
-	texH = Engine::get()->getSettings().screen.height;
 
-	//texColor = scene->getTextureFactory().createRenderTexture(texW, texH);
-	//texColor->setFilter(TextureFilter::LINEAR, TextureFilter::LINEAR);
+	// the starting stage [3D scene is rendered into this one]
+	start = newStage("start", 1.0f);
 
-	texDepth = scene->getTextureFactory().createDepthTexture(texW, texH);
-	texDepth->setFilter(TextureFilter::LINEAR, TextureFilter::LINEAR);
-
-	//fb.attachTextureColor(0, texColor);
-	//fb.attachTextureDepth(texDepth);
-	//fb.attachRenderbufferDepth(&rb, texW, texH);
+	// start with initial size
+	resize(
+	    Engine::get()->getSettings().screen.width,
+	    Engine::get()->getSettings().screen.height
+	);
 
 	//setRect(-1, -1, +1, +1);
 	rr.setRect(-1, -1, +1, +1);
-
-	start = new PostProcessStage("start", scene, texW, texH);
-
-	// framebuffer fbStart renders to texture
-	fbStart.bind();
-	fbStart.attachTextureColor(0, start->getOutput());
-	//fbStart.attachTextureDepth(texDepth);
-	fbStart.attachRenderbufferDepth(&rbDepth, texW, texH);		// slightly faster when depth is not needed
-	fbStart.unbind();
 
 }
 
@@ -276,7 +349,7 @@ void PostProcessRenderer::showResult(const SceneState& ss, const RenderState& rs
 			fbChain.attachTextureColor(0, s->getOutput());
 
 			// render it
-			s->render(rr, rs);
+			s->render(rr, rs, ss);
 
 		}
 
@@ -286,7 +359,7 @@ void PostProcessRenderer::showResult(const SceneState& ss, const RenderState& rs
 	fbChain.unbind();
 
 	// and render the final output [chain's last link] to screen [no framebuffer]
-	out->render(rr, rs);
+	out->render(rr, rs, ss);
 
 	glEnable(GL_DEPTH_TEST);
 

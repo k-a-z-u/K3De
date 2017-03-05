@@ -139,6 +139,7 @@ public:
 	}
 
 	void mirrorY(const float y) {
+		(void) y; // TODO
 		state.lookAt.y = -state.lookAt.y;
 		state.pos.y = -state.pos.y;
 		stateChanged = true;

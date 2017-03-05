@@ -195,7 +195,7 @@ SZ_ERROR_FAIL
 */
 
 SRes SzArEx_Open(CSzArEx *p, ILookInStream *inStream,
-    ISzAlloc *allocMain, ISzAlloc *allocTemp);
+    ISzAlloc *allocMain, ISzAlloc *allocTemp, Int64 offset);
 
 EXTERN_C_END
 

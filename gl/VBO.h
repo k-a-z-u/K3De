@@ -1,7 +1,8 @@
 #ifndef VBO_H
 #define VBO_H
 
-#include <GL/glew.h>
+#include "gl.h"
+
 #include <cassert>
 #include <vector>
 
@@ -140,13 +141,20 @@ private:
 
 	/** allocate a dynamic memory-region of the given size */
 	void allocateBytes(const int size) {
+
 		this->bind();
-		const int flags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
-		glBufferStorage(GL_ARRAY_BUFFER, size, nullptr, flags);
-		Error::assertOK();
-		uint8_t* res = (uint8_t*) glMapBufferRange(GL_ARRAY_BUFFER, 0, size, flags);
-		Error::assertOK();
-		data = (T*) res;
+
+		#if defined __APPLE__
+			throw Exception("dynamic VBOs not yet implemented for mac");
+		#else
+			const int flags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
+			glBufferStorage(GL_ARRAY_BUFFER, size, nullptr, flags);
+			Error::assertOK();
+			uint8_t* res = (uint8_t*) glMapBufferRange(GL_ARRAY_BUFFER, 0, size, flags);
+			Error::assertOK();
+			data = (T*) res;
+		#endif
+
 	}
 
 };

@@ -88,6 +88,7 @@ public:
 	}
 
 	void mirrorY(const float y) {
+		(void) y;	// TODO
 		attrs->y = -attrs->y;
 	}
 

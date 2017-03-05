@@ -1,8 +1,7 @@
 #ifndef UBO_H
 #define UBO_H
 
-
-#include <GL/glew.h>
+#include "gl.h"
 
 #include "../misc/Error.h"
 

@@ -1,7 +1,8 @@
 #ifndef GPUPARAMS_H
 #define GPUPARAMS_H
 
-#include <GL/glew.h>
+#include "gl.h"
+
 #include "misc/Error.h"
 
 class GPUParams {

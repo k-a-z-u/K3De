@@ -151,7 +151,7 @@ void MaterialFactory::buildDiffuse(Material2* mat, XMLElem* cfg) {
 				// texture mix
 				"	vec3 N = vec3(0,1,0);\n" +
 				"	vec3 E = normalize(surfaceToEye_M);\n" +
-				"	float waterTexMix = pow(dot(N,E), 2.0);\n" +
+				"	float waterTexMix = clamp(pow(dot(N,E), 2.0), 0.1, 0.9);\n" +
 				"	return mix(cReflect, cRefract, waterTexMix);\n" +
 				"}", {FRAG_VERTEX_SCREEN_POS, "surfaceToEye_M", "texReflect", "texRefract"}, {}
 			);
@@ -373,7 +373,7 @@ void MaterialFactory::buildPixel(Material2 *mat) {
 					//mat->paramsFragment.addMainLine(ShaderVariable(ShaderVariable::Type::COLOR3, "lightColor").getDecl() + " = " + lighting.getColor(si) + ";", 3);
 
 					// from surface towards the light [unit-vector]
-					mat->paramsFragment.addMainLine("vec3 L = normalize(" + lighting.getPos(si) + " - vertex_M);", 3);
+					mat->paramsFragment.addMainLine("highp vec3 L = normalize(" + lighting.getPos(si) + " - vertex_M);", 3);
 					mat->paramsFragment.usedVariable("vertex_M");
 
 					// diffuse angle
@@ -388,11 +388,11 @@ void MaterialFactory::buildPixel(Material2 *mat) {
 						mat->paramsFragment.addMainSection("specular", 3);
 
 						// specular angle
-						mat->paramsFragment.addMainLine("vec3 R = reflect(-L, N);", 3);
+						mat->paramsFragment.addMainLine("highp vec3 R = reflect(-L, N);", 3);
 						mat->paramsFragment.addMainLine("lowp float cosAlpha = max( 0.0f, dot(E, R) );", 3);
 
 						// add specular color
-						mat->paramsFragment.addMainLine("color.rgb += specularColor * pow(cosAlpha, specularShininess) * lightStrength;", 3);
+						mat->paramsFragment.addMainLine("color.rgb += specularColor * " + lighting.getColor(si) + " * pow(cosAlpha, specularShininess) * lightStrength;", 3);
 
 					}
 

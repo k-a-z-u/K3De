@@ -17,6 +17,18 @@ void Engine::tick() {
 
 }
 
+void Engine::onWindowSizeChange(GLFWwindow*, int width, int height) {
+
+	auto action = [width, height] () {
+		Engine::get()->settings.screen.width = width;
+		Engine::get()->settings.screen.height = height;
+		Scene* scene = Engine::get()->getScene();
+		if (scene) {scene->resize(width, height);}
+	};
+
+	MainLoop::get().add(action);
+
+}
 
 void Engine::render() {
 

@@ -16,9 +16,12 @@ private:
 	/** hidden ctor */
 	Data(uint8_t* data, const size_t len, const bool managed) : _data(data), _len(len), _managed(managed) {;}
 
-	Data() = delete;
+
 
 public:
+
+	/** empty ctor */
+	Data() : _data(nullptr), _managed(false) {;}
 
 	/** dtor */
 	~Data() {

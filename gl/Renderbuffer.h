@@ -1,7 +1,8 @@
 #ifndef RENDERBUFFER_H
 #define RENDERBUFFER_H
 
-#include <GL/glew.h>
+#include "gl.h"
+
 #include "../misc/Error.h"
 
 class Renderbuffer {

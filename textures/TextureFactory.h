@@ -19,7 +19,11 @@ private:
 	const char* NAME = "TexFac";
 
 	/** the texture compression format to use */
+#if defined __APPLE__
+	static constexpr GLuint COMPR = GL_COMPRESSED_RGBA;
+#else
 	static constexpr GLuint COMPR = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+#endif
 
 	std::vector<std::unique_ptr<ITexture>> textures;
 
@@ -48,6 +52,23 @@ public:
 	/** number of loaded textures */
 	size_t getNumLoaded() const {
 		return textures.size();
+	}
+
+
+	/** destroy the given texture and remove it from the factory. the given pointer is NO LONGER VALID */
+	void destroy(const ITexture* tex) {
+
+		Debug(NAME, "manually destroying 2D texture");
+
+		for (size_t i = 0; i < textures.size(); ++i) {
+			if (textures[i].get() == tex) {
+				textures.erase(textures.begin() + i);
+				return;
+			}
+		}
+
+		throw Exception("texture does not belong to this factory");
+
 	}
 
 	/** create a new alpha-channel texture using the given input file */
@@ -137,6 +158,8 @@ public:
 	/** create a new texture using the given resource */
 	Texture2D* create(const Resource res, bool compressed = true, bool mipMaps = true) {
 
+		Debug(NAME, "creating 2D texture from resource");
+
 		// create and add a new texture
 		Texture2D* tex = new Texture2D(-1, -1);
 		textures.push_back(std::make_unique(tex));
@@ -201,6 +224,8 @@ public:
 
 	Texture2D* create(const void* data, const int w, const int h, const int formatIn, const int formatOut) {
 
+		Debug(NAME, "creating 2D texture from raw data");
+
 		// create and add a new texture
 		Texture2D* tex = new Texture2D(w, h);
 		textures.push_back(std::make_unique(tex));
@@ -243,8 +268,11 @@ public:
 
 		// set anisotropic filtering [will fail if unsupported]
 		if (anisotropic) {
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropic);
-			Error::assertOK();
+			#if defined __APPLE__
+			#else
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropic);
+				Error::assertOK();
+			#endif
 		}
 
 		// generate mip-maps?
@@ -257,6 +285,8 @@ public:
 
 	/** create a new 2D-array texture using the given input files */
 	Texture2DArray* create2DArray(const std::vector<std::string> files) {
+
+		Debug(NAME, "creating 2D array-texture");
 
 		// load all images into a combined memory region
 		std::vector<Image> images;
@@ -337,6 +367,8 @@ public:
 
 	Texture* createRenderTexture(const int w, const int h, const GLuint type = GL_RGB) {
 
+		Debug(NAME, "creating 2D render texture " + std::to_string(w) + " x " + std::to_string(h));
+
 		Texture* tex = new Texture(GL_TEXTURE_2D, w, h);
 		textures.push_back(std::make_unique(tex));
 		tex->bind(0);
@@ -372,6 +404,8 @@ public:
 
 	Texture* createDepthTexture(const int w, const int h) {
 
+		Debug(NAME, "creating 2D depth texture " + std::to_string(w) + " x " + std::to_string(h));
+
 		Texture* tex = new Texture(GL_TEXTURE_2D, w, h);
 		textures.push_back(std::make_unique(tex));
 		tex->bind(0);
@@ -386,23 +420,6 @@ public:
 		return tex;
 
 	}
-
-//	Texture* createDepthTexture3D(const int w, const int h, const int d) {
-
-//		Texture* tex = new Texture(GL_TEXTURE_3D, w, h);
-//		textures.push_back(std::make_unique(tex));
-//		tex->bind(0);
-
-//		// TODO: performance boost possible?
-//		// Give an empty image to OpenGL ( the last "0" )
-//		glTexImage3D(GL_TEXTURE_3D, 0,GL_DEPTH_COMPONENT32F, w, h, d, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-
-//		//tex->setFilter(TextureFilter::NEAREST, TextureFilter::NEAREST);
-//		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-//		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-//		return tex;
-
-//	}
 
 };
 

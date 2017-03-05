@@ -1,7 +1,8 @@
 #ifndef FRAMEBUFFER_H
 #define FRAMEBUFFER_H
 
-#include <GL/glew.h>
+#include "gl.h"
+
 #include <vector>
 #include <KLib/Assertions.h>
 

@@ -20,6 +20,7 @@ public:
 
 	/** dtor */
 	~ThreadPool() {
+		stop();
 		join();
 		for (ThreadQueue* q : queues) {
 			q->join();

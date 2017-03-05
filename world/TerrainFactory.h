@@ -123,11 +123,11 @@ public:
 			for (int px = 1; px < ts.w-1; ++px) {
 
 				// interpolate the normal for (px,py) using its direct neighbors
-				Vec3 vCenter = vertices[getIndex(px, py, ts)].v;
-				Vec3 vl = vertices[getIndex(px-1, py  , ts)].v;
-				Vec3 vt = vertices[getIndex(px  , py+1, ts)].v;
-				Vec3 vr = vertices[getIndex(px+1, py  , ts)].v;
-				Vec3 vb = vertices[getIndex(px  , py-1, ts)].v;
+				//Vec3 vCenter = vertices[getIndex(px, py, ts)].v;
+				const Vec3 vl = vertices[getIndex(px-1, py  , ts)].v;
+				const Vec3 vt = vertices[getIndex(px  , py+1, ts)].v;
+				const Vec3 vr = vertices[getIndex(px+1, py  , ts)].v;
+				const Vec3 vb = vertices[getIndex(px  , py-1, ts)].v;
 
 				Vec3 n(0,0,0);
 				n += Math::cross(vl,vt);

@@ -46,7 +46,8 @@ namespace MatPart {
 				+ std::to_string(constColor.a) + ")";
 
 			if ("colorizeByConstant" == type) {
-				return "(" + inp + ".a * " + color + ")";
+				//return "(" + inp + ".a * " + color + ")";
+				return "vec4(" + std::to_string(constColor.r) + "," + std::to_string(constColor.g) + "," + std::to_string(constColor.b) + "," + inp + ".a)";
 			} else if ("colorizeByVertexColor" == type) {
 				return "(" + inp + ".a * " + FRAG_VERTEX_COLOR + ")";
 			} else {

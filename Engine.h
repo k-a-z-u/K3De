@@ -87,18 +87,30 @@ public:
 		return settings.screen;
 	}
 
-	//int i = 0;
-	void run() {
+	void run(const int fps) {
 
-		glEnable(GL_CULL_FACE);
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LESS);
+//		glEnable(GL_CULL_FACE);
+//		glEnable(GL_DEPTH_TEST);
+//		glDepthFunc(GL_LESS);
+
+		const int sleep = 1000 / fps;
 
 		do {
-			render();
-			//if (++i > 2048) {break;}
+			std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
+			tick();
 		} while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0 );
 
+		// cleanup
+		cleanup();
+
+	}
+
+	/** perform cleanups */
+	void cleanup() {
+		if (window) {
+			glfwDestroyWindow(window);
+			window = nullptr;
+		}
 	}
 
 
@@ -110,6 +122,9 @@ public:
 
 
 private:
+
+	/** called when the window cahnges its size */
+	static inline void onWindowSizeChange(GLFWwindow* window, int width, int height );
 
 	/** render the current scene */
 	inline void render();
@@ -130,12 +145,15 @@ private:
 		if( !glfwInit() ) {throw Exception("error during init");}
 		Error::assertOK();
 
-//		// opengl version
-//		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
-//		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-//		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-//		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
-//		Error::assertOK();
+		// this one is needed, when not OpenGL ES but OpenGL is used
+		switch(getOpenGLVersion()) {
+		case OPENGL_3_3:
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+			glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
+			glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
+			Error::assertOK();
+		}
 
 		// anti-aliasing?
 		if (settings.antiAliasing) {
@@ -145,17 +163,20 @@ private:
 
 		// create a window
 		window = glfwCreateWindow( settings.screen.width, settings.screen.height, settings.title.c_str(), NULL, NULL);
-		if( window == NULL ) {glfwTerminate(); throw "error while creating window";}
+		if( window == NULL ) {glfwTerminate(); throw Exception("error while creating window");}
 		Error::assertOK();
 
 		glfwMakeContextCurrent(window);
 		glewExperimental = true;
-		if (glewInit() != GLEW_OK) {throw "error during glewInit()";}
+		if (glewInit() != GLEW_OK) {throw Exception("error during glewInit()");}
 		Error::assertOK();
 
 		// Ensure we can capture the escape key being pressed below
 		glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 		Error::assertOK();
+
+		// capture resize event
+		glfwSetWindowSizeCallback(window, Engine::onWindowSizeChange);
 
 		// store
 		this->settings = settings;
@@ -175,6 +196,7 @@ private:
 
 	/** static key-input callback */
 	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+		(void) window;
 		for (InputListener* l : Engine::get()->inputListeners) {
 			l->onKeyEvent(key, scancode, action, mods);
 		}

@@ -1,7 +1,8 @@
 #ifndef ERROR_H
 #define ERROR_H
 
-#include <GL/glew.h>
+#include "../gl/gl.h"
+
 #include <KLib/Assertions.h>
 
 #define todo(str)		std::cout << str << std::endl;

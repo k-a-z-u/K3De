@@ -4,13 +4,21 @@
 /** address one of the GPU's texture-units [0:...] */
 using TextureUnit = unsigned int;
 
+#include "../Debug.h"
+
 class ITexture {
+
+private:
+
+	const char* NAME = "ITexture";
 
 protected:
 
 public:
 
-	virtual ~ITexture() {;}
+	virtual ~ITexture() {
+		Debug(NAME, "destroying");
+	}
 
 	virtual void bind(const TextureUnit idx) const = 0;
 

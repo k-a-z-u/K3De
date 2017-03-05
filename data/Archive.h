@@ -41,7 +41,7 @@ public:
 	}
 
 	/** ctor */
-	Archive(const std::string& fileName) {
+	Archive(const std::string& fileName, const size_t offset = 0) {
 
 		static constexpr int MAX_NAME_LEN = 4096;
 
@@ -69,7 +69,7 @@ public:
 		SzArEx_Init(&db);
 
 		// open the archive
-		res = SzArEx_Open(&db, &lookStream.s, &allocImp, &allocTempImp);
+		res = SzArEx_Open(&db, &lookStream.s, &allocImp, &allocTempImp, offset);
 		if (res != SZ_OK) {throw Exception("error while opening archive");}
 
 		// iterate over all files
@@ -83,9 +83,13 @@ public:
 			if (nameLen > MAX_NAME_LEN) {throw Exception("invalid file name length");}
 			SzArEx_GetFileNameUtf16(&db, i, tmpName);
 
-			// debug
+			// remember
 			files[toString(tmpName)] = i;
-			std::cout << i << ": " << toString(tmpName) << std::endl;
+
+			// debug
+            #if defined(WITH_VERBOSE)
+				std::cout << i << ": " << toString(tmpName) << std::endl;
+            #endif
 
 		}
 

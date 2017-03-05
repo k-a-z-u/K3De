@@ -14,6 +14,8 @@ class ResourceFactory {
 
 private:
 
+	const char* NAME = "ResFac";
+
 	/** all archives to scan for files */
 	std::vector<Archive*> archives;
 
@@ -37,8 +39,8 @@ public:
 	}
 
 	/** add a new archive to search for resources */
-	void addArchive(const std::string& fileName) {
-		archives.push_back(new Archive(fileName));
+	void addArchive(const std::string& fileName, const size_t offset = 0) {
+		archives.push_back(new Archive(fileName, offset));
 	}
 
 	/** add a new include path */
@@ -49,10 +51,10 @@ public:
 	/** get the given resource's content */
 	Data get(const Resource& r) {
 
-		// search within configured archives
-		for (Archive* a : archives) {
-			if (a->hasFile(r.getName())) {return a->get(r.getName());}
-		}
+		Debug(NAME, "loading resource " + r.getName());
+
+		// try the name itself as absolute filename
+		if (exists(r.getName())) {return readFile(r.getName());}
 
 		// search all include paths
 		for (const std::string path : includePaths) {
@@ -60,8 +62,10 @@ public:
 			if (exists(full)) {return readFile(full);}
 		}
 
-		// try the name itself as absolute filename
-		if (exists(r.getName())) {return readFile(r.getName());}
+		// search within configured archives
+		for (Archive* a : archives) {
+			if (a->hasFile(r.getName())) {return a->get(r.getName());}
+		}
 
 		// err
 		throw Exception("could not find resource: " + r.getName());
@@ -72,7 +76,7 @@ public:
 private:
 
 	inline bool exists (const std::string& name) {
-		std::ifstream f(name.c_str());
+		std::ifstream f(name.c_str(), std::ios::in | std::ios::binary);
 		return f.good();
 	}
 

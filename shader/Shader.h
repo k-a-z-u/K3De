@@ -3,7 +3,7 @@
 
 #include <KLib/Assertions.h>
 
-#include <GL/glew.h>
+#include "../gl/gl.h"
 
 #include <string>
 #include <fstream>
@@ -13,6 +13,10 @@
 #include "../math/Math.h"
 #include "../misc/Error.h"
 #include "../gl/UBO.h"
+#include "../data/Data.h"
+
+#include "ShaderBinary.h"
+#include "ShaderVersion.h"
 
 #include <set>
 #include <sstream>
@@ -49,29 +53,83 @@ public:
 		return programID;
 	}
 
-	void loadVertexShader(const std::string& code) {
+	void loadVertexShader(const std::string& _code) {
 		vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+		const std::string code = adjustCode(_code);
 		Error::assertOK();
 		debugCode(code);
 		compile(vertexShaderID, code);
 		Error::assertOK();
 	}
+	void loadVertexShader(const ShaderBinary& bin) {
+		vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+		Error::assertOK();
+		glShaderBinary(1, &vertexShaderID, bin.format, bin.data.get(), bin.data.size());
+		Error::assertOK();
+	}
 
-	void loadFragmentShader(const std::string& code) {
+
+	void loadFragmentShader(const std::string& _code) {
 		fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+		const std::string code = adjustCode(_code);
 		Error::assertOK();
 		debugCode(code);
 		compile(fragmentShaderID, code);
 		Error::assertOK();
 	}
+	void loadFragmentShader(const ShaderBinary& bin) {
+		fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+		Error::assertOK();
+		glShaderBinary(1, &fragmentShaderID, bin.format, bin.data.get(), bin.data.size());
+		Error::assertOK();
+	}
+
 
 	/** not supported by openGl ES! */
-	void loadGeometryShader(const std::string& code) {
+	void loadGeometryShader(const std::string& _code) {
 		geomentryShaderID = glCreateShader(GL_GEOMETRY_SHADER);
+		const std::string code = adjustCode(_code);
 		Error::assertOK();
 		debugCode(code);
 		compile(geomentryShaderID, code);
 		Error::assertOK();
+	}
+	void loadGeometryShader(const ShaderBinary& bin) {
+		geomentryShaderID = glCreateShader(GL_GEOMETRY_SHADER);
+		Error::assertOK();
+		glShaderBinary(1, &geomentryShaderID, bin.format, bin.data.get(), bin.data.size());
+		Error::assertOK();
+	}
+
+
+	void loadProgramBinary(const ProgramBinary& bin) {
+
+		// create a new program
+		programID = glCreateProgram();
+		_assertNot0(programID, "error while creating program");
+
+		// load
+		glProgramBinary(programID, bin.format, bin.data.get(), bin.data.size());
+		Error::assertOK();
+
+	}
+
+	ProgramBinary getProgramBinary() {
+
+		// export
+		static constexpr int bufSize = 128*1024;
+		uint8_t buf[bufSize];
+		GLsizei used;
+		GLenum format;
+		glGetProgramBinary(programID, bufSize, &used, &format, buf);
+		Error::assertOK();
+
+		// wrap
+		ProgramBinary bin;
+		bin.data = Data::wrapManaged(buf, used);
+		bin.format = format;
+		return bin;
+
 	}
 
 	void link() {
@@ -224,7 +282,23 @@ public:
 
 private:
 
-	void debugCode(const std::string str) {
+	/** replace the first occurence of from with to */
+	static inline bool replace(std::string& str, const std::string& from, const std::string& to) {
+		size_t start_pos = str.find(from);
+		if(start_pos == std::string::npos) {return false;}
+		str.replace(start_pos, from.length(), to);
+		return true;
+	}
+
+	std::string adjustCode(const std::string& str) {
+		std::string copy = str;
+		replace(copy, "{VERSION}", ShaderVersion::getGLSL());
+		return copy;
+	}
+
+	void debugCode(const std::string& str) {
+
+#if defined(WITH_VERBOSE)
 
 		std::stringstream ss;
 
@@ -238,6 +312,8 @@ private:
 		ss << "\n\n\n";
 
 		std::cout << ss.str() << std::endl;
+
+#endif
 
 	}
 

@@ -12,6 +12,7 @@
 #include "../Exception.h"
 #include "../textures/ITexture.h"
 #include "ShaderVariable.h"
+#include "../shader/ShaderVersion.h"
 
 class ShaderParams {
 
@@ -129,7 +130,7 @@ protected:
 	}
 
 	std::string getHeader() const {
-		return "#version 300 es\n";	// 3.00 ES
+		return ShaderVersion::getGLSL();
 	}
 
 	std::string getVariables() const {

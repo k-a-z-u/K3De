@@ -64,11 +64,29 @@ void Scene::setEnableWater(bool enable) {
 	}
 }
 
+void Scene::resize(const int w, const int h) {
+	getCamera().setScreenSize(w, h);
+	if (getShadowRenderer())		{getShadowRenderer()->resize(w,h);}
+	if (getWaterRenderer())			{getWaterRenderer()->resize(w,h);}
+	if (getPostProcessRenderer())	{getPostProcessRenderer()->resize(w,h);}
+}
+
 void Scene::render() {
 
 	// timing update
 	ss.lastRenderStart = ss.renderStart;
 	ss.renderStart = Time::runtime();
+
+	// update animations
+	for (size_t i = 0; i < animations.size(); ++i) {
+		IAnimation* ani = animations[i];
+		ani->step(this, ss);
+		if (ani->isDone()) {
+			animations.erase(animations.begin() + i);
+			delete ani;
+			--i;
+		}
+	}
 
 	// inform the scene
 	onBeforeRender();
@@ -186,12 +204,17 @@ void Scene::renderForShadows() {
 	rs.matrices.V = cam.getVMatrix();
 	rs.matrices.PV = cam.getPVMatrix();
 
-	for (Renderable* r : renderables)	{
+	for (Renderable* r : renderables) {
 		if (r->castsShadows()) {
 			renderThis(r, rs);
 		}
 	}
-	for (Terrain* t : terrains)			{renderThis(t, rs);}
+
+	for (Terrain* t : terrains) {
+		if (t->castsShadows()) {
+			renderThis(t, rs);
+		}
+	}
 
 }
 

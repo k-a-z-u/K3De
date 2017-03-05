@@ -24,6 +24,7 @@
 #include "FPS.h"
 #include "RenderState.h"
 #include "SceneState.h"
+#include "IAnimation.h"
 
 class Water;
 class Terrain;
@@ -75,6 +76,9 @@ protected:
 
 	/** "normal" renderables */
 	std::vector<Renderable*> renderables;
+
+	/** all active animations */
+	std::vector<IAnimation*> animations;
 
 	/** the sky */
 	SkyBox* skybox;
@@ -141,6 +145,10 @@ public:
 
 	void addParticles(Renderable* ps) {
 		particles.push_back(ps);
+	}
+
+	void addAnimation(IAnimation* anim) {
+		animations.push_back(anim);
 	}
 
 	/** add a new water to the scene */
@@ -217,6 +225,9 @@ public:
 	/** get the scene's water renderer */
 	WaterRenderer* getWaterRenderer() {return waterRenderer;}
 
+	/** get the scene's post process renderer */
+	PostProcessRenderer* getPostProcessRenderer() {return postProcRenderer;}
+
 
 	/** scene is set as the currently active scene */
 	virtual void onBecomesActive() {;}
@@ -246,6 +257,9 @@ private:
 
 	/** render everything visible to water reflection and refraction */
 	inline void renderForWater();
+
+	/** called when the window is resized */
+	inline void resize(const int w, const int h);
 
 public:
 

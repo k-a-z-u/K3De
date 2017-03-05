@@ -29,7 +29,7 @@ public:
 	inline IndexedMesh* createMesh(const Resource& res, const bool normalize = false, const bool centerAtOrigin = false);
 
 	/** create a new instance-wrapper around the given source mesh [allows position,rotation,scale without modifying the mesh] */
-	inline InstanceMesh* createNewInstance(IMesh* mesh);
+	inline InstanceMesh* createNewInstance(Renderable* mesh);
 
 	static std::vector<AttrVertexNormalTexture> getPlaneY(const float y, const float x1, const float z1, const float x2, const float z2, const Vec2 texTiling) {
 
@@ -60,7 +60,7 @@ public:
 #include "IndexedMesh.h"
 #include "InstanceMesh.h"
 
-InstanceMesh* MeshFactory::createNewInstance(IMesh* srcMesh) {
+InstanceMesh* MeshFactory::createNewInstance(Renderable* srcMesh) {
 
 	// create a new instance-wrapper around the given source
 	InstanceMesh* mesh = new InstanceMesh(srcMesh);

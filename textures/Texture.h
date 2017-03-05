@@ -1,7 +1,7 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
-#include <GL/glew.h>
+#include "../gl/gl.h"
 #include "../misc/Error.h"
 #include "ITexture.h"
 #include "../math/Vector.h"
@@ -104,7 +104,11 @@ public:
 	/** set anisotropic filtering */
 	void setAnisotropic(const float val) {
 		// assert bound!
+#if defined __APPLE__
+		// TODO
+#else
 		glTexParameterf(type, GL_TEXTURE_MAX_ANISOTROPY_EXT, val);
+#endif
 	}
 
 	/** generate MipMaps for this texture */

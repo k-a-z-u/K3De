@@ -7,6 +7,7 @@
 #include "xml.h"
 #include "../data/Resource.h"
 #include "../data/ResourceFactory.h"
+#include "../Debug.h"
 
 class Scene;
 

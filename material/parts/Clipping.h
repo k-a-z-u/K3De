@@ -29,8 +29,7 @@ namespace MatPart {
 			mat->getFragmentParams().usedVariable("clipY");
 
 			return
-				"bool clip = (vertex_M.y < clipY[0]) || (vertex_M.y > clipY[1]);\n"
-				"if (clip) {discard;};\n";
+			    "if ((vertex_M.y < clipY[0]) || (vertex_M.y > clipY[1])) {discard;}\n";
 
 		}
 

@@ -84,22 +84,22 @@ namespace MatPart {
 				// fixed scatter pattern looks better than a random pattern
 				"	return (\n"
 
-					+ isShadowed(-0.1f,  0.0f) + "+\n"
-					+ isShadowed(+0.1f,  0.0f) + "+\n"
-					+ isShadowed( 0.0f, +0.1f) + "+\n"
-					+ isShadowed( 0.0f, -0.1f) + "+\n"
+					+ isShadowed( 0.0f,  0.0f) + "+\n"
 
-					+ isShadowed(+0.1f, +0.1f) + "+\n"
-					+ isShadowed(-0.1f, +0.1f) + "+\n"
-					+ isShadowed(+0.0f, -0.1f) + "+\n"
-					+ isShadowed(-0.0f, -0.1f) + "+\n"
+					+ isShadowed(-1.0f,  0.0f) + "+\n"
+					+ isShadowed(+1.0f,  0.0f) + "+\n"
+					+ isShadowed( 0.0f, +1.0f) + "+\n"
+					+ isShadowed( 0.0f, -1.0f) + "+\n"
 
-					+ isShadowed(-0.2f,  0.0f) + "+\n"
-					+ isShadowed(+0.2f,  0.0f) + "+\n"
-					+ isShadowed( 0.0f, +0.2f) + "+\n"
-					+ isShadowed( 0.0f, -0.2f) + "+\n"
+					+ isShadowed(+1.0f, +1.0f) + "+\n"
+					+ isShadowed(-1.0f, +1.0f) + "+\n"
+					+ isShadowed(+1.0f, -1.0f) + "+\n"
+					+ isShadowed(-1.0f, -1.0f) + "+\n"
 
-					+ isShadowed(0, 0) + "\n"
+					+ isShadowed(-2.0f,  0.0f) + "+\n"
+					+ isShadowed(+2.0f,  0.0f) + "+\n"
+					+ isShadowed( 0.0f, +2.0f) + "+\n"
+					+ isShadowed( 0.0f, -2.0f) + "\n"
 
 				"	) / 13.0f;\n"
 
@@ -113,9 +113,10 @@ namespace MatPart {
 
 		std::string isShadowed(const float ox, const float oy) {
 
-			const float scale = 0.03;
-TODO("without dividing by shadow coord? difference?")
+			const float scale = 0.005f;
+//TODO("without dividing by shadow coord? difference?")
 			std::string o = "(vec2(" + std::to_string(ox*scale) + "," + std::to_string(oy*scale) + "))";// / shadowCoord.w)";
+			//std::string o = "(vec2(" + std::to_string(ox*scale*2) + "," + std::to_string(oy*scale*2) + ") / shadowCoord.w)";
 
 			return	"\t\t"
 					"( texture(shadowMap, sc.st + " + o + ").r "	// smallest distance from this given (x,y) to the light

@@ -27,7 +27,7 @@ class Water : public Plane3 {
 public:
 
 	/** ctor */
-	Water(const Vec3& center, const Vec2 size, const Vec2 texTiling = Vec2(1,1)) : mat(1.0f) {
+	Water(const Vec3& center, const Vec2 size) : mat(1.0f) {
 
 		//std::vector<AttrVertexNormalTexture> vec = MeshFactory::getPlaneY(center.y, center.x-size.x/2, center.z-size.y/2, center.x+size.x/2, center.z+size.y/2, texTiling);
 		//vertices.append(vec);

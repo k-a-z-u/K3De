@@ -167,9 +167,9 @@ private:
 		const float scn_h_px = scene->getScreenSize().height;
 
 		// texture's size in pixels
-		const ITexture* tex = getTexture();
-		const float tex_w_px = 512;//tex->getWidth();
-		const float tex_h_px = 512;//tex->getHeight();
+		const ITexture* tex = getTexture();		// TODO. async texture load size?
+		const float tex_w_px = tex->getWidth();
+		const float tex_h_px = tex->getHeight();
 
 		// element size in scene space
 		const Vec2 s = size.toVec(scene->getScreenSize());

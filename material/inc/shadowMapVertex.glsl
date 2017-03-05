@@ -1,6 +1,6 @@
 R"=====(
 
-#version 300 es
+{VERSION}
 precision mediump float;
 
 layout(location = 0) in vec3 vertex;

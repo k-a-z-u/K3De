@@ -15,6 +15,8 @@ namespace MatPart {
 
 		ITexture* tex;
 
+		std::string r,g,b,a;
+
 
 	public:
 
@@ -50,6 +52,14 @@ namespace MatPart {
 			// mode
 			mode = (node->Attribute("mode")) ? (node->Attribute("mode")) : ("rgba");
 
+			// for mode=map
+			if ("map" == mode) {
+				r = XML_MANDATORY_ATTR(node, "r");
+				g = XML_MANDATORY_ATTR(node, "g");
+				b = XML_MANDATORY_ATTR(node, "b");
+				a = XML_MANDATORY_ATTR(node, "a");
+			}
+
 		}
 
 		/** get the underlying texture */
@@ -79,9 +89,32 @@ namespace MatPart {
 			const std::string base = "texture(" + texID + ", " + uv + ")";
 			std::string res;
 			if		("rgba" == mode)	{res = base;}
+
 			else if (mode.empty())		{res = base;}
+
 			else if	("rgb" == mode)		{res = "vec4("+base+".rgb, 1.0)";}
+
 			else if ("grey" == mode)	{res = "vec4(vec3("+base+".a), 1.0)";}		// gray images are stored as alpha-only textures
+
+			// use fast multiply-add and swizzling to build the output
+			else if ("map" == mode)	{
+
+				std::string tex = base + ".";
+				std::string mul = "vec4(";
+				std::string add = "vec4(";
+
+				if (r[0] == '.') {tex += r[1];  mul += "1.0,"; add += "0.0,";} else {tex += "r"; mul += "0.0,"; add += r+",";}
+				if (g[0] == '.') {tex += g[1];  mul += "1.0,"; add += "0.0,";} else {tex += "r"; mul += "0.0,"; add += g+",";}
+				if (b[0] == '.') {tex += b[1];  mul += "1.0,"; add += "0.0,";} else {tex += "r"; mul += "0.0,"; add += b+",";}
+				if (a[0] == '.') {tex += a[1];  mul += "1.0" ; add += "0.0" ;} else {tex += "r"; mul += "0.0" ; add += a;}
+
+				mul += ")";
+				add += ")";
+
+				res = tex + " * " + mul + " + " + add;
+
+			}
+
 
 			// color modifier?
 			if (modColor) {

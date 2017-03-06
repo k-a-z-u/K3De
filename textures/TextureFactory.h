@@ -85,76 +85,6 @@ public:
 
 	}
 
-
-
-//	/** create a new texture using the given input file */
-//	Texture2D* create(const std::string& file, bool compressed = true) {
-
-//		Debug(NAME, "loading texture: " + file);
-
-//		// parse the image file
-//		Image img = ImageFactory::load(includePath + file);
-//		void* data = (void*) img.getData().data();
-
-////		// get the texture format
-////		int formatIn, formatOut;
-////		switch(img.getFormat()) {
-////			case ImageFormat::IMAGE_RGB:
-////				formatIn = GL_RGB;
-////				formatOut = (compressed) ? (COMPR) : (GL_RGB);
-////				break;
-////			case ImageFormat::IMAGE_RGBA:
-////				formatIn = GL_RGBA;
-////				formatOut = (compressed) ? (COMPR) : (GL_RGBA);
-////				break;
-////			case ImageFormat::IMAGE_GREY:
-////				formatIn = GL_ALPHA;
-////				formatOut = (compressed) ? (GL_COMPRESSED_ALPHA) : (GL_ALPHA);
-////				break;
-////			case ImageFormat::IMAGE_GREY_ALPHA:
-////				formatIn = GL_ALPHA;
-////				formatOut = (compressed) ? (GL_COMPRESSED_ALPHA) : (GL_ALPHA);				// which compressionm format?
-////				break;
-////			default: throw "error";
-////		}
-
-//		const int formatIn = getFormatIn(img);
-//		const int formatOut = getFormatOut(img, compressed);
-
-//		return create(data, img.getWidth(), img.getHeight(), formatIn, formatOut);
-
-//	}
-
-
-//	/** create a new texture using the given input file */
-//	Texture2D* create(const std::string file, bool compressed = true, bool mipMaps = true) {
-
-//		// create and add a new texture
-//		Texture2D* tex = new Texture2D(-1, -1);
-//		textures.push_back(std::make_unique(tex));
-
-//		auto funcDecode = [this, file, tex, compressed, mipMaps] () {
-
-//			// decode the image file
-//			Image img = ImageFactory::load(includePath + file);
-
-//			//auto funcUpload = [this, tex, img, compressed, mipMaps] () {
-//				void* data = (void*) img.getData().data();
-//				const int formatIn = getFormatIn(img);
-//				const int formatOut = getFormatOut(img, compressed);
-//				upload(tex, data, img.getWidth(), img.getHeight(), formatIn, formatOut, mipMaps);
-//			//};
-
-//			//MainLoop::get().add(funcUpload);
-
-//		};
-
-//		GlobalThreadPool::get().add(funcDecode);
-
-//		return tex;
-
-//	}
-
 	/** create a new texture using the given resource */
 	Texture2D* create(const Resource res, bool compressed = true, bool mipMaps = true) {
 
@@ -191,14 +121,22 @@ public:
 	int getFormatIn(const Image& img) const {
 
 		switch(img.getFormat()) {
+
+			// GL_ALPHA and such is deprecated.
+			// for grey textures, use one-channel and do the desired conversion within the shader
+			case ImageFormat::IMAGE_GREY:
+				return GL_RED;
+
+			// same as above: handle actual component mapping within the shader-code
+			case ImageFormat::IMAGE_GREY_ALPHA:
+				return GL_RG;
+
 		    case ImageFormat::IMAGE_RGB:
 			    return GL_RGB;
+
 		    case ImageFormat::IMAGE_RGBA:
 			    return GL_RGBA;
-		    case ImageFormat::IMAGE_GREY:
-			    return GL_ALPHA;
-		    case ImageFormat::IMAGE_GREY_ALPHA:
-			    return GL_ALPHA;
+
 		    default:
 			    throw Exception("invalid image format");
 		}
@@ -208,16 +146,25 @@ public:
 	int getFormatOut(const Image& img, const bool compressed) const {
 
 		switch(img.getFormat()) {
+
+			// GL_ALPHA and such is deprecated.
+			// for grey textures, use one-channel and do the desired conversion within the shader
+			case ImageFormat::IMAGE_GREY:
+				return (compressed) ? (GL_COMPRESSED_RED) : (GL_RED);
+
+			// same as above: handle actual component mapping within the shader-code
+			case ImageFormat::IMAGE_GREY_ALPHA:
+				return  (compressed) ? (GL_COMPRESSED_RG) : (GL_RG);
+
 			case ImageFormat::IMAGE_RGB:
 				return (compressed) ? (COMPR) : (GL_RGB);
+
 			case ImageFormat::IMAGE_RGBA:
 				return (compressed) ? (COMPR) : (GL_RGBA);
-			case ImageFormat::IMAGE_GREY:
-				return (compressed) ? (GL_COMPRESSED_ALPHA) : (GL_ALPHA);
-			case ImageFormat::IMAGE_GREY_ALPHA:
-				return  (compressed) ? (GL_COMPRESSED_ALPHA) : (GL_ALPHA);
+
 			default:
 				throw Exception("invalid image format");
+
 		}
 
 	}

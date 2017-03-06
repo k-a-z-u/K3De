@@ -27,6 +27,7 @@ for (XMLElem* sub = root->FirstChildElement(name); sub != nullptr; sub = sub->Ne
 
 #define XML_ASSERT_NODE_NAME(name, node)		if (std::string(name) != std::string(node->Name())) {throw Exception("expected " + std::string(name) + " got " + node->Name());}
 
+#define XML_MANDATORY_ATTR(node, attr)		(node->Attribute(attr) ? node->Attribute(attr) : throw Exception(std::string("missing XML attribute: ") + attr));
 
 
 #endif // HELPER_XML_H

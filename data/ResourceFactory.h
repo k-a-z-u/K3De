@@ -1,10 +1,12 @@
 #ifndef RESOURCEFACTORY_H
 #define RESOURCEFACTORY_H
 
-#include "Resource.h"
-#include "Archive.h"
 #include <vector>
 
+#include "Resource.h"
+#include "Archive.h"
+
+#include "../Debug.h"
 
 /**
  * load resources from filesystem or archive files

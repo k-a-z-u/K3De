@@ -126,11 +126,14 @@ protected:
 		this->w = newW;
 		this->h = newH;
 
-		// remove old textures [if any]
-		if (texOut) {scene->getTextureFactory().destroy(texOut); texOut = nullptr;}
+		// allocate or resize
+		if (!texOut) {
+			texOut = scene->getTextureFactory().createRenderTexture(newW, newH);
+		} else {
+			texOut->bind(0);
+			texOut->resize(newW, newH);
+		}
 
-		// allocate new texture
-		texOut = scene->getTextureFactory().createRenderTexture(newW, newH);
 		texOut->setWrapping(TextureWrapping::CLAMP, TextureWrapping::CLAMP);
 		texOut->setFilter(TextureFilter::LINEAR, TextureFilter::LINEAR);
 
@@ -145,6 +148,8 @@ protected:
 			}
 			shader->unbind();
 		}
+
+		texOut->unbind(0);
 
 	}
 
@@ -266,11 +271,14 @@ public:
 			texW = w;
 			texH = h;
 
-			// remove old textures?
-			if (texDepth) {scene->getTextureFactory().destroy(texDepth);}
+			// allocate or resize
+			if (!texDepth) {
+				texDepth = scene->getTextureFactory().createDepthTexture(texW, texH);
+			} else {
+				texDepth->bind(0);
+				texDepth->resize(texW, texH);
+			}
 
-			// allocate new ones
-			texDepth = scene->getTextureFactory().createDepthTexture(texW, texH);
 			texDepth->setFilter(TextureFilter::LINEAR, TextureFilter::LINEAR);
 
 		}
@@ -285,7 +293,9 @@ public:
 		fbStart.attachTextureColor(0, start->getOutput());
 		//fbStart.attachTextureDepth(texDepth);
 		fbStart.attachRenderbufferDepth(&rbDepth, texW, texH);		// slightly faster when depth is not needed
+
 		fbStart.unbind();
+		texDepth->unbind(0);
 
 	}
 

@@ -16,7 +16,8 @@ protected:
 public:
 
 	/** ctor */
-	Texture2DArray(const int widht, const int height, const int numLayers) : Texture(GL_TEXTURE_2D_ARRAY, widht, height), numLayers(numLayers) {
+	Texture2DArray(const GLuint format, const int widht, const int height, const int numLayers) :
+		Texture(GL_TEXTURE_2D_ARRAY, format, widht, height), numLayers(numLayers) {
 		;
 	}
 

@@ -313,6 +313,10 @@ private:
 
 		std::cout << ss.str() << std::endl;
 
+#else
+
+		(void) str;
+
 #endif
 
 	}

@@ -56,7 +56,7 @@ public:
 
 
 	/** destroy the given texture and remove it from the factory. the given pointer is NO LONGER VALID */
-	void destroy(const ITexture* tex) {
+	void ddestroy(const ITexture* tex) {
 
 		Debug(NAME, "manually destroying 2D texture");
 
@@ -90,28 +90,37 @@ public:
 
 		Debug(NAME, "creating 2D texture from resource");
 
-		// create and add a new texture
-		Texture2D* tex = new Texture2D(-1, -1);
+		// decode the image file
+		Image img = ImageFactory::load(res);
+		void* data = (void*) img.getData().data();
+		const int formatIn = getFormatIn(img);
+		const int formatOut = getFormatOut(img, compressed);
+
+		Texture2D* tex = new Texture2D(formatOut, -1, -1);
 		textures.push_back(std::make_unique(tex));
+		upload(tex, data, img.getWidth(), img.getHeight(), formatIn, formatOut, mipMaps);
 
-		auto funcDecode = [this, res, tex, compressed, mipMaps] () {
+//		// create and add a new texture
+//		Texture2D* tex = new Texture2D(-1, -1);
+//		textures.push_back(std::make_unique(tex));
 
-			// decode the image file
-			Image img = ImageFactory::load(res);
+//		auto funcDecode = [this, res, tex, compressed, mipMaps] () {
 
-			auto funcUpload = [this, tex, img, compressed, mipMaps] () {
-				void* data = (void*) img.getData().data();
-				const int formatIn = getFormatIn(img);
-				const int formatOut = getFormatOut(img, compressed);
-				upload(tex, data, img.getWidth(), img.getHeight(), formatIn, formatOut, mipMaps);
-			};
+//			// decode the image file
+//			Image img = ImageFactory::load(res);
 
-			MainLoop::get().add(funcUpload);
+//			auto funcUpload = [this, tex, img, compressed, mipMaps] () {
+//				void* data = (void*) img.getData().data();
+//				const int formatIn = getFormatIn(img);
+//				const int formatOut = getFormatOut(img, compressed);
+//				upload(tex, data, img.getWidth(), img.getHeight(), formatIn, formatOut, mipMaps);
+//			};
 
-		};
+//			MainLoop::get().add(funcUpload);
 
+//		};
 
-		GlobalThreadPool::get().add(funcDecode);
+//		GlobalThreadPool::get().add(funcDecode);
 
 		return tex;
 
@@ -174,7 +183,7 @@ public:
 		Debug(NAME, "creating 2D texture from raw data");
 
 		// create and add a new texture
-		Texture2D* tex = new Texture2D(w, h);
+		Texture2D* tex = new Texture2D(formatOut, w, h);
 		textures.push_back(std::make_unique(tex));
 
 		// upload data
@@ -253,7 +262,7 @@ public:
 		const int layers = files.size();
 
 		// create and add a new texture
-		Texture2DArray* tex = new Texture2DArray(w, h, layers);
+		Texture2DArray* tex = new Texture2DArray(GL_RGB, w, h, layers);
 		textures.push_back(std::make_unique(tex));
 		tex->bind(0);
 
@@ -312,16 +321,16 @@ public:
 
 	}
 
-	Texture* createRenderTexture(const int w, const int h, const GLuint type = GL_RGB) {
+	Texture* createRenderTexture(const int w, const int h, const GLuint format = GL_RGB) {
 
 		Debug(NAME, "creating 2D render texture " + std::to_string(w) + " x " + std::to_string(h));
 
-		Texture* tex = new Texture(GL_TEXTURE_2D, w, h);
+		Texture* tex = new Texture(GL_TEXTURE_2D, format, w, h);
 		textures.push_back(std::make_unique(tex));
 		tex->bind(0);
 
 		// Give an empty image to OpenGL ( the last "0" )
-		glTexImage2D(GL_TEXTURE_2D, 0,type, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 		Error::assertOK();
 
 //		// Poor filtering. Needed !
@@ -352,14 +361,15 @@ public:
 	Texture* createDepthTexture(const int w, const int h) {
 
 		Debug(NAME, "creating 2D depth texture " + std::to_string(w) + " x " + std::to_string(h));
+		const GLuint format = GL_DEPTH_COMPONENT32F;
 
-		Texture* tex = new Texture(GL_TEXTURE_2D, w, h);
+		Texture* tex = new Texture(GL_TEXTURE_2D, format, w, h);
 		textures.push_back(std::make_unique(tex));
 		tex->bind(0);
 
 		// TODO: performance boost possible?
 		// Give an empty image to OpenGL ( the last "0" )
-		glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32F, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
 
 		//tex->setFilter(TextureFilter::NEAREST, TextureFilter::NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);

@@ -74,28 +74,40 @@ void WaterRenderer::resize(const int w, const int h) {
 	texH = nTexH;
 
 	// allocate reflection
-	if (texReflect) {scene->getTextureFactory().destroy(texReflect);}
-	texReflect = scene->getTextureFactory().createRenderTexture(texW, texH);
+	if (!texReflect) {
+		texReflect = scene->getTextureFactory().createRenderTexture(texW, texH);
+	} else {
+		texReflect->bind(0);
+		texReflect->resize(texW, texH);
+	}
+
 	texReflect->setFilter(TextureFilter::LINEAR, TextureFilter::LINEAR);
 	texReflect->setWrapping(TextureWrapping::CLAMP, TextureWrapping::CLAMP);
-	//texReflect->setAnisotropic(0);
+
 	fbReflect.bind();
 	fbReflect.attachTextureColor(0, texReflect);
 	fbReflect.attachRenderbufferDepth(&rbReflect, texW, texH);
 	fbReflect.setupColorTextures();
 	fbReflect.unbind();
+	texReflect->unbind(0);
 
 	// allocate refraction
-	if (texRefract) {scene->getTextureFactory().destroy(texRefract);}
-	texRefract = scene->getTextureFactory().createRenderTexture(texW, texH);
+	if (!texRefract) {
+		texRefract = scene->getTextureFactory().createRenderTexture(texW, texH);
+	} else {
+		texRefract->bind(0);
+		texRefract->resize(texW, texH);
+	}
+
 	texRefract->setFilter(TextureFilter::LINEAR, TextureFilter::LINEAR);
 	texRefract->setWrapping(TextureWrapping::CLAMP, TextureWrapping::CLAMP);
-	//texRefract->setAnisotropic(0);
+
 	fbRefract.bind();
 	fbRefract.attachTextureColor(0, texRefract);
 	fbRefract.attachRenderbufferDepth(&rbRefract, texW, texH);
 	fbRefract.setupColorTextures();
 	fbRefract.unbind();
+	texRefract->unbind(0);
 
 }
 

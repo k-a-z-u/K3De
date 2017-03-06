@@ -10,7 +10,7 @@ class Texture2D : public Texture {
 public:
 
 	/** ctor */
-	Texture2D(const int width, const int height) : Texture(GL_TEXTURE_2D, width, height) {
+	Texture2D(const GLuint format, const int width, const int height) : Texture(GL_TEXTURE_2D, format, width, height) {
 		;
 	}
 

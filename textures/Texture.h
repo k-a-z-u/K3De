@@ -31,11 +31,11 @@ private:
 	/** the openGL texture type (1D, 2D, 3D, 2D-Array, ..) */
 	GLuint type;
 
-	/** the openGL texture-id */
-	GLuint id;
-
 	/** the texture's data format */
 	GLuint format;
+
+	/** the openGL texture-id */
+	GLuint id;
 
 	/** the texture's width */
 	int width;
@@ -47,7 +47,8 @@ private:
 public:
 
 	/** ctor */
-	Texture(const GLuint type, const int width, const int height) : type(type), id(0), width(width), height(height) {
+	Texture(const GLuint type, const GLuint format, const int width, const int height) :
+		type(type), format(format), id(0), width(width), height(height) {
 		create();
 	}
 
@@ -80,6 +81,18 @@ public:
 		glActiveTexture(GL_TEXTURE0 + idx);	Error::assertOK();
 		glBindTexture(type, 0);				Error::assertOK();
 		setUnbound(key(idx));
+	}
+
+	void resize(const int w, const int h) {
+//		assertBound(key(idx));
+		// TODO: exactly same format as during creation?
+		if (format == GL_DEPTH_COMPONENT32F) {
+			glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0,				GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+			Error::assertOK();
+		} else {
+			glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0,				GL_RED, GL_UNSIGNED_BYTE, 0);
+			Error::assertOK();
+		}
 	}
 
 	/** get the texture's ID */

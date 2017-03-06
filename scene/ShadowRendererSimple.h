@@ -86,16 +86,19 @@ void ShadowRendererSimple::resize(const int w, const int h) {
 	// [unfortunately one 3D texture for all lights does NOT work for depth-texture!, color-texture would probably work..]
 	for (int i = 0; i < MAX_LIGHTS; ++i) {
 
-		// remove existing texture (if any)
-		if (texShadows[i]) {
-			scene->getTextureFactory().destroy(texShadows[i]);
-			texShadows[i] = nullptr;
+		// allocate or resize
+		if (!texShadows[i]) {
+			texShadows[i] = scene->getTextureFactory().createDepthTexture(texW, texH);
+		} else {
+			texShadows[i]->bind(0);
+			texShadows[i]->resize(texW, texH);
 		}
 
 		// create the new texture
 		texShadows[i] = scene->getTextureFactory().createDepthTexture(texW, texH);
 		texShadows[i]->setFilter(TextureFilter::LINEAR, TextureFilter::LINEAR);
 		texShadows[i]->setWrapping(TextureWrapping::CLAMP, TextureWrapping::CLAMP);
+		texShadows[i]->unbind(0);
 
 	}
 

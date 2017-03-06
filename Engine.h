@@ -147,12 +147,19 @@ private:
 
 		// this one is needed, when not OpenGL ES but OpenGL is used
 		switch(getOpenGLVersion()) {
-		case OPENGL_3_3:
-			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
-			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-			glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-			glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
-			Error::assertOK();
+                
+            case OPENGL_3_3:
+                glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
+                glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+                glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
+                glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
+                Error::assertOK();
+                break;
+                
+            default:
+                break;
+                
+                
 		}
 
 		// anti-aliasing?
@@ -167,9 +174,13 @@ private:
 		Error::assertOK();
 
 		glfwMakeContextCurrent(window);
-		glewExperimental = true;
-		if (glewInit() != GLEW_OK) {throw Exception("error during glewInit()");}
-		Error::assertOK();
+        
+        #if defined (__APPLE__)
+        #else
+            glewExperimental = true;
+            if (glewInit() != GLEW_OK) {throw Exception("error during glewInit()");}
+            Error::assertOK();
+        #endif
 
 		// Ensure we can capture the escape key being pressed below
 		glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);

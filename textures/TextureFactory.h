@@ -16,7 +16,7 @@ class TextureFactory {
 
 private:
 
-	const char* NAME = "TexFac";
+	static constexpr const char* NAME = "TexFac";
 
 	/** the texture compression format to use */
 #if defined __APPLE__

@@ -12,7 +12,7 @@ class Shader;
 
 namespace MatPart {
 	class Modifier;
-	class LoadedTexture;
+	struct LoadedTexture;
 }
 
 class Material2 {

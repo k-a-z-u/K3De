@@ -10,7 +10,7 @@ class ITexture {
 
 private:
 
-	const char* NAME = "ITexture";
+	static constexpr const char* NAME = "ITexture";
 
 protected:
 

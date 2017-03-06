@@ -11,7 +11,7 @@ class WaterRenderer {
 
 private:
 
-	const char* NAME = "WaterR";
+	static constexpr const char* NAME = "WaterR";
 
 	int texW = 0;
 	int texH = 0;

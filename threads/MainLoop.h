@@ -18,7 +18,7 @@ public:
 
 private:
 
-	const char* NAME = "MainLoop";
+	static constexpr const char* NAME = "MainLoop";
 
 
 	std::vector<Action> actions;

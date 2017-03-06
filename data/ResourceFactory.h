@@ -16,7 +16,7 @@ class ResourceFactory {
 
 private:
 
-	const char* NAME = "ResFac";
+	static constexpr const char* NAME = "ResFac";
 
 	/** all archives to scan for files */
 	std::vector<Archive*> archives;

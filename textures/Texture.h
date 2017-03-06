@@ -56,7 +56,7 @@ public:
 	}
 
 
-	bool isAlphaOnly() const {
+	bool isAlphaOnly() const override {
 		return format == GL_COMPRESSED_ALPHA || format == GL_ALPHA;
 	}
 

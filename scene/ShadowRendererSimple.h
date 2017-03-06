@@ -33,10 +33,10 @@ public:
 	inline void update() override;
 
 	/** get the shadow-map-texture for the given light */
-	inline Texture* getShadowTexture(const int lightIdx) {return texShadows[lightIdx];}
+	inline Texture* getShadowTexture(const int lightIdx) override {return texShadows[lightIdx];}
 
 	/** update underlying data when the scene was resized */
-	inline void resize(const int w, const int h);
+	inline void resize(const int w, const int h) override;
 
 };
 

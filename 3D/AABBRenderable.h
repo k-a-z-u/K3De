@@ -69,7 +69,7 @@ private:
 
 public:
 
-	void render(const SceneState&, const RenderState&) {
+	void render(const SceneState&, const RenderState&) override {
 
 		vao.bind();
 		glDrawArrays(GL_LINES, 0, vertices.size());
@@ -78,7 +78,7 @@ public:
 
 	}
 
-	virtual const Mat4& getMatrix() const {return identity;}
+	virtual const Mat4& getMatrix() const override {return identity;}
 
 };
 

@@ -14,7 +14,7 @@ class Scene;
 class MaterialFactory {
 
 
-	const char* NAME = "MatFac2";
+	static constexpr const char* NAME = "MatFac2";
 
 	Scene* scene;
 

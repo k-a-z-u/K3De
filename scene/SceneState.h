@@ -24,12 +24,17 @@ public:
 
 	/** get the timestamp the last rendering was started at */
 	Time getLastRenderStart() const {
-		return lastRenderDuration;
+		return lastRenderStart;
 	}
 
 	/** get the time it took to render the last frame */
 	Time getLastRenderDuration() const {
 		return lastRenderDuration;
+	}
+
+	/** get an fps indepentend measurement since the last frame */
+	Time getTick() const {
+		return renderStart - lastRenderStart;
 	}
 
 };

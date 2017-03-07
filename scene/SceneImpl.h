@@ -89,7 +89,7 @@ void Scene::render() {
 	}
 
 	// inform the scene
-	onBeforeRender();
+	onBeforeRender(ss);
 
 	// inform every renderable about the pending render process
 	for (Renderable* r : renderables) {r->onBeforeRender(ss);}

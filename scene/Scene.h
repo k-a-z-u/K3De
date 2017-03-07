@@ -21,6 +21,8 @@
 #include "../2D/UI.h"
 #include "../2D/SpriteFactory.h"
 
+#include "../InputListener.h"
+
 #include "FPS.h"
 #include "RenderState.h"
 #include "SceneState.h"
@@ -35,6 +37,7 @@ class WaterRenderer;
 class PostProcessRenderer;
 class ParticleSystem;
 
+
 /**
  * @brief a scene is something that describes a render-setup
  * including light, camera, objects, etc.
@@ -42,7 +45,7 @@ class ParticleSystem;
  * this is the base-class for all scenes.
  * the user has to subclass thise one and implement the missing methods
  */
-class Scene {
+class Scene : public InputListener {
 
 protected:
 
@@ -219,6 +222,15 @@ public:
 
 	}
 
+	void setClearColor(const Vec4& color) {
+		this->clearColor = color;
+		glClearColor(color.r, color.g, color.b, color.a);
+	}
+
+	const Vec4& getClearColor() {return clearColor;}
+
+
+
 	/** get the scene's shadow renderer */
 	ShadowRenderer* getShadowRenderer() {return shadowRenderer;}
 
@@ -229,20 +241,17 @@ public:
 	PostProcessRenderer* getPostProcessRenderer() {return postProcRenderer;}
 
 
+
 	/** scene is set as the currently active scene */
 	virtual void onBecomesActive() {;}
 
 	/** scene will be rendered soon */
-	virtual void onBeforeRender() {;}
+	virtual void onBeforeRender(const SceneState& ss) {;}
+
+	/** scene receives key events */
+	virtual void onKeyEvent(const int key, const int scancode, const int action, const int mods) = 0;
 
 
-
-	void setClearColor(const Vec4& color) {
-		this->clearColor = color;
-		glClearColor(color.r, color.g, color.b, color.a);
-	}
-
-	const Vec4& getClearColor() {return clearColor;}
 
 private:
 

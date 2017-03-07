@@ -87,23 +87,8 @@ public:
 		return settings.screen;
 	}
 
-	void run(const int fps) {
-
-//		glEnable(GL_CULL_FACE);
-//		glEnable(GL_DEPTH_TEST);
-//		glDepthFunc(GL_LESS);
-
-		const int sleep = 1000 / fps;
-
-		do {
-			std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
-			tick();
-		} while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0 );
-
-		// cleanup
-		cleanup();
-
-	}
+	/** run blocking using the given framerate */
+	void run(const int fps);
 
 	/** perform cleanups */
 	void cleanup() {
@@ -124,7 +109,13 @@ public:
 private:
 
 	/** called when the window cahnges its size */
-	static inline void onWindowSizeChange(GLFWwindow* window, int width, int height );
+	static inline void onWindowSizeChange(GLFWwindow* window, int width, int height);
+
+	/** static key-input callback */
+	static inline void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+
+private:
 
 	/** render the current scene */
 	inline void render();
@@ -205,13 +196,7 @@ private:
 
 private:
 
-	/** static key-input callback */
-	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-		(void) window;
-		for (InputListener* l : Engine::get()->inputListeners) {
-			l->onKeyEvent(key, scancode, action, mods);
-		}
-	}
+
 
 //	void updateFPS() {
 

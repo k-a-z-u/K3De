@@ -113,7 +113,7 @@ void ShadowRendererSimple::update() {
 	scene->getCamera().push();
 
 	// switch to shadow's resolution
-	scene->getCamera().setScreenSize(texW, texH);
+	scene->getCamera().setViewportSize(texW, texH);
 
 	// enable framebuffer rendering
 	fbShadows.bind();

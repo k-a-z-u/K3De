@@ -51,7 +51,8 @@ protected:
 
 	Lighting lighting;
 
-
+    /** the window's and viewport's size. updated by the engine when the window is changed */
+    ScreenSize size;
 
 	/** camera */
 	Camera cam;
@@ -168,10 +169,10 @@ public:
 	}
 
 	/** get the current screen size */
-	inline ScreenSize getScreenSize() const;
+	inline const ScreenSize& getScreenSize() const;
 
 	/** get the current screen size */
-	inline const ScreenSize* getScreenSizePtr() const;
+	inline ScreenSize* getScreenSizePtr();
 
 
 	/** get current FPS, given by the last render-time */
@@ -268,7 +269,7 @@ private:
 	inline void renderForWater();
 
 	/** called when the window is resized */
-	inline void resize(const int w, const int h);
+	inline void resize(const ScreenSize& size);
 
 public:
 

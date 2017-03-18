@@ -44,14 +44,7 @@ private:
 public:
 
 
-	Image getFrame() {
-		const int w = getScreenSize().width;
-		const int h = getScreenSize().height;
-		Image img(w, h, ImageFormat::IMAGE_RGB);
-		//glReadBuffer(GL_BACK_LEFT);
-		glReadPixels(0,0, w,h, GL_RGB,GL_UNSIGNED_BYTE, img.getDataPtr());
-		return img;
-	}
+    Image getFrame();
 
 
 
@@ -82,10 +75,10 @@ public:
 	}
 
 	/** get the current screen size */
-	ScreenSize getScreenSize() const {
-		// TODO: change on window resize
-		return settings.screen;
-	}
+//	ScreenSize getScreenSize() const {
+//		// TODO: change on window resize
+//		return settings.screen;
+//	}
 
 	/** run blocking using the given framerate */
 	void run(const int fps);
@@ -160,7 +153,7 @@ private:
 		}
 
 		// create a window
-		window = glfwCreateWindow( settings.screen.width, settings.screen.height, settings.title.c_str(), NULL, NULL);
+		window = glfwCreateWindow( settings.windowWidth, settings.windowHeight, settings.title.c_str(), NULL, NULL);
 		if( window == NULL ) {glfwTerminate(); throw Exception("error while creating window");}
 		Error::assertOK();
 

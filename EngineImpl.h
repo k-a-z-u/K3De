@@ -17,17 +17,27 @@ void Engine::tick() {
 
 }
 
-void Engine::onWindowSizeChange(GLFWwindow*, int width, int height) {
+void Engine::onWindowSizeChange(GLFWwindow* win, int width, int height) {
 
-	auto action = [width, height] () {
-		Engine::get()->settings.screen.width = width;
-		Engine::get()->settings.screen.height = height;
+	auto action = [win, width, height] () {
+		//Engine::get()->settings.screen.width = width;
+		//Engine::get()->settings.screen.height = height;
+        //Engine::get()->settings.screen = ScreenSize(win);
 		Scene* scene = Engine::get()->getScene();
-		if (scene) {scene->resize(width, height);}
+		if (scene) {scene->resize(ScreenSize(win));}
 	};
 
 	MainLoop::get().add(action);
 
+}
+
+Image Engine::getFrame() {
+    const int w = scene->getScreenSize().viewport.width;
+    const int h = scene->getScreenSize().viewport.height;
+    Image img(w, h, ImageFormat::IMAGE_RGB);
+    //glReadBuffer(GL_BACK_LEFT);
+    glReadPixels(0,0, w,h, GL_RGB,GL_UNSIGNED_BYTE, img.getDataPtr());
+    return img;
 }
 
 void Engine::render() {
@@ -82,7 +92,8 @@ void Engine::run(const int fps) {
 /** set the current scene */
 void Engine::setScene(Scene* scene) {
 	this->scene = scene;
-	scene->onBecomesActive();
+    this->scene->getScreenSizePtr()->update(window);  // ensure the scene know's its window's size
+    scene->onBecomesActive();
 }
 
 /** static key-input callback */

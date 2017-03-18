@@ -5,8 +5,11 @@
 #include "scene/ScreenSize.h"
 
 struct EngineSettings {
-
-	ScreenSize screen;
+    
+    /** currently used size [depends on the window's size] */
+    //ScreenSize screen;
+    int windowWidth = 640;
+    int windowHeight = 480;
 
 	int antiAliasing = 0;
 

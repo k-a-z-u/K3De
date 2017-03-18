@@ -11,6 +11,8 @@
     #include <GL/glew.h>
 #endif
 
+#include <GLFW/glfw3.h>
+
 enum OpenGLVersion {
 	OPENGL_ES_3,
 	OPENGL_3_3,

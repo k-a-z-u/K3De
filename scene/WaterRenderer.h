@@ -52,8 +52,8 @@ WaterRenderer::WaterRenderer(Scene* scene) {
 	this->scene = scene;
 
 	resize(
-		Engine::get()->getSettings().screen.width,
-		Engine::get()->getSettings().screen.height
+		scene->getScreenSize().viewport.width,
+		scene->getScreenSize().viewport.height
 	);
 
 }
@@ -114,7 +114,7 @@ void WaterRenderer::resize(const int w, const int h) {
 void WaterRenderer::update() {
 
 
-	scene->getCamera().setScreenSize(texW, texH);
+	scene->getCamera().setViewportSize(texW, texH);
 
 	// reflect
 	scene->getCamera().mirrorY(0);

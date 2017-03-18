@@ -60,7 +60,7 @@ public:
 		state = stack.front();
 		stateChanged = true;
 		stack.pop_front();
-		updateScreenSize();		// update
+		updateViewportSize();		// update
 	}
 
 	/** set the camera's field-of-view (in degree) */
@@ -87,17 +87,22 @@ public:
 	}
 
 	/** set the render resolution (in pixel) */
-	void setScreenSize(const int width, const int height) {
+	void setViewportSize(const int width, const int height) {
 		state.screenSize.x = width;
 		state.screenSize.y = height;
 		setAspect((float)width/(float)height);
-		updateScreenSize();
+		updateViewportSize();
 	}
 
 	/** set the render resolution to the engine's screen size */
-	void setScreenSize() {
-		setScreenSize(Engine::get()->getSettings().screen.width, Engine::get()->getSettings().screen.height);
-	}
+//	void setViewportSize(Scene* scene) {
+//		setViewportSize(scene->getScreenSize().viewport.width, scene->getScreenSize().viewport.height);
+//	}
+    
+//    /** set the render resolution */
+//    void setViewportSize(const ScreenSize& size) {
+//        setViewportSize(size.viewport.width, size.viewport.height);
+//    }
 
 	/** get the current screen size (resolution, in pixel) */
 	const Vec2& getScreenSize() const {
@@ -176,7 +181,7 @@ private:
 	}
 
 	/** update the openGL viewport size */
-	void updateScreenSize() {
+	void updateViewportSize() {
 		glViewport(0, 0, state.screenSize.x, state.screenSize.y);
 	}
 

@@ -180,7 +180,7 @@ protected:
 		(void) rs;
 
 		scene->getCamera().push();
-		scene->getCamera().setScreenSize(w, h);
+		scene->getCamera().setViewportSize(w, h);
 
 		shader->bind();
 //		const int w = (texIn) ? (texIn->getWidth()) : (rs.screenWidht);
@@ -254,8 +254,8 @@ public:
 		std::unique_ptr<PostProcessStage> uptr = std::make_unique_args<PostProcessStage>(name, scene, texScale);
 		PostProcessStage* ptr = uptr.get();
 		ptr->resize(
-		    Engine::get()->getSettings().screen.width,
-		    Engine::get()->getSettings().screen.height
+		    scene->getScreenSize().viewport.width,
+		    scene->getScreenSize().viewport.height
 		);
 		stages.push_back(std::move(uptr));
 		return ptr;
@@ -326,8 +326,8 @@ PostProcessRenderer::PostProcessRenderer(Scene* scene) {
 
 	// start with initial size
 	resize(
-	    Engine::get()->getSettings().screen.width,
-	    Engine::get()->getSettings().screen.height
+	    scene->getScreenSize().viewport.width,
+	    scene->getScreenSize().viewport.height
 	);
 
 	//setRect(-1, -1, +1, +1);

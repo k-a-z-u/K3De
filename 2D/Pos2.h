@@ -35,7 +35,7 @@ struct MetricX : public Metric {
 	/** convert to percent of screen width */
 	float toPercent(const ScreenSize& screen) const {
 		switch(unit) {
-			case Unit::PIXEL:		return value / screen.width;
+			case Unit::PIXEL:		return value / screen.viewport.width;
 			case Unit::PERCENT:		return value;
 			default: throw "coding error";
 		}
@@ -54,7 +54,7 @@ struct MetricY : public Metric {
 	/** convert to percent of screen height */
 	float toPercent(const ScreenSize& screen) const {
 		switch(unit) {
-			case Unit::PIXEL:		return value / screen.height;
+			case Unit::PIXEL:		return value / screen.viewport.height;
 			case Unit::PERCENT:		return value;
 			default: throw "coding error";
 		}

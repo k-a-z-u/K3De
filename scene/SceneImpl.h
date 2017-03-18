@@ -12,14 +12,12 @@
 #include "../world/Terrain.h"
 #include "../world/Skybox.h"
 
-ScreenSize Scene::getScreenSize() const {
-	return Engine::get()->getScreenSize();
+const ScreenSize& Scene::getScreenSize() const {
+    return size;
 }
 
-const ScreenSize* Scene::getScreenSizePtr() const {
-	static ScreenSize screen;					// TODO: fix
-	screen = Engine::get()->getScreenSize();
-	return &screen;
+ScreenSize* Scene::getScreenSizePtr() {
+    return &size;
 }
 
 void Scene::addWater(Water* w) {
@@ -64,8 +62,11 @@ void Scene::setEnableWater(bool enable) {
 	}
 }
 
-void Scene::resize(const int w, const int h) {
-	getCamera().setScreenSize(w, h);
+void Scene::resize(const ScreenSize& size) {
+    this->size = size;
+    const int w = size.viewport.width;
+    const int h = size.viewport.height;
+    getCamera().setViewportSize(w, h);
 	if (getShadowRenderer())		{getShadowRenderer()->resize(w,h);}
 	if (getWaterRenderer())			{getWaterRenderer()->resize(w,h);}
 	if (getPostProcessRenderer())	{getPostProcessRenderer()->resize(w,h);}
@@ -100,8 +101,8 @@ void Scene::render() {
 	//uboLights.bind();
 
 	// other params
-	rs.screenWidht = getScreenSize().width;
-	rs.screenHeight = getScreenSize().height;
+	rs.screenWidht = getScreenSize().viewport.width;
+	rs.screenHeight = getScreenSize().viewport.height;
 
 
 	if (waterRenderer)	{waterRenderer->update();}
@@ -111,7 +112,7 @@ void Scene::render() {
 	if (postProcRenderer) {postProcRenderer->begin3D();}
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		getCamera().setScreenSize();
+		getCamera().setViewportSize(getScreenSize().viewport.width, getScreenSize().viewport.height);
 
 		renderForNormal();
 		renderUI();

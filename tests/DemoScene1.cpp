@@ -10,6 +10,12 @@
 #include <thread>
 #include <chrono>
 
+class MyScene : public Scene {
+	virtual void onKeyEvent(const int key, const int scancode, const int action, const int mods) {;}
+	virtual void onBecomesActive() {;}
+	virtual void onBeforeRender(const SceneState& ss) {;}
+};
+
 TEST(DemoScene1, scene) {
 
 	EngineSettings set;
@@ -17,7 +23,7 @@ TEST(DemoScene1, scene) {
 	set.screen.height = 600;
 	Engine::init(set);
 
-	Scene scene;
+	MyScene scene;
 	scene.setEnableShadows(true);
 	Engine::get()->setScene(&scene);
 

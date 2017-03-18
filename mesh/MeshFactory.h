@@ -6,7 +6,7 @@
 
 #include "MeshVertex.h"
 #include "../misc/Memory.h"
-#include "../import/ObjImport.h"
+#include "../import/OBJ/ImportMesh.h"
 #include "../data/Resource.h"
 
 class IMesh;
@@ -121,7 +121,7 @@ IndexedMesh* MeshFactory::createMesh(const Resource& res, const bool normalize, 
 	meshes.push_back(std::make_unique(mesh));
 
 	// import from .OBJ file
-	ObjImport imp;
+	OBJ::ImportMesh imp;
 	imp.load(data, normalize, centerAtOrigin);
 
 	// append vertices and faces [=indices]

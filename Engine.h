@@ -88,7 +88,7 @@ public:
 	}
 
 	/** run blocking using the given framerate */
-	void run(const int fps);
+	inline void run(const int fps);
 
 	/** perform cleanups */
 	void cleanup() {

@@ -243,10 +243,10 @@ public:
 
 
 	/** scene is set as the currently active scene */
-	virtual void onBecomesActive() {;}
+	virtual void onBecomesActive() = 0;
 
 	/** scene will be rendered soon */
-	virtual void onBeforeRender(const SceneState& ss) {;}
+	virtual void onBeforeRender(const SceneState& ss) = 0;
 
 	/** scene receives key events */
 	virtual void onKeyEvent(const int key, const int scancode, const int action, const int mods) = 0;

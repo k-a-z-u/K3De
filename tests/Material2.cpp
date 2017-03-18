@@ -10,12 +10,19 @@
 #include <thread>
 #include <chrono>
 
+class MyScene2359123123 : public Scene {
+	virtual void onKeyEvent(const int key, const int scancode, const int action, const int mods) {;}
+	virtual void onBecomesActive() {;}
+	virtual void onBeforeRender(const SceneState& ss) {;}
+};
+
+
 TEST(Material2, build1) {
 
 	EngineSettings set;
 	Engine::init(set);
 
-	Scene scene;
+	MyScene2359123123 scene;
 	scene.setEnableShadows(true);
 
 	MaterialFactory& fac = scene.getMaterialFactory();

@@ -28,7 +28,8 @@
 #include "../mesh/MeshVertex.h"
 #include "../mesh/MD5Mesh.h"
 
-#include "../import/ObjImport.h"
+#include "../import/OBJ/ImportMesh.h"
+#include "../import/OBJ/ImportAni.h"
 #include "../import/MD5/ImportAni.h"
 #include "../import/MD5/ImportMesh.h"
 

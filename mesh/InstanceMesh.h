@@ -38,6 +38,10 @@ TODO("todo. ugly top copy those ones..")
 //		return getAABBmodel().getTransformed(transform.getMatrix());
 //	}
 
+	virtual void onBeforeRender(const SceneState& ss) override {
+		this->mesh->onBeforeRender(ss);
+	}
+
 	void render(const SceneState& ss, const RenderState& rs) override {
 		//if (material2) {material2->bind();}
 		mesh->render(ss, rs);

@@ -40,11 +40,25 @@ namespace MatPart {
 			material->getFragmentParams().usedVariable("normalRotMat");
 
 			XMLElem* eTex = elem->FirstChildElement("texture");
-			MatPart::SourceTexture mpTex;
-			mpTex.build(material, eTex);
-			material->getFragmentParams().addFunction("getBumpMapNormal",
-				"vec3 getBumpMapNormal() {return normalize(" + mpTex.get() + ".rgb - 0.5);}", {}, {}
-			);
+			XMLElem* eTexMix = elem->FirstChildElement("textureMix");
+
+			if (eTex) {
+
+				MatPart::SourceTexture mpTex;
+				mpTex.build(material, eTex);
+				material->getFragmentParams().addFunction("getBumpMapNormal",
+				    "vec3 getBumpMapNormal() {return normalize(" + mpTex.get() + ".rgb - 0.5);}", {}, {}
+				);
+
+			} else if (eTexMix) {
+
+				MatPart::SourceTextureMix mpTex;
+				mpTex.build(material, eTexMix);
+				material->getFragmentParams().addFunction("getBumpMapNormal",
+				    "vec3 getBumpMapNormal() {return normalize(" + mpTex.get() + ".rgb - 0.5);}", {}, {}
+				);
+
+			}
 
 			material->getFragmentParams().addFunction("getNormal", "vec3 getNormal() {return normalRotMat * getBumpMapNormal();}", {"normalRotMat"}, {"getBumpMapNormal"});
 

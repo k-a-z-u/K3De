@@ -43,10 +43,8 @@ private:
 
 public:
 
-
-    Image getFrame();
-
-
+	/** grab current scene's viewport content */
+	inline Image getFrame();
 
 	/** singleton access */
 	static Engine* get() {

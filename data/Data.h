@@ -55,17 +55,17 @@ public:
 
 
 	/** wrap the given data [unmanaged] */
-	static Data wrapUnmanaged(uint8_t* data, const size_t size) {
-		return Data(data, size, false);
+	static Data wrapUnmanaged(void* data, const size_t size) {
+		return Data((uint8_t*)data, size, false);
 	}
 
 	/** wrap the given data [managed, free on destruction] */
-	static Data wrapManaged(uint8_t* data, const size_t size) {
-		return Data(data, size, true);
+	static Data wrapManaged(void* data, const size_t size) {
+		return Data((uint8_t*)data, size, true);
 	}
 
 	/** wrap the given data [managed, free on destruction] */
-	static Data copy(uint8_t* data, const size_t size) {
+	static Data copy(void* data, const size_t size) {
 		uint8_t* dst = (uint8_t*) malloc(size);
 		memcpy(dst, data, size);
 		return Data(dst, size, true);

@@ -73,9 +73,17 @@ public:
 
 		Data data = ResourceFactory::get().get(res);
 
+		return load(data, res.getName());
+
+	}
+
+	Material2* load(const Data& data, const std::string& origResourceName = "") {
+
+		Debug(NAME, "loading data: " + std::to_string(data.size()) + " bytes");
+
 		// create a new material
 		Material2* mat = new Material2();
-		mat->dataPath = getFolder(res.getName());
+		mat->dataPath = getFolder(origResourceName);
 
 		XMLDoc doc;
 		//assertOK(doc.LoadFile(file.c_str()), doc, "error while loading file");

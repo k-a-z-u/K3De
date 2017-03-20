@@ -60,12 +60,19 @@ public:
 //	}
 
 	/** get the terrain's size */
-	const Vec3& getSize() const {
+	const Vec3& getSizeOld() const {
 		return params.size;
 	}
 
+	/** get the terrain's size */
+	AABB getSize() const {
+		Vec3 p1 = -(params.size * params.scale * 0.5);
+		Vec3 p2 =  (params.size * params.scale * 0.5);
+		return AABB(p1, p2);
+	}
+
 	/** get the terrain's height at the given (x,z) position */
-	float getHeight(const Vec2& pos) {
+	float getHeightAt(const Vec2& pos) {
 
 		// convert everything relative to the lower-left position
 		const Vec2 posLowerLeft = pos - params.center.xz() + (params.size.xz() / 2);

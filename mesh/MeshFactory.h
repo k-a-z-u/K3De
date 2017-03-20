@@ -121,12 +121,11 @@ IndexedMesh* MeshFactory::createMesh(const Resource& res, const bool normalize, 
 	meshes.push_back(std::make_unique(mesh));
 
 	// import from .OBJ file
-	OBJ::ImportMesh imp;
-	imp.load(data, normalize, centerAtOrigin);
+	OBJ::Mesh oMesh = OBJ::ImportMesh::load(data, normalize, centerAtOrigin);
 
 	// append vertices and faces [=indices]
-	mesh->vertices.append(imp.getIndexedMeshVerticesWithTangent());
-	mesh->indices.append(imp.getIndexedMeshIndices());
+	mesh->vertices.append(oMesh.getIndexedMeshVerticesWithTangent());
+	mesh->indices.append(oMesh.getIndexedMeshIndices());
 
 	// upload both
 	mesh->vertices.upload();
@@ -136,7 +135,7 @@ IndexedMesh* MeshFactory::createMesh(const Resource& res, const bool normalize, 
 	mesh->configure();
 
 	// calculate BBox
-	for (const AttrVertexNormalTexture& vnt : imp.getIndexedMeshVertices()) {
+	for (const AttrVertexNormalTexture& vnt : oMesh.getIndexedMeshVertices()) {
 		mesh->bbox.add(vnt.getVertex());
 	}
 

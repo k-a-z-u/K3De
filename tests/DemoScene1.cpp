@@ -19,8 +19,8 @@ class MyScene : public Scene {
 TEST(DemoScene1, scene) {
 
 	EngineSettings set;
-	set.screen.width = 800;
-	set.screen.height = 600;
+	set.windowWidth = 800;
+	set.windowHeight = 600;
 	Engine::init(set);
 
 	MyScene scene;

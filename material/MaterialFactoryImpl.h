@@ -4,6 +4,7 @@
 #include "MaterialFactory.h"
 #include "parts/modifiers/ModifierFactory.h"
 #include "parts/sources/SourceTexture.h"
+#include "parts/sources/SourceTextureMix.h"
 #include "parts/sources/SourceColor.h"
 #include "parts/BumpMap.h"
 #include "parts/Shadowing.h"
@@ -103,6 +104,7 @@ void MaterialFactory::buildDiffuse(Material2* mat, XMLElem* cfg) {
 	if (elem) {
 
 		XMLElem* eTex = elem->FirstChildElement("texture");
+		XMLElem* eTexMix = elem->FirstChildElement("textureMix");
 		XMLElem* eCol = elem->FirstChildElement("color");
 		XMLElem* eWater = elem->FirstChildElement("water");
 
@@ -111,6 +113,14 @@ void MaterialFactory::buildDiffuse(Material2* mat, XMLElem* cfg) {
 
 			MatPart::SourceTexture mpTex;
 			mpTex.build(mat, eTex);
+
+			mat->paramsFragment.addFunction("getDiffuseColor", "vec4 getDiffuseColor() {return " + mpTex.get() + ";}", {}, {});
+
+		// multiple textures, blended together
+		} else if (eTexMix) {
+
+			MatPart::SourceTextureMix mpTex;
+			mpTex.build(mat, eTexMix);
 
 			mat->paramsFragment.addFunction("getDiffuseColor", "vec4 getDiffuseColor() {return " + mpTex.get() + ";}", {}, {});
 

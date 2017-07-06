@@ -22,7 +22,13 @@
 
 //#include "math/Math.h"
 
+#include "shader/Shader.h"
+#include "shader/ComputeShader.h"
 
+#define MAX_LIGHTS 8
+#include "K3De.h"
+#include "Engine.h"
+#include "EngineImpl.h"
 
 //Engine* Engine::instance;
 
@@ -43,6 +49,117 @@ int runTests(int argc, char** argv) {
 #endif
 
 
+void testCompute() {
+
+	std::string code = R"(
+
+		#version 430
+		layout (local_size_x = 1, local_size_y = 1, local_size_z =1) in;
+
+		//uniform float a;
+		//uniform float b;
+		//shared float res;
+		//layout (location = 0, rgba32f) uniform image2D texScan;
+		//layout (location = 1, rgba32f) uniform image2D texCAD;
+		//layout (location = 2, rgba32f) uniform image2D texDst;
+		//layout (binding = 0, r32f) uniform image2D texScan;
+		//layout (binding = 1, r32f) uniform image2D texCAD;
+		//layout (binding = 2, rgba8) uniform image2D texDst;
+		layout (rgba8) uniform image2D texScan;
+		layout (rgba8) uniform image2D texCAD;
+		layout (rgba8) uniform image2D texDst;
+		shared float _diffSum = 0;
+		shared int _pixelsUsed = 0;
+		shared int _pixelsTotal = 0;
+
+		void main() {
+
+			uint y = gl_GlobalInvocationID.y;
+
+			float diffSum = 0;
+			int pixelsTotal = 0;
+			int pixelsUsed = 0;
+
+			for (int x = 0; x < 640; ++x) {
+
+				++pixelsTotal;
+
+				ivec2 coord = ivec2(x,y);
+				float vScan = imageLoad(texScan, coord).r;
+				float vCAD = imageLoad(texCAD, coord).r;
+
+				// skip?
+				if (vCAD == 0.0 || vCAD == 1.0 || vScan == 0.0 || vScan == 1.0) {continue;}
+
+				// update
+				++pixelsUsed;
+				float diff = vScan - vCAD;
+				diffSum += diff;
+
+				// debug
+				vec4 vDiff = vec4(diff, diff, diff, 1.0);
+				imageStore(texDst, coord, vDiff);
+
+			}
+
+			_diffSum += diffSum;
+			_pixelsTotal += pixelsTotal;
+			_pixelsUsed += pixelsUsed;
+
+			//memoryBarrierShared​();
+			barrier();
+
+		}
+
+	)";
+
+	EngineSettings settings;
+	Engine::init(settings);
+	Engine* eng = Engine::get();
+
+	TextureFactory texFac;
+
+	Texture* texScan = texFac.create(Resource("/tmp/leTex/img/fein/1.png"), false, false, GL_RGBA);
+	Texture* texCAD = texFac.create(Resource("/tmp/leTex/img/fein/2.png"), false, false, GL_RGBA);
+	Texture* texRes = texFac.create(nullptr, 640, 640, GL_RGBA, GL_RGBA);
+	//Texture* texRes = texFac.create(Resource("/apps/workspaces/kiste_data/abschluss/tex/img/fein/ring_single_depth.png"), false, false);
+
+
+	//texScan->bind(0);
+	//texCAD->bind(1);
+	//texRes->bind(2);
+
+	ComputeShader shader;
+	shader.loadComputeShader(code);
+	shader.link();
+
+	shader.bind();
+
+	shader.bindTexture("texScan", texScan, 0, GL_R32F);
+	shader.bindTexture("texCAD", texCAD, 1, GL_R32F);
+	shader.bindTexture("texDst", texRes, 2, GL_RGBA8);
+
+	shader.dispatch(1,640,1);
+	glMemoryBarrier( GL_ALL_BARRIER_BITS );
+	shader.unbind();
+
+//	texScan->unbind(0);
+//	texCAD->unbind(1);
+//	texRes->unbind(2);
+
+	Image img(640, 640, ImageFormat::IMAGE_RGBA);
+//	texCAD->bind(0);
+	texRes->downloadTo((uint8_t*) img.getData().data());
+
+	ImageFactory::save("/tmp/test.png", img);
+
+//	shader.setFloat("a", 10);
+//	shader.setFloat("b", 22);
+
+	int i = 0; (void) i;
+
+}
+
 int main(int argc, char** argv) {
 
 //	ThreadPool& gtq = GlobalThreadPool::get();
@@ -52,8 +169,10 @@ int main(int argc, char** argv) {
 
 //	gtq.join();
 
+	testCompute();
+
 #ifdef WITH_TESTS
-	runTests(argc, argv);
+	//runTests(argc, argv);
 	//exit(0);
 #endif
 

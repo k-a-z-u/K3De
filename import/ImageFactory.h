@@ -35,6 +35,7 @@ public:
 	static void save(const std::string& filename, const Image& img) {
 		const std::string ext = getExt(filename);
 		if (ext == "jpg") {return K3De::JPG::save(filename, img);}
+		if (ext == "png") {return K3De::PNG::save(filename, img);}
 		if (ext == "tga") {return K3De::TGA::save(filename, img);}
 		throw Exception("unsupported format for: " + filename);
 	}

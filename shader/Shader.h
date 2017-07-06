@@ -20,10 +20,11 @@
 
 #include <set>
 #include <sstream>
+#include <iostream>
 
 class Shader {
 
-private:
+protected:
 
     #include "../misc/BindOnce.h"
 
@@ -100,7 +101,6 @@ public:
 		glShaderBinary(1, &geomentryShaderID, bin.format, bin.data.get(), bin.data.size());
 		Error::assertOK();
 	}
-
 
 	void loadProgramBinary(const ProgramBinary& bin) {
 
@@ -280,7 +280,7 @@ public:
 		}
 	}
 
-private:
+protected:
 
 	/** replace the first occurence of from with to */
 	static inline bool replace(std::string& str, const std::string& from, const std::string& to) {

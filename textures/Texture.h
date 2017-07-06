@@ -6,6 +6,7 @@
 #include "ITexture.h"
 #include "../math/Vector.h"
 #include <set>
+#include <vector>
 
 /** supported texture filters */
 enum class TextureFilter {
@@ -67,6 +68,31 @@ public:
 
 	int getHeight() const override {
 		return height;
+	}
+
+	GLuint getFormat() const {
+		return format;
+	}
+
+	std::vector<uint8_t> download() {
+		const int maxSize = width * height * 4;	// TODO
+		std::vector<uint8_t> dst(maxSize);
+		downloadTo(dst.data());
+		return dst;
+	}
+
+	/** download this texture from GPU to Host */
+	void downloadTo(uint8_t* dst) {
+		//glBindBuffer(0, 0);
+		const int idx = 0;
+		glActiveTexture(GL_TEXTURE0 + idx);	Error::assertOK();
+		glBindTexture(this->type, id);		Error::assertOK();
+		const GLint level = 0;	// mip-map level
+		const GLenum format = GL_RGBA;
+		const GLenum type = GL_UNSIGNED_BYTE;
+		//glGetTexLevelParameteriv();
+		glGetTexImage(GL_TEXTURE_2D, level, format, type, dst);
+		Error::assertOK();
 	}
 
 	void bind(const TextureUnit idx) const override {

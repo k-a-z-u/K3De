@@ -86,7 +86,7 @@ public:
 	}
 
 	/** create a new texture using the given resource */
-	Texture2D* create(const Resource res, bool compressed = true, bool mipMaps = true) {
+	Texture2D* create(const Resource res, bool compressed = true, bool mipMaps = true, int reqFormatOut = -1) {
 
 		Debug(NAME, "creating 2D texture from resource");
 
@@ -94,7 +94,7 @@ public:
 		Image img = ImageFactory::load(res);
 		void* data = (void*) img.getData().data();
 		const int formatIn = getFormatIn(img);
-		const int formatOut = getFormatOut(img, compressed);
+		const int formatOut = (reqFormatOut == -1) ? (getFormatOut(img, compressed)) : (reqFormatOut);
 
 		Texture2D* tex = new Texture2D(formatOut, -1, -1);
 		textures.push_back(std::make_unique(tex));

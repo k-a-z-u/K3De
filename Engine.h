@@ -129,20 +129,25 @@ private:
 
 		// this one is needed, when not OpenGL ES but OpenGL is used
 		switch(getOpenGLVersion()) {
-                
-            case OPENGL_3_3:
-                glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
-                glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-                glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-                glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
-                Error::assertOK();
-                break;
-                
-            default:
-                break;
-                
-                
+
+			case OPENGL_3_3:
+				glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
+				glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+				glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
+				glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
+				Error::assertOK();
+				break;
+
+			default:
+				break;
+
 		}
+
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.2
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
+
 
 		// anti-aliasing?
 		if (settings.antiAliasing) {
@@ -155,14 +160,22 @@ private:
 		if( window == NULL ) {glfwTerminate(); throw Exception("error while creating window");}
 		Error::assertOK();
 
+		// Display OpenGL version
+		int major, minor, rev;
+		glfwGetVersion(&major, &minor, &rev);
+		std::cout << "OpenGL - " << major << "." << minor << "." << rev << std::endl;
+
 		glfwMakeContextCurrent(window);
-        
-        #if defined (__APPLE__)
-        #else
-            glewExperimental = true;
-            if (glewInit() != GLEW_OK) {throw Exception("error during glewInit()");}
-            Error::assertOK();
-        #endif
+		Error::assertOK();
+
+		#if defined (__APPLE__)
+			// apple does not need GLEW!
+		#else
+			glewExperimental = true;
+			if (glewInit() != GLEW_OK) {throw Exception("error during glewInit()");}
+			glGetError();	// reset potential errors
+			//Error::assertOK();
+		#endif
 
 		// Ensure we can capture the escape key being pressed below
 		glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);

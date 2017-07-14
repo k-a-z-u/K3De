@@ -130,7 +130,6 @@ namespace K3De {
 			png_destroy_write_struct (&png, &info_ptr);
 
 		#else
-			(void) d;
 			throw Exception("not compiled with PNG support. used -DWITH_PNG");
 		#endif
 

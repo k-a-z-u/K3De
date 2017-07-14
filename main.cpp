@@ -53,7 +53,10 @@ void testCompute() {
 
 	std::string code = R"(
 
-		#version 430
+		#version 420
+		#extension GL_ARB_compute_shader : enable
+		#extension GL_ARB_shader_storage_buffer_object : enable
+
 		layout (local_size_x = 1, local_size_y = 1, local_size_z =1) in;
 
 		//uniform float a;
@@ -65,8 +68,8 @@ void testCompute() {
 		//layout (binding = 0, r32f) uniform image2D texScan;
 		//layout (binding = 1, r32f) uniform image2D texCAD;
 		//layout (binding = 2, rgba8) uniform image2D texDst;
-		layout (rgba8) uniform image2D texScan;
-		layout (rgba8) uniform image2D texCAD;
+		layout (rgba32f) uniform image2D texScan;
+		layout (rgba32f) uniform image2D texCAD;
 		layout (rgba8) uniform image2D texDst;
 		shared float _diffSum = 0;
 		shared int _pixelsUsed = 0;
@@ -89,15 +92,17 @@ void testCompute() {
 				float vCAD = imageLoad(texCAD, coord).r;
 
 				// skip?
-				if (vCAD == 0.0 || vCAD == 1.0 || vScan == 0.0 || vScan == 1.0) {continue;}
+				//if (vCAD == 0.0 || vCAD == 1.0 || vScan == 0.0 || vScan == 1.0) {continue;}
 
 				// update
 				++pixelsUsed;
 				float diff = vScan - vCAD;
 				diffSum += diff;
 
+				diff = x / 32.0f;
+
 				// debug
-				vec4 vDiff = vec4(diff, diff, diff, 1.0);
+				vec4 vDiff = vec4(diff, diff, diff, 255.0);
 				imageStore(texDst, coord, vDiff);
 
 			}
@@ -119,8 +124,11 @@ void testCompute() {
 
 	TextureFactory texFac;
 
-	Texture* texScan = texFac.create(Resource("/tmp/leTex/img/fein/1.png"), false, false, GL_RGBA);
-	Texture* texCAD = texFac.create(Resource("/tmp/leTex/img/fein/2.png"), false, false, GL_RGBA);
+	const std::string f1 = "/tmp/1/1.png";
+	const std::string f2 = "/tmp/1/2.png";
+
+	Texture* texScan = texFac.create(Resource(f1), false, false, GL_RGBA);
+	Texture* texCAD = texFac.create(Resource(f2), false, false, GL_RGBA);
 	Texture* texRes = texFac.create(nullptr, 640, 640, GL_RGBA, GL_RGBA);
 	//Texture* texRes = texFac.create(Resource("/apps/workspaces/kiste_data/abschluss/tex/img/fein/ring_single_depth.png"), false, false);
 
@@ -135,8 +143,8 @@ void testCompute() {
 
 	shader.bind();
 
-	shader.bindTexture("texScan", texScan, 0, GL_R32F);
-	shader.bindTexture("texCAD", texCAD, 1, GL_R32F);
+	shader.bindTexture("texScan", texScan, 0, GL_RGBA32F);
+	shader.bindTexture("texCAD", texCAD, 1, GL_RGBA32F);
 	shader.bindTexture("texDst", texRes, 2, GL_RGBA8);
 
 	shader.dispatch(1,640,1);
@@ -148,10 +156,16 @@ void testCompute() {
 //	texRes->unbind(2);
 
 	Image img(640, 640, ImageFormat::IMAGE_RGBA);
+	for (int i = 0; i < 640*100*4; ++i) {
+		img.getDataPtr()[i] = 128;
+	}
+
+	ImageFactory::save("/tmp/1/test2.png", img);
+
 //	texCAD->bind(0);
 	texRes->downloadTo((uint8_t*) img.getData().data());
 
-	ImageFactory::save("/tmp/test.png", img);
+	ImageFactory::save("/tmp/1/test.png", img);
 
 //	shader.setFloat("a", 10);
 //	shader.setFloat("b", 22);

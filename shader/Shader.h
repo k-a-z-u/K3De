@@ -17,6 +17,7 @@
 
 #include "ShaderBinary.h"
 #include "ShaderVersion.h"
+#include "Uniform.h"
 
 #include <set>
 #include <sstream>
@@ -167,6 +168,8 @@ public:
 
 		cleanup();
 
+		getAllUniforms();
+
 	}
 
 
@@ -184,29 +187,51 @@ public:
 		setUnbound(programID);
 	}
 
-	GLint getCachedUniformLocation(const std::string& name) const {
-		assertBound();
-		const auto it = uniforms.find(name);
-		if (it == uniforms.end()) {
-			const GLint id = glGetUniformLocation(programID, name.c_str());
-			Error::assertOK();
-			uniforms[name] = id;
-			return id;
-		} else {
+//	inline GLint getCachedUniformLocation(const std::string& name) const {
+//		//assertBound();
+//		std::unordered_map<std::string, int>::const_iterator it = uniforms.find(name);
+//		if (it == uniforms.end()) {
+////			const GLint id = glGetUniformLocation(programID, name.c_str());
+////			Error::assertOK();
+////			uniforms[name] = id;
+////			return id;
+//			return -1;
+//		} else {
+//			return it->second;
+//		}
+//	}
+
+	/** get the ID for a uniform named "name" */
+	inline GLuint getUniformLocation(const std::string& name) const {
+		std::unordered_map<std::string, int>::const_iterator it = uniforms.find(name);
+		if (it != uniforms.end()) {
 			return it->second;
+		} else {
+			throw Exception("uniform not found: " + name);
 		}
 	}
 
-	/** get the ID for a uniform named "name" */
-	GLuint getUniformLocation(const std::string& name) const {
-		const GLint id = getCachedUniformLocation(name);
-		if (id == -1) {throw Exception("uniform not found: " + name);}
-		return id;
-	}
-
 	/** does the program have a uniform with the given name? */
-	bool hasUniform(const std::string& name) const {
-		return -1 != getCachedUniformLocation(name);
+	inline bool hasUniform(const std::string& name) const {
+
+#ifdef WITH_ASSERTIONS
+
+		// from program
+		const GLint _loc1 = glGetUniformLocation(programID, name.c_str());
+
+		// from cache
+		std::unordered_map<std::string, int>::const_iterator _it = uniforms.find(name);
+		const GLint _loc2 = (_it == uniforms.end()) ? (-1) : (_it->second);
+
+		// difference?
+		if (_loc1 != _loc2) {
+			throw Exception("uniform cache mismatch");
+		}
+
+#endif
+		std::unordered_map<std::string, int>::const_iterator it = uniforms.find(name);
+		return it != uniforms.end();
+
 	}
 
 	/** des the programe have a uniform-block with the given name? */
@@ -281,6 +306,75 @@ public:
 	}
 
 protected:
+
+
+
+	void getAllUniforms() {
+
+		// total number of uniforms
+		GLint numUniforms;
+		glGetProgramiv(programID, GL_ACTIVE_UNIFORMS, &numUniforms);
+
+		// fetch details for each uniform
+		for (int i = 0; i < numUniforms; ++i) {
+
+			// fetch details
+			GLenum type;
+			GLchar name[128];
+			GLsizei nameLen;
+			GLsizei size;
+			glGetActiveUniform(programID, i, 128, &nameLen, &size, &type, name);
+
+			// get location
+			std::cout << "#name " << name << std::endl;
+			//GLint location = getUniformLocation(name);
+			const GLint location = glGetUniformLocation(programID, name);
+			std::cout << "#loc " << location << std::endl;
+
+			// remember
+			if (location >= 0) {
+				Uniform u(programID, name, type, size, location);
+				std::cout << u.asString() << std::endl;
+				addUniform(u);
+			}
+
+			// array uniform? texShadow[4] -> texShadow[0],texShadow[1],...
+			for (int i = 1; i < size; ++i) {
+
+				std::string curName = name;
+				replace(curName, "[0]", "["+std::to_string(i)+"]");
+
+				const GLint location = glGetUniformLocation(programID, curName.c_str());
+				if (location >= 0) {
+					Uniform uBase(programID, curName, type, size, location);
+					std::cout << uBase.asString() << std::endl;
+					addUniform(uBase);
+				}
+
+			}
+
+			// compound uniform? e.g. Lights.light[7].attenuationQuadratic -> Lights.light[7]
+			const std::string baseName = Uniform::getBaseName(name);
+			if (baseName != name) {
+
+				const GLint location = glGetUniformLocation(programID, baseName.c_str());
+				if (location >= 0) {
+					Uniform uBase(programID, baseName, type, size, location);
+					std::cout << uBase.asString() << std::endl;
+					addUniform(uBase);
+				}
+
+			}
+
+			std::cout << "--------" <<std::endl;
+
+		}
+
+	}
+
+	void addUniform(const Uniform& u) {
+		uniforms[u.name] = u.location;
+	}
 
 	/** replace the first occurence of from with to */
 	static inline bool replace(std::string& str, const std::string& from, const std::string& to) {

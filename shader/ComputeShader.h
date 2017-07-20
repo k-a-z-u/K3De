@@ -23,6 +23,7 @@ public:
 
 	/** bind the given texture to the compute shader. usual format: GL_RGBA8 */
 	void bindTexture(const std::string& uniformName, Texture* tex, const GLuint location, const GLenum format) {
+		ensureValidFormat(format);
 		const GLuint level = 0;
 		this->setInt(uniformName, location);
 		//const GLenum format = GL_RGBA8; //GL_RGBA32F;
@@ -36,6 +37,21 @@ public:
 		glDispatchCompute(xGroups, yGroups, zGroups);
 		Error::assertOK();
 
+	}
+
+private:
+
+	/** sanity check */
+	void ensureValidFormat(const GLenum format) {
+		switch(format) {
+		case GL_RGBA8:
+		case GL_RGBA32F:
+		case GL_R8:
+		case GL_R32F:
+			break;
+		default:
+			throw Exception("unsupported format: " + format);
+		}
 	}
 
 

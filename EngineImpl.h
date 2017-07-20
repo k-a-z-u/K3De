@@ -60,8 +60,13 @@ void Engine::run(const int fps) {
 	const int sleep = 1000 / fps;
 	int cnt = 0;
 
+	size_t numFrames = 0;
+	const std::chrono::system_clock::time_point tStart = std::chrono::system_clock::now();
+
 	// run until ESC is pressed or window's close symbol is clicked
 	do {
+
+		++numFrames;
 
 		// render and analyzed the needed time
 		const std::chrono::system_clock::time_point t1 = std::chrono::system_clock::now();
@@ -78,7 +83,10 @@ void Engine::run(const int fps) {
 		// debug output
         #if defined(WITH_DEBUG)
 		   if (++cnt % 100 == 0) {
-			   std::cout << getScene()->getFPS() << std::endl;
+			   const std::chrono::system_clock::time_point tCur = std::chrono::system_clock::now();
+			   const size_t runtime_ms = (size_t) std::chrono::duration_cast<std::chrono::milliseconds>(tCur - tStart).count();
+			   const float fps = numFrames * 1000 / runtime_ms;
+			   std::cout << getScene()->getFPS() << " (" << fps << ")" << std::endl;
 		   }
         #endif
 

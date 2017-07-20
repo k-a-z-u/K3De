@@ -130,7 +130,6 @@ void testCompute() {
 	Texture* texScan = texFac.create(Resource(f1), false, false, GL_RGBA);
 	Texture* texCAD = texFac.create(Resource(f2), false, false, GL_RGBA);
 	Texture* texRes = texFac.create(nullptr, 640, 640, GL_RGBA, GL_RGBA);
-	//Texture* texRes = texFac.create(Resource("/apps/workspaces/kiste_data/abschluss/tex/img/fein/ring_single_depth.png"), false, false);
 
 
 	//texScan->bind(0);

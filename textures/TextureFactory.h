@@ -196,6 +196,9 @@ public:
 
 	void upload(Texture* tex, const void* data, const int w, const int h, const int formatIn, const int formatOut, const bool mipmaps = true) {
 
+		// sanity check
+		ensureValidFormat(formatOut);
+
 		tex->format = formatOut;
 		tex->width = w;
 		tex->height = h;
@@ -238,6 +241,7 @@ public:
 		}
 
 	}
+
 
 	/** create a new 2D-array texture using the given input files */
 	Texture2DArray* create2DArray(const std::vector<std::string> files) {
@@ -375,6 +379,25 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 		return tex;
+
+	}
+
+private:
+
+	void ensureValidFormat(GLenum format) {
+
+		switch (format) {
+			case GL_RGBA:
+			case GL_RGB:
+			case GL_ALPHA:
+			case GL_RED:
+			case GL_R32F:
+			case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+			case GL_COMPRESSED_RGBA:
+				break;
+			default:
+				throw Exception("unsupported texture format: " + format);
+		}
 
 	}
 

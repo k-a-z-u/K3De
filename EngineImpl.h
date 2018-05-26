@@ -115,6 +115,23 @@ void Engine::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 	}
 }
 
+/** static mouse-input callback */
+void Engine::cursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
+
+	static double ox = xpos;
+	static double oy = ypos;
+	const double dx = xpos - ox; ox = xpos;
+	const double dy = ypos - oy; oy = ypos;
+
+	(void) window;
+	for (InputListener* l : Engine::get()->inputListeners) {
+		l->onCursorPosition(xpos, ypos, dx, dy);
+	}
+	if (Engine::get()->getScene()) {
+		Engine::get()->getScene()->onCursorPosition(xpos, ypos, dx, dy);
+	}
+
+}
 
 
 #endif // ENGINEIMPL_H

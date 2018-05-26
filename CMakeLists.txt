@@ -5,8 +5,8 @@ PROJECT(K3De)
 SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
 
 IF (NOT CMAKE_BUILD_TYPE)
-    MESSAGE(STATUS "No build type selected. Default to RELEASE")
-    SET(CMAKE_BUILD_TYPE "RELEASE")
+	MESSAGE(STATUS "No build type selected. Default to RELEASE")
+	SET(CMAKE_BUILD_TYPE "RELEASE")
 ENDIF()
 
 FIND_PACKAGE(OpenGL REQUIRED)
@@ -14,22 +14,32 @@ FIND_PACKAGE(OpenGL REQUIRED)
 
 OPTION(WITH_PNG "Build with PNG image support" OFF)
 IF(WITH_PNG)
-    MESSAGE(STATUS "PNG image support: ENABLED")
+	MESSAGE(STATUS "PNG image support: ENABLED")
 	add_definitions(-DWITH_PNG)
 	SET(EXTRA_LIBS ${EXTRA_LIBS} png)
 ELSE()
-    MESSAGE(STATUS "PNG image support: DISABLED")
+	MESSAGE(STATUS "PNG image support: DISABLED")
 ENDIF()
 
 
 OPTION(WITH_JPEG "Build with JPEG image support" OFF)
 IF(WITH_JPEG)
-    MESSAGE(STATUS "JPEG image support: ENABLED")
+	MESSAGE(STATUS "JPEG image support: ENABLED")
 	add_definitions(-DWITH_JPEG)
 	SET(EXTRA_LIBS ${EXTRA_LIBS} jpeg)
 ELSE()
-    MESSAGE(STATUS "JPEG image support: DISABLED")
+	MESSAGE(STATUS "JPEG image support: DISABLED")
 ENDIF()
+
+OPTION(WITH_TEST "Build with Test-Cases" OFF)
+IF(WITH_TEST)
+	MESSAGE(STATUS "Test-Caseses: ENABLED")
+	add_definitions(-DWITH_TESTS)
+	SET(EXTRA_LIBS ${EXTRA_LIBS} gtest)
+ELSE()
+	MESSAGE(STATUS "Test-Cases: DISABLED")
+ENDIF()
+
 
 
 
@@ -69,7 +79,7 @@ ADD_DEFINITIONS(
 	-g3
 	-O0
 	-DWITH_ASSERTIONS
-	-DWITH_TESTS
+	-DWITH_DEBUG
 
 	#-O2
 )
@@ -95,10 +105,8 @@ TARGET_LINK_LIBRARIES(
 	GLEW
 	GL
 	glfw
-	png
-	jpeg
-	gtest
 	pthread
+	${EXTRA_LIBS}
    #${SDL_LIBRARY}
    #${SDLIMAGE_LIBRARY}
    #${SDLGFX_LIBRARY}

@@ -74,12 +74,14 @@ public:
 	/** get the terrain's height at the given (x,z) position */
 	float getHeightAt(const Vec2& pos) {
 
-		// convert everything relative to the lower-left position
-		const Vec2 posLowerLeft = pos - params.center.xz() + (params.size.xz() / 2);
+		// convert everything relative to actual center [usually (0,0)]
+		const Vec2 p = pos - params.center.xy();// + (params.size.xz() / 2);
 
 		// get the nearest vertex (no interpolation!)
-		const int vx = std::round(posLowerLeft.x / params.scale.x);
-		const int vy = std::round(posLowerLeft.y / params.scale.z);
+		const float x01 = p.x / params.scale.x + 0.5f;
+		const float y01 = p.y / params.scale.y + 0.5f;
+		const int vx = std::round(x01 * params.numXVertices);
+		const int vy = std::round(y01 * params.numYVertices);
 		const int vIdx = vx + vy * params.numXVertices;
 
 		// sanity check
@@ -87,14 +89,14 @@ public:
 		_assertTrue(vy >= 0 && vy < params.numYVertices, "out of bounds");
 
 		// the the nearest vertex's height
-		const float height = params.vertices.at(vIdx).y;
+		const float height = params.vertices.at(vIdx).z;
 		return height;
 
 	}
 
 	virtual void render(const SceneState& ss, const RenderState& rs) override {
 
-		material2->bind();
+		material->bind();
 
 		lastVisible = 0;
 		for (TerrainPart& part : parts) {
@@ -115,7 +117,7 @@ public:
 
 		}
 
-		material2->unbind();
+		material->unbind();
 
 	}
 

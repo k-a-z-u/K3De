@@ -38,6 +38,9 @@ private:
 	/** the openGL texture-id */
 	GLuint id;
 
+	/** the corresponding sampler */
+	GLuint samplerID;
+
 	/** the texture's width */
 	int width;
 
@@ -99,6 +102,7 @@ public:
 		assertUnbound(key(idx));
 		glActiveTexture(GL_TEXTURE0 + idx);	Error::assertOK();
 		glBindTexture(type, id);			Error::assertOK();
+		glBindSampler(idx, samplerID);		Error::assertOK();
 		setBound(key(idx));
 	}
 
@@ -129,15 +133,19 @@ public:
 	/** set the TextureFilter to use when down/up-scaling this texture */
 	void setFilter(const TextureFilter min, const TextureFilter mag) {
 		// assert bound!
-		glTexParameteri(type, GL_TEXTURE_MAG_FILTER, getFilter(mag));	Error::assertOK();
-		glTexParameteri(type, GL_TEXTURE_MIN_FILTER, getFilter(min));	Error::assertOK();
+		//glTexParameteri(type, GL_TEXTURE_MAG_FILTER, getFilter(mag));	Error::assertOK();
+		//glTexParameteri(type, GL_TEXTURE_MIN_FILTER, getFilter(min));	Error::assertOK();
+		glSamplerParameteri(samplerID, GL_TEXTURE_MAG_FILTER, getFilter(mag));	Error::assertOK();
+		glSamplerParameteri(samplerID, GL_TEXTURE_MIN_FILTER, getFilter(min));	Error::assertOK();
 	}
 
 	/** set the wrapping mode to use for the (s,t) coordinates */
 	void setWrapping(const TextureWrapping wrapS, const TextureWrapping wrapT) {
 		// assert bound!
-		glTexParameteri(type, GL_TEXTURE_WRAP_S, getWrapping(wrapS));
-		glTexParameteri(type, GL_TEXTURE_WRAP_T, getWrapping(wrapT));
+		//glTexParameteri(type, GL_TEXTURE_WRAP_S, getWrapping(wrapS));	Error::assertOK();
+		//glTexParameteri(type, GL_TEXTURE_WRAP_T, getWrapping(wrapT));	Error::assertOK();
+		glSamplerParameteri(samplerID, GL_TEXTURE_WRAP_S, getWrapping(wrapS));	Error::assertOK();
+		glSamplerParameteri(samplerID, GL_TEXTURE_WRAP_T, getWrapping(wrapT));	Error::assertOK();
 	}
 
 	/** set anisotropic filtering */
@@ -189,16 +197,18 @@ private:
 		switch (w) {
 			case TextureWrapping::CLAMP:	return GL_CLAMP;
 			case TextureWrapping::REPEAT:	return GL_REPEAT;
-			default:						throw "error";
+			default:						throw Exception("invalid wrapping");
 		}
 	}
 
 	void create() {
-		glGenTextures(1, &id);			Error::assertOK();
+		glGenTextures(1, &id);				Error::assertOK();
+		glGenSamplers(1, &samplerID);		Error::assertOK();
 	}
 
 	void remove() {
-		glDeleteTextures(1, &id);		Error::assertOK();
+		glDeleteTextures(1, &id);			Error::assertOK();
+		glDeleteSamplers(1, &samplerID);	Error::assertOK();
 	}
 
 

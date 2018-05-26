@@ -4,31 +4,50 @@
 #include "IMesh.h"
 #include "../math/AffineTransform.h"
 #include "Transformable.h"
+#include "../3D/Triangles3.h"
 
 /**
  * this flyweight wrapper class can be used to render one (static) mesh
  * at several positions (position, rotation, scale).
  *
  */
-class InstanceMesh : public Renderable, public Transformable {
+class InstanceMesh : public IMesh, public Transformable {
 
 protected:
 
 	/** the mesh to render */
-	Renderable* mesh;
+	IMesh* mesh;
 
 public:
 
 	/** ctor */
-	InstanceMesh(Renderable* mesh) : mesh(mesh) {
-TODO("todo. ugly top copy those ones..")
+	InstanceMesh(IMesh* mesh) : mesh(mesh) {
+		//TODO("todo. ugly top copy those ones..")
 		this->shader = mesh->getShader();
-		this->material2 = mesh->getMaterial();
+		this->material = mesh->getMaterial();
 	}
 
 	const Mat4& getMatrix() const override {
 		return transform.getMatrix();
 	}
+
+	Triangles3 getTriangles() const override {
+		return mesh->getTriangles();
+	}
+
+	virtual AABB getAABBmodel() const override {
+		throw Exception("not yet implemented");		// needs this matrix
+		//return mesh->getAABBmodel();
+	}
+
+	virtual AABB getAABBworld() const override {
+		throw Exception("not yet implemented");		// needs this matrix
+		//return mesh->getAABBworld();
+	}
+
+//	void setMaterial(Material3* mat) {
+//		throw Exception("must not call setMaterial() on an instance mesh. call this on the wrapped mesh instead");
+//	}
 
 //	AABB getAABBmodel() const override {
 //		return mesh->getAABBmodel();
@@ -43,9 +62,9 @@ TODO("todo. ugly top copy those ones..")
 	}
 
 	void render(const SceneState& ss, const RenderState& rs) override {
-		//if (material2) {material2->bind();}
+		if (material) {material->bind();}		// should be null
 		mesh->render(ss, rs);
-		//if (material2) {material2->unbind();}
+		if (material) {material->unbind();}
 	}
 
 	// TODO:

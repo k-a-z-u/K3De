@@ -46,6 +46,7 @@ class MyScene1002943 : public Scene {
 	virtual void onKeyEvent(const int key, const int scancode, const int action, const int mods) {;}
 	virtual void onBecomesActive() {;}
 	virtual void onBeforeRender(const SceneState& ss) {;}
+	virtual void onCursorPosition(double absX, double absY, double dx, double dy) {;}
 };
 
 

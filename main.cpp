@@ -1,4 +1,6 @@
 
+#define MAX_LIGHTS 8
+
 //// Include standard headers
 //#include <stdio.h>
 //#include <stdlib.h>
@@ -25,7 +27,7 @@
 #include "shader/Shader.h"
 #include "shader/ComputeShader.h"
 
-#define MAX_LIGHTS 8
+
 #include "K3De.h"
 #include "Engine.h"
 #include "EngineImpl.h"
@@ -173,6 +175,8 @@ void testCompute() {
 
 }
 
+
+
 int main(int argc, char** argv) {
 
 //	ThreadPool& gtq = GlobalThreadPool::get();
@@ -182,7 +186,10 @@ int main(int argc, char** argv) {
 
 //	gtq.join();
 
-	testCompute();
+
+//testii();
+//test2();
+//testCompute();
 
 #ifdef WITH_TESTS
 	//runTests(argc, argv);

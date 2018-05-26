@@ -70,6 +70,14 @@ public:
 		needsUpdate = true;
 	}
 
+	/** configure the rotation (x,y,z) [in radians] */
+	void setRotationDeg(const float x_deg, const float y_deg, const float z_deg) {
+		rotate.x = x_deg / 180.0f * (float) M_PI;
+		rotate.y = y_deg / 180.0f * (float) M_PI;
+		rotate.z = z_deg / 180.0f * (float) M_PI;
+		needsUpdate = true;
+	}
+
 	/** get the current rotation (x,y,z) [in radians] */
 	Vec3 getRotationRad() const {
 		return rotate;

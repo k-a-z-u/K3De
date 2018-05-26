@@ -140,14 +140,14 @@ public:
 			case ImageFormat::IMAGE_GREY_ALPHA:
 				return GL_RG;
 
-		    case ImageFormat::IMAGE_RGB:
-			    return GL_RGB;
+			case ImageFormat::IMAGE_RGB:
+				return GL_RGB;
 
-		    case ImageFormat::IMAGE_RGBA:
-			    return GL_RGBA;
+			case ImageFormat::IMAGE_RGBA:
+				return GL_RGBA;
 
-		    default:
-			    throw Exception("invalid image format");
+			default:
+				throw Exception("invalid image format");
 		}
 
 	}
@@ -374,10 +374,18 @@ public:
 		// TODO: performance boost possible?
 		// Give an empty image to OpenGL ( the last "0" )
 		glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+		Error::assertOK();
 
-		//tex->setFilter(TextureFilter::NEAREST, TextureFilter::NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		tex->setFilter(TextureFilter::LINEAR, TextureFilter::LINEAR);
+		Error::assertOK();
+		tex->setWrapping(TextureWrapping::CLAMP, TextureWrapping::CLAMP);
+		Error::assertOK();
+//		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+//		Error::assertOK();
+//		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+//		Error::assertOK();
+
+		// done
 		return tex;
 
 	}

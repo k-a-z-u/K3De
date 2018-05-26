@@ -4,6 +4,28 @@
 #include <string>
 #include "../gl/gl.h"
 
+/** all default uniforms within most shaders */
+enum DefaultUniform {
+
+	CLIPPING,
+
+	MODEL_MATRIX,
+	VIEW_MATRIX,
+	PROJECTION_MATRIX,
+
+	VIEW_PROJECTION_MATRIX,
+	MODEL_VIEW_PROJECTION_MATRIX,
+
+	TIME,
+
+	CAMERA_POSITION,
+
+	SCREEN_WIDTH,
+	SCREEN_HEIGHT,
+
+	LIGHTS,
+
+};
 
 
 /** describes one uniform variable within a program */

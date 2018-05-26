@@ -30,7 +30,7 @@ public:
 		const float d = 0.001;	// delta to prevent black edges due to rounding
 
 		// the 8 edges
-		const Vec3 v1(-1,-1,-1);
+		const Vec3 v1(-1,-1,-1); //--, +-, ++, -+	1 2 6 5
 		const Vec3 v2(+1,-1,-1);
 		const Vec3 v3(+1,+1,-1);
 		const Vec3 v4(-1,+1,-1);
@@ -70,39 +70,20 @@ public:
 		const Vec2 bo3(0.50-d, M66+d);	// upper-right
 		const Vec2 bo4(0.25+d, M66+d);	// upper-left;
 
-		addQuad(v1, v2, v3, v4, m1, m2, m3, m4);	// front
-		addQuad(v5, v1, v4, v8, l1, l2, l3, l4);	// left
-		addQuad(v2, v6, v7, v3, r1, r2, r3, r4);	// right
-		addQuad(v6, v5, v8, v7, b1, b2, b3, b4);	// back
-
-		addQuad(v4, v3, v7, v8, t1, t2, t3, t4);		// top
-		addQuad(v5, v6, v2, v1, bo1, bo2, bo3, bo4);	// bottom
-
-//		vertices.append(VertexNormalTexture(v5, n, m3));
-//		vertices.append(VertexNormalTexture(v7, n, m1));
-//		vertices.append(VertexNormalTexture(v6, n, m4));
-
-//		vertices.append(VertexNormalTexture(v5, n, m3));
-//		vertices.append(VertexNormalTexture(v8, n, m2));
-//		vertices.append(VertexNormalTexture(v7, n, m1));
+//		addQuad(v1, v2, v3, v4, m1, m2, m3, m4);	// front
+//		addQuad(v5, v1, v4, v8, l1, l2, l3, l4);	// left
+//		addQuad(v2, v6, v7, v3, r1, r2, r3, r4);	// right
+//		addQuad(v6, v5, v8, v7, b1, b2, b3, b4);	// back
+//		addQuad(v4, v3, v7, v8, t1, t2, t3, t4);		// top
+//		addQuad(v5, v6, v2, v1, bo1, bo2, bo3, bo4);	// bottom
 
 
-//		vertices.append(VertexNormalTexture(v1, n, r3));
-//		vertices.append(VertexNormalTexture(v8, n, r1));
-//		vertices.append(VertexNormalTexture(v5, n, r4));
-
-//		vertices.append(VertexNormalTexture(v1, n, r3));
-//		vertices.append(VertexNormalTexture(v3, n, r2));
-//		vertices.append(VertexNormalTexture(v8, n, r1));
-
-
-//		vertices.append(VertexNormalTexture(v6, n, l3));
-//		vertices.append(VertexNormalTexture(v4, n, l1));
-//		vertices.append(VertexNormalTexture(v2, n, l4));
-
-//		vertices.append(VertexNormalTexture(v8, n, l3));
-//		vertices.append(VertexNormalTexture(v4, n, l2));
-//		vertices.append(VertexNormalTexture(v7, n, l1));
+		addQuad(v4, v3, v7, v8, m1, m2, m3, m4);	// front		// OK
+		addQuad(v5, v1, v4, v8, l4, l1, l2, l3);	// left
+		addQuad(v7, v3, v2, v6, r4, r1, r2, r3);	// right // OK
+		addQuad(v5, v6, v2, v1, b3, b4, b1, b2);	// back // OK
+		addQuad(v8, v7, v6, v5, t1, t2, t3, t4);		// top
+		addQuad(v1, v2, v3, v4, bo1, bo2, bo3, bo4);	// bottom
 
 		// upload
 		vertices.upload();
@@ -130,6 +111,9 @@ public:
 		return true;
 	}
 
+	Triangles3 getTriangles() const override {
+		throw Exception("not supported");
+	}
 
 
 };

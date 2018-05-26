@@ -12,12 +12,15 @@ class Shader;
 
 namespace MatPart {
 	class Modifier;
+	class Lighting;
 	struct LoadedTexture;
 }
 
 class Material2 {
 
 	friend class MaterialFactory;
+
+	MatPart::Lighting* lighting;
 
 private:
 
@@ -30,8 +33,8 @@ private:
 	/** whether this material casts shadows */
 	bool castsShadows;
 
-	/** whether to use lighting or not */
-	bool useLigthing;
+//	/** whether to use lighting or not */
+//	bool useLigthing;
 
 	/** does this material use specular lighting? */
 	bool useSpecular;
@@ -88,8 +91,11 @@ public:
 	/** whether this material casts shadows */
 	bool getCastsShadows() const {return castsShadows;}
 
-	/** whether to use lighting for this material */
-	bool usesLighting() const {return useLigthing;}
+	MatPart::Lighting* getLighting() {return lighting;}
+	void setLighting(MatPart::Lighting* lighting) {this->lighting = lighting;}
+
+//	/** whether to use lighting for this material */
+//	bool usesLighting() const {return useLigthing;}
 
 	/** whether this material can be clipped */
 	bool usesClipping() const {return useClipping;}

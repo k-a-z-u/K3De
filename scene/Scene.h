@@ -5,7 +5,7 @@
 
 #include "Camera.h"
 #include "Lighting.h"
-#include "Renderable.h"
+#include "IRenderable.h"
 
 
 
@@ -16,7 +16,7 @@
 #include "../mesh/MeshFactory.h"
 #include "../shader/ShaderFactory.h"
 #include "../textures/TextureFactory.h"
-#include "../material/MaterialFactory.h"
+#include "../material3/MaterialFactory3.h"
 
 #include "../2D/UI.h"
 #include "../2D/SpriteFactory.h"
@@ -51,8 +51,8 @@ protected:
 
 	Lighting lighting;
 
-    /** the window's and viewport's size. updated by the engine when the window is changed */
-    ScreenSize size;
+	/** the window's and viewport's size. updated by the engine when the window is changed */
+	ScreenSize size;
 
 	/** camera */
 	Camera cam;
@@ -76,10 +76,10 @@ protected:
 	/** water layers */
 	std::vector<Water*> waters;
 
-	std::vector<Renderable*> particles;
+	std::vector<IRenderable*> particles;
 
 	/** "normal" renderables */
-	std::vector<Renderable*> renderables;
+	std::vector<IRenderable*> renderables;
 
 	/** all active animations */
 	std::vector<IAnimation*> animations;
@@ -95,9 +95,9 @@ protected:
 	ShaderFactory shaderFac;
 	TextureFactory textureFac;
 	SpriteFactory spriteFac;
-	MaterialFactory matFac;
+	MaterialFactory3 matFac;
 
-	Vec2 clipY;
+	Vec2 clipZ;
 
 	FPS fps;
 	RenderState rs;
@@ -126,9 +126,9 @@ public:
 		this->postProcRenderer = ppRenderer;
 	}
 
-	void setClipY(const float min, const float max) {
-		clipY.x = min;
-		clipY.y = max;
+	void setClipZ(const float min, const float max) {
+		clipZ.x = min;
+		clipZ.y = max;
 	}
 
 	/** maximal number of lights? */
@@ -142,12 +142,24 @@ public:
 		return lighting.getLight(idx);
 	}
 
-	/** add the given renderable to the scene */
-	void add(Renderable* r) {
-		renderables.push_back(r);
+	Ambient& getAmbient() {
+		return lighting.getAmbient();
 	}
 
-	void addParticles(Renderable* ps) {
+	/** get all renderables within the level */
+	const std::vector<IRenderable*>& getRenderables() const {
+		return renderables;
+	}
+
+	/** get all renderables within the level */
+	std::vector<IRenderable*>& getRenderables() {
+		return renderables;
+	}
+
+	/** add the given renderable to the scene */
+	inline void add(IRenderable* r);
+
+	void addParticles(IRenderable* ps) {
 		particles.push_back(ps);
 	}
 
@@ -193,7 +205,7 @@ public:
 	SpriteFactory& getSpriteFactory() {return spriteFac;}
 
 	/** get the scene's material-factory */
-	MaterialFactory& getMaterialFactory() {return matFac;}
+	MaterialFactory3& getMaterialFactory() {return matFac;}
 
 	/** get the scene's camera */
 	Camera& getCamera() {return cam;}
@@ -205,21 +217,24 @@ public:
 		this->overwriteShader = shader;
 	}
 
-	void setShadowPV(const Mat4& mat, const int lightIdx) {
+	/** set the shadow-PV-matrix for the given light. add bias: switch from -1:+1 to 0:1 */
+	void setShadowPV(const Mat4& mat, const int lightIdx, const bool addBias = true) {
 
 		// this bias matrix is used to convert from [-1;+1] to [0;+1]
 		// adding this directly to the matrix saves time within the shaders!
 		static const float bias[16] = {
-		    0.5, 0.0, 0.0, 0.5,
-		    0.0, 0.5, 0.0, 0.5,
-		    0.0, 0.0, 0.5, 0.5,
-		    0.0, 0.0, 0.0, 1.0
+			0.5, 0.0, 0.0, 0.5,
+			0.0, 0.5, 0.0, 0.5,
+			0.0, 0.0, 0.5, 0.5,
+			0.0, 0.0, 0.0, 1.0
 		};
 		static const Mat4 mBias = Mat4::fromRawRowMajor(bias);
 
-		//this->shadowPV = mBias * mat;
-		//lights.light[lightIdx].setShadowPV(mBias * mat);
-		lighting.getLight(lightIdx).setShadowPV(mBias * mat);
+		if (addBias) {
+			lighting.getLight(lightIdx).setShadowPV(mBias * mat);
+		} else {
+			lighting.getLight(lightIdx).setShadowPV(mat);
+		}
 
 	}
 
@@ -251,6 +266,9 @@ public:
 
 	/** scene receives key events */
 	virtual void onKeyEvent(const int key, const int scancode, const int action, const int mods) = 0;
+
+	/** scene receives mouse events */
+	virtual void onCursorPosition(double absX, double absY, double dx, double dy) = 0;
 
 
 
@@ -284,7 +302,7 @@ private:
 	inline void renderUI();
 
 	/** render one object (if enabled, visible, ...) */
-	inline void renderThis(Renderable* r, RenderState& rs);
+	inline void renderThis(IRenderable* r, RenderState& rs);
 
 };
 

@@ -102,14 +102,14 @@ public:
 	/** render this object */
 	virtual void render(const SceneState&, const RenderState&) override {
 
-		if (material2) {material2->bind();}
+		if (material) {material->bind();}
 
 		vao.bind();
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 		Error::assertOK();
 		vao.unbind();
 
-		if (material2) {material2->unbind();}
+		if (material) {material->unbind();}
 
 	}
 

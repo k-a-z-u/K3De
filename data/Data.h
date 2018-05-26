@@ -2,6 +2,7 @@
 #define DATA_H
 
 #include <cstdint>
+#include <string>
 
 class Data {
 
@@ -51,6 +52,11 @@ public:
 			this->_managed = o._managed;	o._managed = false;
 		}
 		return *this;
+	}
+
+	/** convert content to std::string */
+	std::string asString() const {
+		return std::string((char*)_data, _len);
 	}
 
 

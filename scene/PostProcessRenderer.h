@@ -143,8 +143,8 @@ protected:
 			for (size_t idx = 0; idx < texIn.get().size(); ++idx) {
 				const ITexture* tex = texIn.get()[idx];
 				const std::string name = "texColor" + std::to_string(idx);
-				if (shader->hasUniform(name+"_w"))		{shader->setFloat(name+"_w", tex->getWidth());}
-				if (shader->hasUniform(name+"_h"))		{shader->setFloat(name+"_h", tex->getHeight());}
+				if (shader->hasUniform(name+"_w"))	{shader->setFloat(name+"_w", tex->getWidth());}
+				if (shader->hasUniform(name+"_h"))	{shader->setFloat(name+"_h", tex->getHeight());}
 			}
 			shader->unbind();
 		}
@@ -254,8 +254,8 @@ public:
 		std::unique_ptr<PostProcessStage> uptr = std::make_unique_args<PostProcessStage>(name, scene, texScale);
 		PostProcessStage* ptr = uptr.get();
 		ptr->resize(
-		    scene->getScreenSize().viewport.width,
-		    scene->getScreenSize().viewport.height
+			scene->getScreenSize().viewport.width,
+			scene->getScreenSize().viewport.height
 		);
 		stages.push_back(std::move(uptr));
 		return ptr;
@@ -326,8 +326,8 @@ PostProcessRenderer::PostProcessRenderer(Scene* scene) {
 
 	// start with initial size
 	resize(
-	    scene->getScreenSize().viewport.width,
-	    scene->getScreenSize().viewport.height
+		scene->getScreenSize().viewport.width,
+		scene->getScreenSize().viewport.height
 	);
 
 	//setRect(-1, -1, +1, +1);

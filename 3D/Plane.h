@@ -44,16 +44,6 @@ public:
 		Estimator::estimateTangents(vt1, vt3, vt2);
 		Estimator::estimateTangents(vt1, vt4, vt3);
 
-
-//		indices.append(0);
-//		indices.append(1);
-//		indices.append(2);
-
-//		indices.append(0);
-//		indices.append(2);
-//		indices.append(3);
-
-
 		vertices.append(vt1);
 		vertices.append(vt3);
 		vertices.append(vt2);
@@ -63,25 +53,63 @@ public:
 		vertices.append(vt3);
 
 		vertices.upload();
-		//indices.upload();
-
 
 		vao.bind();
 
 		vertices.bind();
 
-//		//VertexNormalTexture
-//		vao.setVertices(0, 8*4, 0);
-//		vao.setNormals(1, 8*4, 3*4);
-//		vao.setTexCoords(2, 8*4, 6*4);
+			// VertexNormalTangentTexture
+			vao.setVertices(0, 11*4);
+			vao.setNormals(1, 11*4, 3*4);
+			vao.setTangents(3, 11*4, 6*4);		// todo swap indicies [2,3] here and within shaders?
+			vao.setTexCoords(2, 11*4, 9*4);
 
-		// VertexNormalTangentTexture
-		vao.setVertices(0, 11*4);
-		vao.setNormals(1, 11*4, 3*4);
-		vao.setTangents(3, 11*4, 6*4);		// todo swap indicies [2,3] here and within shaders?
-		vao.setTexCoords(2, 11*4, 9*4);
+		vao.unbind();
 
-		//indices.bind();
+	}
+
+	void addPlaneZ(const float z, const Vec2 x1y1, const Vec2 x2y2, const Vec2 tile = Vec2(1,1)) {
+
+		const Vec2 t1(0,0);
+		const Vec2 t2 = tile;
+
+		const float x1 = x1y1.x;
+		const float x2 = x2y2.x;
+
+		const float y1 = x1y1.y;
+		const float y2 = x2y2.y;
+
+		const Vec3 ta(0,0,0);		// dummy data
+		const Vec3 n(0,0,1);
+
+		AttrVertexNormalTangentTexture vt1(x1, y1, z,		n.x,n.y,n.z,	ta.x, ta.y, ta.z,	t1.x, t2.y);
+		AttrVertexNormalTangentTexture vt2(x2, y1, z,		n.x,n.y,n.z,	ta.x, ta.y, ta.z,	t2.x, t2.y);
+		AttrVertexNormalTangentTexture vt3(x2, y2, z,		n.x,n.y,n.z,	ta.x, ta.y, ta.z,	t2.x, t1.y);
+		AttrVertexNormalTangentTexture vt4(x1, y2, z,		n.x,n.y,n.z,	ta.x, ta.y, ta.z,	t1.x, t1.y);
+
+		Estimator::estimateTangents(vt1, vt3, vt2);
+		Estimator::estimateTangents(vt1, vt4, vt3);
+
+		// those seem/feel correct.. those for addPlaneY do not
+		vertices.append(vt1);
+		vertices.append(vt2);
+		vertices.append(vt3);
+
+		vertices.append(vt3);
+		vertices.append(vt4);
+		vertices.append(vt1);
+
+		vertices.upload();
+
+		vao.bind();
+
+			vertices.bind();
+
+			// VertexNormalTangentTexture
+			vao.setVertices(0, 11*4);
+			vao.setNormals(1, 11*4, 3*4);
+			vao.setTangents(3, 11*4, 6*4);		// todo swap indicies [2,3] here and within shaders?
+			vao.setTexCoords(2, 11*4, 9*4);
 
 		vao.unbind();
 
@@ -89,7 +117,7 @@ public:
 
 	void render(const SceneState&, const RenderState&) override {
 
-		if (material2)	{material2->bind();}
+		if (material)	{material->bind();}
 		vao.bind();
 
 		//glDisable(GL_CULL_FACE);
@@ -98,7 +126,7 @@ public:
 		Error::assertOK();
 
 		vao.unbind();
-		if (material2)	{material2->unbind();}
+		if (material)	{material->unbind();}
 
 	}
 

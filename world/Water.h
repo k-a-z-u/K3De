@@ -42,7 +42,7 @@ public:
 
 		//vao.unbind();
 
-		addPlaneY(0, -size/2, size/2);
+		addPlaneZ(0, -size/2, size/2);
 		setPosition(center);
 
 	}

@@ -14,6 +14,7 @@ class MyScene : public Scene {
 	virtual void onKeyEvent(const int key, const int scancode, const int action, const int mods) {;}
 	virtual void onBecomesActive() {;}
 	virtual void onBeforeRender(const SceneState& ss) {;}
+	virtual void onCursorPosition(double absX, double absY, double dx, double dy) {;}
 };
 
 TEST(DemoScene1, scene) {
@@ -53,7 +54,7 @@ TEST(DemoScene1, scene) {
 
 
 
-
+/*
 	MaterialFactory& fac = scene.getMaterialFactory();
 
 	{
@@ -173,7 +174,7 @@ TEST(DemoScene1, scene) {
 //		ImageFactory::saveJPG("/tmp/2/img_" + std::to_string(cnt) + ".jpg", img); ++cnt;
 
 	}
-
+*/
 }
 
 

@@ -180,6 +180,10 @@ public:
 		return data;
 	}
 
+	const std::vector<T>& getData() const {
+		return data;
+	}
+
 	decltype(data.begin()) begin() {return data.begin();}
 	decltype(data.end()) end() {return data.end();}
 

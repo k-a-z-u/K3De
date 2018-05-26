@@ -42,7 +42,6 @@ private:
 	/** hidden CTOR */
 	IndexedMesh() {;}
 
-
 	void configure() {
 
 		vao.bind();
@@ -74,20 +73,43 @@ private:
 
 public:
 
+	/** scale the underlying vertex data */
+	void scale(const float s) {
+		for (AttrVertexNormalTangentTexture& v : vertices) {
+			v.setVertex(v.getVertex()*s);
+		}
+		vertices.upload();
+	}
+
+	Triangles3 getTriangles() const override {
+		Triangles3 res;
+		const auto& indices = this->indices.getData();
+		for (size_t i = 0; i < indices.size(); i+=3) {
+			const int idx1 = indices[i+0];
+			const int idx2 = indices[i+1];
+			const int idx3 = indices[i+2];
+			const Vec3 v1 = vertices.getData()[idx1].getVertex();
+			const Vec3 v2 = vertices.getData()[idx2].getVertex();
+			const Vec3 v3 = vertices.getData()[idx3].getVertex();
+			res.push_back(Triangle3(v1,v2,v3));
+		}
+		return res;
+	}
+
 	const Mat4& getMatrix() const override {
 		return transform.getMatrix();
 	}
 
 	void render(const SceneState&, const RenderState&) override {
 
-		if (material2) {material2->bind();}
+		if (material) {material->bind();}
 
 		vao.bind();
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 		Error::assertOK();
 		vao.unbind();
 
-		if (material2) {material2->unbind();}
+		if (material) {material->unbind();}
 
 	}
 

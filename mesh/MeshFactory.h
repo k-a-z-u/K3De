@@ -2,7 +2,6 @@
 #define MESHFACTORY_H
 
 #include <vector>
-#
 
 #include "MeshVertex.h"
 #include "../misc/Memory.h"
@@ -12,6 +11,7 @@
 class IMesh;
 class IndexedMesh;
 class InstanceMesh;
+class SubMesh;
 
 class MeshFactory {
 
@@ -29,7 +29,7 @@ public:
 	inline IndexedMesh* createMesh(const Resource& res, const bool normalize = false, const bool centerAtOrigin = false);
 
 	/** create a new instance-wrapper around the given source mesh [allows position,rotation,scale without modifying the mesh] */
-	inline InstanceMesh* createNewInstance(Renderable* mesh);
+	inline InstanceMesh* createNewInstance(IMesh* mesh);
 
 	static std::vector<AttrVertexNormalTexture> getPlaneY(const float y, const float x1, const float z1, const float x2, const float z2, const Vec2 texTiling) {
 
@@ -59,13 +59,14 @@ public:
 #include "UnindexedMesh.h"
 #include "IndexedMesh.h"
 #include "InstanceMesh.h"
+#include "SubMesh.h"
 
-InstanceMesh* MeshFactory::createNewInstance(Renderable* srcMesh) {
+InstanceMesh* MeshFactory::createNewInstance(IMesh* srcMesh) {
 
 	// create a new instance-wrapper around the given source
 	InstanceMesh* mesh = new InstanceMesh(srcMesh);
 
-TODO("TODO")
+	//TODO("TODO")
 	// add to the list of meshes [e.g. for scene cleanup]
 //	meshes.push_back(std::make_unique(mesh));
 

@@ -27,14 +27,15 @@ class TerrainFactory {
 
 	static Vec3 getVertex(const int px, const int py, const TerrainStruct& t) {
 
-		const int ox = t.w * t.scale.x;
-		const int oy = 1.0 * t.scale.y;
-		const int oz = t.h * t.scale.z;
+		const float x01 = (float)px / (float)t.w;
+		const float y01 = (float)py / (float)t.h;
+		const float z01 = t.height.getGrey(px, py) / 255.0f;
 
 		Vec3 vec;
-		vec.y = t.center.y - oy/2 + (t.height.getGrey(px, py) / 255.0f * t.scale.y);
-		vec.x = t.center.x - ox/2 + (px * t.scale.x);
-		vec.z = t.center.z - oz/2 + (py * t.scale.z);
+		vec.x = t.center.x + ((x01-0.5f) * t.scale.x);
+		vec.y = t.center.y + ((y01-0.5f) * t.scale.y);
+		vec.z = t.center.z + ((z01-0.5f) * t.scale.z);
+
 		return vec;
 
 	}
@@ -54,6 +55,7 @@ class TerrainFactory {
 
 public:
 
+	/** without scaling, the terrain spans from (-0.5,-0.5) to (+0.5,+0.5) */
 	Terrain* create(const Vec3& center, const Vec3& scale, const Image& heightMap, const int xTiles = 8, const int yTiles = 8) {
 
 		TerrainStruct ts;
@@ -84,7 +86,7 @@ public:
 		for (int py = 0; py < yVertices; ++py) {
 			for (int px = 0; px < xVertices; ++px) {
 				const Vec3 v = getVertex(px, py, ts);
-				const Vec3 n(0, 1, 0);
+				const Vec3 n(0, 0, 1);
 				const Vec3 ta(0, 0, 0);	// later...
 				const Vec2 t = getTexCoord(px, py, ts);
 				vertices.push_back( AttrVertexNormalTangentTexture(v, n, ta, t) );
@@ -130,10 +132,10 @@ public:
 				const Vec3 vb = vertices[getIndex(px  , py-1, ts)].v;
 
 				Vec3 n(0,0,0);
-				n += Math::cross(vl,vt);
-				n += Math::cross(vt,vr);
-				n += Math::cross(vr,vb);
-				n += Math::cross(vb,vl);
+				n += Math::cross(vt,vl);
+				n += Math::cross(vr,vt);
+				n += Math::cross(vb,vr);
+				n += Math::cross(vl,vb);
 				n = Math::normalize(n);
 
 				vertices[getIndex(px,py,ts)].setNormal(n);
@@ -182,16 +184,16 @@ public:
 
 						// first triangle
 						part.indices.append(idx1);
-						part.indices.append(idx3);
 						part.indices.append(idx2);
+						part.indices.append(idx3);
 
 						// estimate the tangent for all 3 vertices
 						Estimator::estimateTangents(part.vertices[idx1], part.vertices[idx3], part.vertices[idx2]);
 
 						// second triangle
-						part.indices.append(idx1);
-						part.indices.append(idx4);
 						part.indices.append(idx3);
+						part.indices.append(idx4);
+						part.indices.append(idx1);
 
 						// estimate the tangent for all 3 vertices
 						Estimator::estimateTangents(part.vertices[idx1], part.vertices[idx4], part.vertices[idx3]);

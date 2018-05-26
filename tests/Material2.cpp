@@ -15,7 +15,7 @@ class MyScene2359123123 : public Scene {
 	virtual void onBecomesActive() {;}
 	virtual void onBeforeRender(const SceneState& ss) {;}
 };
-
+/*
 
 TEST(Material2, build1) {
 
@@ -75,6 +75,7 @@ TEST(Material2, build1) {
 	}
 
 }
+*/
 
 
 #endif

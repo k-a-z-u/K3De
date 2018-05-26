@@ -4,6 +4,7 @@
 #include <KLib/Assertions.h>
 
 #include "../gl/gl.h"
+#include "../misc/String.h"
 
 #include <string>
 #include <fstream>
@@ -17,24 +18,24 @@
 
 #include "ShaderBinary.h"
 #include "ShaderVersion.h"
-#include "Uniform.h"
 
 #include <set>
 #include <sstream>
 #include <iostream>
 
+#include "Uniform.h"
+
 class Shader {
 
 protected:
 
-    #include "../misc/BindOnce.h"
+	#include "../misc/BindOnce.h"
+	#include "Uniforms.h"
 
 	GLuint vertexShaderID;
 	GLuint fragmentShaderID;
 	GLuint geomentryShaderID;
 	GLuint programID;
-	mutable std::unordered_map<std::string, int> uniforms;
-
 
 public:
 
@@ -168,7 +169,8 @@ public:
 
 		cleanup();
 
-		getAllUniforms();
+		// fetch all active uniforms for this shader
+		getAllActiveUniforms();
 
 	}
 
@@ -187,206 +189,11 @@ public:
 		setUnbound(programID);
 	}
 
-//	inline GLint getCachedUniformLocation(const std::string& name) const {
-//		//assertBound();
-//		std::unordered_map<std::string, int>::const_iterator it = uniforms.find(name);
-//		if (it == uniforms.end()) {
-////			const GLint id = glGetUniformLocation(programID, name.c_str());
-////			Error::assertOK();
-////			uniforms[name] = id;
-////			return id;
-//			return -1;
-//		} else {
-//			return it->second;
-//		}
-//	}
-
-	/** get the ID for a uniform named "name" */
-	inline GLuint getUniformLocation(const std::string& name) const {
-		std::unordered_map<std::string, int>::const_iterator it = uniforms.find(name);
-		if (it != uniforms.end()) {
-			return it->second;
-		} else {
-			throw Exception("uniform not found: " + name);
-		}
-	}
-
-	/** does the program have a uniform with the given name? */
-	inline bool hasUniform(const std::string& name) const {
-
-#ifdef WITH_ASSERTIONS
-
-		// from program
-		const GLint _loc1 = glGetUniformLocation(programID, name.c_str());
-
-		// from cache
-		std::unordered_map<std::string, int>::const_iterator _it = uniforms.find(name);
-		const GLint _loc2 = (_it == uniforms.end()) ? (-1) : (_it->second);
-
-		// difference?
-		if (_loc1 != _loc2) {
-			throw Exception("uniform cache mismatch");
-		}
-
-#endif
-		std::unordered_map<std::string, int>::const_iterator it = uniforms.find(name);
-		return it != uniforms.end();
-
-	}
-
-	/** des the programe have a uniform-block with the given name? */
-	bool hasUniformBlock(const std::string& name) const {
-		return GL_INVALID_INDEX != glGetUniformBlockIndex(programID, name.c_str());
-	}
-
-	void setInt(const std::string& name, const int i) const {
-		//bind();
-		assertBound();
-		glUniform1i(getUniformLocation(name), i);
-		Error::assertOK();
-	}
-
-	void setFloat(const std::string& name, const float val) const {
-		//bind();
-		assertBound();
-		glUniform1f(getUniformLocation(name), val);
-		Error::assertOK();
-	}
-
-	void setVector(const std::string& name, const Vec2& vec) const {
-		//bind();
-		assertBound();
-		const GLuint id = getUniformLocation(name);
-		glUniform2f(id, vec.x, vec.y);
-		Error::assertOK();
-	}
-
-	void setVector(const std::string& name, const Vec3& vec) const {
-		//bind();
-		assertBound();
-		glUniform3f(getUniformLocation(name), vec.x, vec.y, vec.z);
-		Error::assertOK();
-	}
-
-	void setVar(const std::string& name, UBO& ubo) {
-		//bind();
-		assertBound();
-		const GLuint idx = glGetUniformBlockIndex(programID, name.c_str());
-		glUniformBlockBinding(programID, idx, 0);
-		Error::assertOK();
-		glBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo.getID());
-		Error::assertOK();
-	}
-
-	void setMatrix(const std::string& name, const Mat4& mat) const {
-		//bind();
-		assertBound();
-		const GLuint id = getUniformLocation(name);
-		//glUniformMatrix4fv(id, 1, GL_FALSE, &mat[0][0]);
-		glUniformMatrix4fv(id, 1, GL_TRUE, mat.data());		// GL_TRUE = transpose from row-major to column-major!
-		Error::assertOK();
-	}
-
-
-
-	std::unordered_set<std::string> _setValues;
-
-	void setVarOnce(const std::string& name, UBO& ubo) {
-		if (_setValues.find(name) == _setValues.end()) {
-			setVar(name, ubo);
-			_setValues.insert(name);
-		}
-	}
-
-	void setFloatOnce(const std::string& name, const float val) {
-		if (_setValues.find(name) == _setValues.end()) {
-			setFloat(name, val);
-			_setValues.insert(name);
-		}
-	}
-
 protected:
-
-
-
-	void getAllUniforms() {
-
-		// total number of uniforms
-		GLint numUniforms;
-		glGetProgramiv(programID, GL_ACTIVE_UNIFORMS, &numUniforms);
-
-		// fetch details for each uniform
-		for (int i = 0; i < numUniforms; ++i) {
-
-			// fetch details
-			GLenum type;
-			GLchar name[128];
-			GLsizei nameLen;
-			GLsizei size;
-			glGetActiveUniform(programID, i, 128, &nameLen, &size, &type, name);
-
-			// get location
-			std::cout << "#name " << name << std::endl;
-			//GLint location = getUniformLocation(name);
-			const GLint location = glGetUniformLocation(programID, name);
-			std::cout << "#loc " << location << std::endl;
-
-			// remember
-			if (location >= 0) {
-				Uniform u(programID, name, type, size, location);
-				std::cout << u.asString() << std::endl;
-				addUniform(u);
-			}
-
-			// array uniform? texShadow[4] -> texShadow[0],texShadow[1],...
-			for (int i = 1; i < size; ++i) {
-
-				std::string curName = name;
-				replace(curName, "[0]", "["+std::to_string(i)+"]");
-
-				const GLint location = glGetUniformLocation(programID, curName.c_str());
-				if (location >= 0) {
-					Uniform uBase(programID, curName, type, size, location);
-					std::cout << uBase.asString() << std::endl;
-					addUniform(uBase);
-				}
-
-			}
-
-			// compound uniform? e.g. Lights.light[7].attenuationQuadratic -> Lights.light[7]
-			const std::string baseName = Uniform::getBaseName(name);
-			if (baseName != name) {
-
-				const GLint location = glGetUniformLocation(programID, baseName.c_str());
-				if (location >= 0) {
-					Uniform uBase(programID, baseName, type, size, location);
-					std::cout << uBase.asString() << std::endl;
-					addUniform(uBase);
-				}
-
-			}
-
-			std::cout << "--------" <<std::endl;
-
-		}
-
-	}
-
-	void addUniform(const Uniform& u) {
-		uniforms[u.name] = u.location;
-	}
-
-	/** replace the first occurence of from with to */
-	static inline bool replace(std::string& str, const std::string& from, const std::string& to) {
-		size_t start_pos = str.find(from);
-		if(start_pos == std::string::npos) {return false;}
-		str.replace(start_pos, from.length(), to);
-		return true;
-	}
 
 	std::string adjustCode(const std::string& str) {
 		std::string copy = str;
-		replace(copy, "{VERSION}", ShaderVersion::getGLSL());
+		String::replace(copy, "{VERSION}", ShaderVersion::getGLSL());
 		return copy;
 	}
 

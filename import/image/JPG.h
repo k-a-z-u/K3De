@@ -85,7 +85,7 @@ namespace K3De {
 			JSAMPROW row_pointer[1];
 
 			FILE* fp = fopen(file.c_str(), "wb");
-			if (!fp) {throw "error";}
+			if (!fp) {throw Exception("error while saving JPG: " + file);}
 
 			cinfo.err = jpeg_std_error( &jerr );
 			jpeg_create_compress(&cinfo);

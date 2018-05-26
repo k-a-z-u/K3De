@@ -2,6 +2,7 @@
 #define CAMERA_H
 
 #include "../math/Math.h"
+#include "../Assert.h"
 #include <list>
 #include "../Engine.h"
 
@@ -9,8 +10,8 @@
 struct CameraState {
 
 	struct {
-		float fov = 45.0f;
-		float near = 0.1f;		// MUST NOT BE 0!!!
+		float fov = 45.0f / 180.0f * M_PI;
+		float near = 0.01f;		// MUST NOT BE 0!!!
 		float far = 50.0f;
 		float aspect = 4.0f/3.0f;	// 4.0f/3.0f
 	} perspective;
@@ -63,20 +64,33 @@ public:
 		updateViewportSize();		// update
 	}
 
-	/** set the camera's field-of-view (in degree) */
-	void setFOV(const float fov) {
-		state.perspective.fov = fov;
+	/** set the camera's field-of-view (in degrees) */
+	void setFOV(const float fov, const float near = 0.01, const float far = 50) {
+		Assert::isNot0(near, "near must not be 0.0");
+		state.perspective.fov = fov / 180.0f * M_PI;
+		state.perspective.near = near;
+		state.perspective.far = far;
 		stateChanged = true;
 	}
 
+	/** get the camera's FOV in radians */
+	float getFOV_rad() const {
+		return state.perspective.fov;
+	}
+	/** get the camera's FOV in radians */
+	float getFOV_deg() const {
+		return state.perspective.fov * 180.0f / M_PI;
+	}
+
 	/** whether to use perspective or orthographic projection */
-	void setUsePerspective(const float perspective) {
+	void setUsePerspective(const bool perspective) {
 		this->state.usePerspective = perspective;
 		this->stateChanged = true;
 	}
 
 	/** set orhtographic projection params */
 	void setOrthographicParams(const float left, const float right, const float top, const float bottom, const float near, const float far) {
+		this->state.usePerspective = false;
 		this->state.orthographic.left = left;
 		this->state.orthographic.right = right;
 		this->state.orthographic.top = top;
@@ -98,7 +112,7 @@ public:
 //	void setViewportSize(Scene* scene) {
 //		setViewportSize(scene->getScreenSize().viewport.width, scene->getScreenSize().viewport.height);
 //	}
-    
+
 //    /** set the render resolution */
 //    void setViewportSize(const ScreenSize& size) {
 //        setViewportSize(size.viewport.width, size.viewport.height);
@@ -138,15 +152,20 @@ public:
 		stateChanged = true;
 	}
 
+	void setLookAt(const Vec3 pos) {
+		state.lookAt.set(pos.x, pos.y, pos.z);
+		stateChanged = true;
+	}
+
 	void setUp(const float x, const float y, const float z) {
 		state.up.set(x,y,z);
 		stateChanged = true;
 	}
 
-	void mirrorY(const float y) {
-		(void) y; // TODO
-		state.lookAt.y = -state.lookAt.y;
-		state.pos.y = -state.pos.y;
+	void mirrorZ(const float z) {
+		(void) z; // TODO
+		state.lookAt.z = -state.lookAt.z;
+		state.pos.z = -state.pos.z;
 		stateChanged = true;
 	}
 
@@ -165,19 +184,29 @@ public:
 		return mP;
 	}
 
+
 private:
 
 	/** update the matrices, if the state has changed */
 	inline void update() {
+
 		if (!stateChanged) {return;}
 		stateChanged = false;
+
 		mV = Math::camLookAt(state.pos, state.lookAt, state.up);
+
 		if (state.usePerspective) {
 			mP = Math::camPerspective(state.perspective.fov, state.perspective.aspect, state.perspective.near, state.perspective.far);
 		} else {
 			mP = Math::camOrthographic(state.orthographic.left, state.orthographic.right, state.orthographic.top, state.orthographic.bottom, state.orthographic.near, state.orthographic.far);
 		}
+
 		mPV = mP*mV;
+
+		Assert::isTrue(mV.isSane(), "camera V matrix seems invalid");
+		Assert::isTrue(mP.isSane(), "camera P matrix seems invalid");
+		Assert::isTrue(mPV.isSane(), "camera PV matrix seems invalid");
+
 	}
 
 	/** update the openGL viewport size */

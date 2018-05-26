@@ -31,7 +31,7 @@ private:
 			Vec4 v2;
 			Vec4 v3;
 		} vectors;
-	//} 
+	//}
 	} ALIGN(16);
 
 
@@ -235,6 +235,14 @@ public:
 			res += "\n";
 		}
 		return res;
+	}
+
+	/** check whether the matrix is sane */
+	bool isSane() const {
+		for (int i = 0; i < size*size; ++i) {
+			if (values[i] != values[i]) {return false;}	// NaN
+		}
+		return true;
 	}
 
 private:

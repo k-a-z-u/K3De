@@ -65,6 +65,12 @@ private:
 
 	std::vector<Attachment> attachments;
 
+	Triangles3 getTriangles() const {
+		std::cout << "WARN! MD5 MESH getTriangles() not yet implemented!" << std::endl;
+		return Triangles3();
+		//throw Exception("not yet implemented");
+	}
+
 
 public:
 
@@ -190,14 +196,14 @@ public:
 
 	void render(const SceneState&, const RenderState&) override {
 
-		if (material2) {material2->bind();}
+		if (material) {material->bind();}
 
 		vao.bind();
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 		Error::assertOK();
 		vao.unbind();
 
-		if (material2) {material2->unbind();}
+		if (material) {material->unbind();}
 
 #ifdef DEBUG_NORMALS
 		vaoNormals.bind();

@@ -13,6 +13,10 @@
 #include "Structs.h"
 #include "RawMesh.h"
 
+#include "../../data/Data.h"
+#include "../../data/Resource.h"
+#include "../../data/ResourceFactory.h"
+
 // http://tfc.duke.free.fr/coding/md5-specs-en.html
 // http://www.3dgep.com/loading-and-animating-md5-models-with-opengl/
 
@@ -30,6 +34,18 @@ namespace MD5 {
 		ImportMesh(const float scale) : scale(scale) {
 			;
 		}
+
+		/** load MD5 Mesh from resource file */
+		ImportedMesh load(const Resource& res) {
+
+			Debug(NAME, "loading resource: " + res.getName());
+
+			const Data d = ResourceFactory::get().get(res);
+			const std::string dat = d.asString();
+			return loadMeshString(dat);
+
+		}
+
 
 		ImportedMesh loadMeshString(const std::string& data) {
 

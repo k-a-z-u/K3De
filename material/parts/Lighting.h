@@ -3,17 +3,30 @@
 
 
 #include "Buildable.h"
+#include "Enableable.h"
+
 #include "sources/SourceTexture.h"
 
 namespace MatPart {
 
-	class Lighting : public Buildable {
+	class Lighting : public Buildable, public Enableable {
+
+	private:
+
+		/** reduce the impact of the diffuse angle -> more ambient */
+		float diffuseImpact = 1.0;
 
 	public:
+
+		float getDiffuseImpact() {return diffuseImpact;}
+		void setDiffuseImpact(const float imp) {this->diffuseImpact = imp;}
 
 		void build(Material2* mat, XMLElem* root) {
 
 			(void) root;
+
+			// limit diffuse impact?
+			diffuseImpact = root->Attribute("diffuseImpact") ? root->FloatAttribute("diffuseImpact") : 1.0;
 
 			std::string lights =
 
@@ -49,35 +62,35 @@ namespace MatPart {
 
 		}
 
-		std::string isEnabled(const std::string idx) const {
+		std::string isLightEnabled(const std::string idx) const {
 			return "(lights.light[" + idx + "].flags & 1) != 0";
 		}
 
-		std::string castsShadows(const std::string idx) const {
+		std::string lightCastsShadows(const std::string idx) const {
 			return "(lights.light[" + idx + "].flags & 2) != 0";
 		}
 
-		std::string getPos(const std::string idx) const {
+		std::string getLightPos(const std::string idx) const {
 			//return "vec3(lights.light["+idx+"].x, lights.light["+idx+"].y, lights.light["+idx+"].z)";
 			return "lights.light["+idx+"].pos.xyz";
 		}
 
-		std::string getColor(const std::string idx) const {
+		std::string getLightColor(const std::string idx) const {
 			//return "vec3(lights.light["+idx+"].r, lights.light["+idx+"].g, lights.light["+idx+"].b)";
 			return "lights.light["+idx+"].color.rgb";
 		}
 
 		// att = 1.0 / (1.0 + 0.1*dist + 0.01*dist*dist)
 
-		std::string getAttenuationLinear(const std::string idx) const {
+		std::string getLightAttenuationLinear(const std::string idx) const {
 			return "lights.light["+idx+"].attenuationLinear";
 		}
 
-		std::string getAttenuationQuadratic(const std::string idx) const {
+		std::string getLightAttenuationQuadratic(const std::string idx) const {
 			return "lights.light["+idx+"].attenuationQuadratic";
 		}
 
-		std::string getImpact(const std::string idx) const {
+		std::string getLightImpact(const std::string idx) const {
 			return "lights.light["+idx+"].impact";
 		}
 

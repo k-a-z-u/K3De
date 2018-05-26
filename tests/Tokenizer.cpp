@@ -1,3 +1,5 @@
+#ifdef WITH_TESTS
+
 #include "Tests.h"
 #include "../misc/Tokenizer.h"
 
@@ -43,3 +45,5 @@ TEST(Tokenizer, Test4) {
 	ASSERT_EQ("3/3/3", t.getToken(' '));
 	ASSERT_FALSE(t.hasNext());
 }
+
+#endif

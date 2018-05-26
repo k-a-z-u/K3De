@@ -13,10 +13,12 @@ public:
 	static inline std::string getGLSL() {
 
 		switch(getOpenGLVersion()) {
-			case OPENGL_3_3:		return "#version 330\n";	// 3.30
+			case OPENGL_3_3:		return "#version 330 core\n";	// 3.30
 			case OPENGL_ES_3:		return "#version 300 es\n";	// 3.00 ES
-		    default:				throw Exception("TODO: getVersionString()");
+			default:				throw Exception("TODO: getVersionString()");
 		}
+
+
 
 	}
 

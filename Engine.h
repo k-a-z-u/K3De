@@ -96,6 +96,24 @@ public:
 	/** one step further. render, other actions, etc. */
 	inline void tick();
 
+	/** get keyboard key state */
+	int getKey(int key) {
+		return glfwGetKey(window, key);
+	}
+
+	/** get keyboard key state */
+	bool isKeyDown(int key) {
+		return glfwGetKey(window, key) == GLFW_PRESS;
+	}
+
+	/** keep the mouse within the window */
+	void captureMouse(bool capture) {
+		if (capture) {
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		} else {
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
+	}
 
 private:
 
@@ -104,6 +122,9 @@ private:
 
 	/** static key-input callback */
 	static inline void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+	/** static cursor-pos callback */
+	static inline void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 
 
 private:
@@ -127,27 +148,27 @@ private:
 		if( !glfwInit() ) {throw Exception("error during init");}
 		Error::assertOK();
 
-		// this one is needed, when not OpenGL ES but OpenGL is used
-		switch(getOpenGLVersion()) {
+//		// this one is needed, when not OpenGL ES but OpenGL is used
+//		switch(getOpenGLVersion()) {
 
-			case OPENGL_3_3:
-				glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
-				glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-				glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-				glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
-				Error::assertOK();
-				break;
+//			case OPENGL_3_3:
+//				glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
+//				glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+//				glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
+//				glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
+//				Error::assertOK();
+//				break;
 
-			default:
-				break;
+//			default:
+//				break;
 
-		}
+//		}
 
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.2
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
-
+		Error::assertOK();
 
 		// anti-aliasing?
 		if (settings.antiAliasing) {
@@ -194,6 +215,7 @@ private:
 
 		// register for keyboard events
 		glfwSetKeyCallback(window, keyCallback);
+		glfwSetCursorPosCallback(window, cursorPosCallback);
 
 	}
 

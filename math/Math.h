@@ -97,7 +97,9 @@ public:
 	/** get the look-at matrix V for the given parameters */
 	static Mat4 camLookAt(const Vec3& pos, const Vec3& lookAt, const Vec3& up) {
 
-		const Vec3 f = normalize(lookAt - pos);
+		// adding this small amount of delta prevents issues for too many zero components
+		const float e = 1e-20;
+		const Vec3 f = normalize(lookAt - pos) + Vec3(e,e,e);
 		const Vec3 s = normalize(cross(f, normalize(up)));
 		const Vec3 u = cross(s, f);
 		const float data[16] = {

@@ -10,7 +10,11 @@
 #include "Structs.h"
 #include "Animation.h"
 
+#include "../../Assert.h"
 
+#include "../../data/Data.h"
+#include "../../data/Resource.h"
+#include "../../data/ResourceFactory.h"
 
 namespace MD5 {
 
@@ -26,6 +30,17 @@ namespace MD5 {
 		/** ctor */
 		ImportAnimation(const float scale) : scale(scale) {
 			;
+		}
+
+		/** load an MD5 animation from the given string-data */
+		ImportedAnimation load(const Resource& res) {
+
+			Debug(NAME, "loading resource: " + res.getName());
+
+			const Data d = ResourceFactory::get().get(res);
+			const std::string dat = d.asString();
+			return loadString(dat);
+
 		}
 
 		/** load an MD5 animation from the given string-data */
@@ -53,6 +68,8 @@ namespace MD5 {
 			std::ifstream is(file);
 			std::string line;
 			while(getline(is, line)) {parseLine(ani, line);}
+
+			Assert::isFalse(ani.frames.empty(), "did not find any frames within animation");
 
 			//Debug(NAME, "got " << hierarchy.bones.size() << " bones and " << frames.size() << " frames");
 

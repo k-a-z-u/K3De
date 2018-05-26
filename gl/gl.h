@@ -6,9 +6,9 @@
  * MacOS has this one included within its OpenGL impl.
  */
 #if defined (__APPLE__)
-    #include <OpenGL/gl3.h>
+	#include <OpenGL/gl3.h>
 #else
-    #include <GL/glew.h>
+	#include <GL/glew.h>
 #endif
 
 #include <GLFW/glfw3.h>
@@ -23,7 +23,8 @@ static inline OpenGLVersion getOpenGLVersion() {
 	#if defined (__APPLE__)
 		return OPENGL_3_3;
 	#else
-		return OPENGL_ES_3;
+		//return OPENGL_ES_3;
+		return OPENGL_3_3;
 	#endif
 }
 

@@ -61,7 +61,8 @@ public:
 	}
 
 	virtual bool isVisible(const Mat4& MVP) const {
-		return bbox.getTransformed(MVP).intersectsUnitCube();
+		//return bbox.getTransformed(MVP).intersectsUnitCube(); // TODO
+		return true;
 	}
 
 	AABB getAABBmodel() const {

@@ -13,11 +13,16 @@
 #include "../world/Skybox.h"
 
 const ScreenSize& Scene::getScreenSize() const {
-    return size;
+	return size;
 }
 
 ScreenSize* Scene::getScreenSizePtr() {
-    return &size;
+	return &size;
+}
+
+void Scene::add(IRenderable* r) {
+	if (dynamic_cast<Water*>(r)) {throw Exception("must not add water via add()");}
+	renderables.push_back(r);
 }
 
 void Scene::addWater(Water* w) {
@@ -28,7 +33,7 @@ void Scene::addWater(Water* w) {
 }
 
 void Scene::setup() {
-	clipY = Vec2(-9999,+9999);
+	clipZ = Vec2(-9999,+9999);
 
 	// default camera
 	cam.setPosition(2, 2, 2);
@@ -47,6 +52,7 @@ void Scene::setup() {
 }
 
 void Scene::setEnableShadows(bool enable) {
+	Assert::isTrue(renderables.empty(), "must call setEnableShadows() before adding renderables!");
 	if(enable) {
 		if (!shadowRenderer) {shadowRenderer = new ShadowRendererSimple(this);}
 	} else {
@@ -55,6 +61,7 @@ void Scene::setEnableShadows(bool enable) {
 }
 
 void Scene::setEnableWater(bool enable) {
+	Assert::isTrue(renderables.empty(), "must call setEnableWater() before adding renderables!");
 	if(enable) {
 		if (!waterRenderer) {waterRenderer = new WaterRenderer(this);}
 	} else {
@@ -63,10 +70,10 @@ void Scene::setEnableWater(bool enable) {
 }
 
 void Scene::resize(const ScreenSize& size) {
-    this->size = size;
-    const int w = size.viewport.width;
-    const int h = size.viewport.height;
-    getCamera().setViewportSize(w, h);
+	this->size = size;
+	const int w = size.viewport.width;
+	const int h = size.viewport.height;
+	getCamera().setViewportSize(w, h);
 	if (getShadowRenderer())		{getShadowRenderer()->resize(w,h);}
 	if (getWaterRenderer())			{getWaterRenderer()->resize(w,h);}
 	if (getPostProcessRenderer())	{getPostProcessRenderer()->resize(w,h);}
@@ -93,8 +100,8 @@ void Scene::render() {
 	onBeforeRender(ss);
 
 	// inform every renderable about the pending render process
-	for (Renderable* r : renderables) {r->onBeforeRender(ss);}
-	for (Renderable* r : ui.elements) {r->onBeforeRender(ss);}
+	for (IRenderable* r : renderables) {r->onBeforeRender(ss);}
+	for (IRenderable* r : ui.elements) {r->onBeforeRender(ss);}
 
 	// update the light-uniform
 	lighting.upload();
@@ -136,7 +143,7 @@ void Scene::render() {
 
 }
 
-void Scene::renderThis(Renderable* r, RenderState& rs) {
+void Scene::renderThis(IRenderable* r, RenderState& rs) {
 
 	// skip disabled elements
 	if (!r->isEnabled()) {return;}
@@ -156,20 +163,30 @@ void Scene::renderThis(Renderable* r, RenderState& rs) {
 	s->bind();
 
 	// configure variable parameters [changing almost every frame]
-	if (s->hasUniform("clipY"))			{s->setVector("clipY", clipY);}
-	if (s->hasUniform("camPos"))		{s->setVector("camPos", cam.getPosition());}
-	if (s->hasUniform("M"))				{s->setMatrix("M", r->getMatrix());}
-	if (s->hasUniform("V"))				{s->setMatrix("V", rs.matrices.V);}//cam.getVMatrix());}
-	if (s->hasUniform("P"))				{s->setMatrix("P", rs.matrices.P);}//cam.getPMatrix());}
-	if (s->hasUniform("PV"))			{s->setMatrix("PV", rs.matrices.PV);}
-	if (s->hasUniform("PVM"))			{s->setMatrix("PVM", rs.matrices.PVM);}
+	//if (s->hasUniform("clipY"))			{s->setVector("clipY", clipY);}
+	if (s->hasUniform(DefaultUniform::CLIPPING))						{s->setVector(DefaultUniform::CLIPPING, clipZ);}
+	//if (s->hasUniform("camPos"))		{s->setVector("camPos", cam.getPosition());}
+	if (s->hasUniform(DefaultUniform::CAMERA_POSITION))					{s->setVector(DefaultUniform::CAMERA_POSITION, cam.getPosition());}
+	//if (s->hasUniform("M"))				{s->setMatrix("M", r->getMatrix());}
+	if (s->hasUniform(DefaultUniform::MODEL_MATRIX))					{s->setMatrix(DefaultUniform::MODEL_MATRIX, r->getMatrix());}
+	//if (s->hasUniform("V"))				{s->setMatrix("V", rs.matrices.V);}//cam.getVMatrix());}
+	if (s->hasUniform(DefaultUniform::VIEW_MATRIX))						{s->setMatrix(DefaultUniform::VIEW_MATRIX, rs.matrices.V);}//cam.getVMatrix());}
+	//if (s->hasUniform("P"))				{s->setMatrix("P", rs.matrices.P);}//cam.getPMatrix());}
+	if (s->hasUniform(DefaultUniform::PROJECTION_MATRIX))				{s->setMatrix(DefaultUniform::PROJECTION_MATRIX, rs.matrices.P);}//cam.getPMatrix());}
+	//if (s->hasUniform("PV"))			{s->setMatrix("PV", rs.matrices.PV);}
+	if (s->hasUniform(DefaultUniform::VIEW_PROJECTION_MATRIX))			{s->setMatrix(DefaultUniform::VIEW_PROJECTION_MATRIX, rs.matrices.PV);}
+	//if (s->hasUniform("PVM"))			{s->setMatrix("PVM", rs.matrices.PVM);}
+	if (s->hasUniform(DefaultUniform::MODEL_VIEW_PROJECTION_MATRIX))	{s->setMatrix(DefaultUniform::MODEL_VIEW_PROJECTION_MATRIX, rs.matrices.PVM);}
 //		if (s->hasUniform("PVshadow"))		{s->setMatrix("PVshadow", shadowPV);}
-	if (s->hasUniform("time"))			{s->setFloat("time", ss.getCurrentTime().seconds());}
+	//if (s->hasUniform("time"))			{s->setFloat("time", ss.getCurrentTime().seconds());}
+	if (s->hasUniform(DefaultUniform::TIME))							{s->setFloat(DefaultUniform::TIME, ss.getCurrentTime().seconds());}
 
 	// configure fixed parameters once [constant between frames]
 	if (s->hasUniformBlock("Lights"))	{s->setVarOnce("Lights", lighting.getUBO());}
-	if (s->hasUniform("screenWidth"))	{s->setFloatOnce("screenWidth", rs.screenWidht);}
-	if (s->hasUniform("screenHeight"))	{s->setFloatOnce("screenHeight", rs.screenHeight);}
+	//if (s->hasUniform("screenWidth"))	{s->setFloatOnce("screenWidth", rs.screenWidht);}
+	if (s->hasUniform(DefaultUniform::SCREEN_WIDTH))	{s->setFloatOnce(DefaultUniform::SCREEN_WIDTH, rs.screenWidht);}
+	//if (s->hasUniform("screenHeight"))	{s->setFloatOnce("screenHeight", rs.screenHeight);}
+	if (s->hasUniform(DefaultUniform::SCREEN_HEIGHT))	{s->setFloatOnce(DefaultUniform::SCREEN_HEIGHT, rs.screenHeight);}
 
 	// render the object
 	r->render(ss, rs);
@@ -192,10 +209,10 @@ void Scene::renderForWater() {
 	rs.matrices.V = cam.getVMatrix();
 	rs.matrices.PV = cam.getPVMatrix();
 
-	for (Renderable* r : renderables)	{renderThis(r, rs);}
+	for (IRenderable* r : renderables)	{renderThis(r, rs);}
 	for (Terrain* t : terrains)			{renderThis(t, rs);}
 	if (skybox)							{renderThis(skybox, rs);}
-	for (Renderable* ps : particles)	{renderThis(ps, rs);}
+	for (IRenderable* ps : particles)	{renderThis(ps, rs);}
 
 }
 
@@ -205,7 +222,7 @@ void Scene::renderForShadows() {
 	rs.matrices.V = cam.getVMatrix();
 	rs.matrices.PV = cam.getPVMatrix();
 
-	for (Renderable* r : renderables) {
+	for (IRenderable* r : renderables) {
 		if (r->castsShadows()) {
 			renderThis(r, rs);
 		}
@@ -225,11 +242,11 @@ void Scene::renderForNormal() {
 	rs.matrices.V = cam.getVMatrix();
 	rs.matrices.PV = cam.getPVMatrix();
 
-	for (Renderable* r : renderables)	{renderThis(r, rs);}
+	for (IRenderable* r : renderables)	{renderThis(r, rs);}
 	for (Water* w : waters)				{renderThis(w, rs);}
 	for (Terrain* t : terrains)			{renderThis(t, rs);}
 	if (skybox)							{renderThis(skybox, rs);}
-	for (Renderable* ps : particles)	{renderThis(ps, rs);}
+	for (IRenderable* ps : particles)	{renderThis(ps, rs);}
 
 }
 
